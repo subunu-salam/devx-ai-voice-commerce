@@ -1,0 +1,67 @@
+import { describe, it, expect, afterEach } from 'vitest';
+import fc from 'fast-check';
+import { cleanup, render, screen } from '@testing-library/react';
+import { MenuItemCard } from './MenuItemCard';
+import { formatPrice } from '../utils/formatPrice';
+import type { MenuItem } from '../types';
+
+afterEach(cleanup);
+
+// --- Arbitrary ---
+
+/** Generate a non-empty, non-whitespace-only string (safe for DOM text queries). */
+const arbVisibleString = (max = 50) =>
+  fc
+    .array(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), {
+      minLength: 1,
+      maxLength: max,
+    })
+    .map((chars) => chars.join(''));
+
+const arbMenuItem: fc.Arbitrary<MenuItem> = fc.record({
+  itemId: fc.string({ minLength: 1, maxLength: 20 }),
+  categoryId: fc.string({ minLength: 1, maxLength: 20 }),
+  name: arbVisibleString(50),
+  description: arbVisibleString(80),
+  price: fc.integer({ min: 1, max: 99999 }),
+  imageUrl: fc.webUrl(),
+  category: fc.string({ minLength: 1, maxLength: 30 }),
+  featured: fc.boolean(),
+  sortOrder: fc.integer({ min: 0, max: 999 }),
+});
+
+// ============================================================
+// Property 2: Menu item rendering includes all required information
+// Validates: Requirements 1.2
+// ============================================================
+describe('Property 2: Menu item rendering includes all required information', () => {
+  it('rendered MenuItemCard contains name, description, formatted price, and image with valid src', () => {
+    /**
+     * **Validates: Requirements 1.2**
+     * For any MenuItem, the rendered component should contain the item's name,
+     * description, formatted price, and an image element with a valid src attribute.
+     */
+    fc.assert(
+      fc.property(arbMenuItem, (item) => {
+        cleanup();
+        render(<MenuItemCard item={item} />);
+
+        // Name is rendered
+        expect(screen.getByText(item.name)).toBeDefined();
+
+        // Description is rendered
+        expect(screen.getByText(item.description)).toBeDefined();
+
+        // Formatted price is rendered
+        const priceText = formatPrice(item.price);
+        expect(screen.getByText(priceText)).toBeDefined();
+
+        // Image element with correct src and alt
+        const img = screen.getByRole('img', { name: item.name });
+        expect(img).toBeDefined();
+        expect(img.getAttribute('src')).toBe(item.imageUrl);
+      }),
+      { numRuns: 100 },
+    );
+  });
+});

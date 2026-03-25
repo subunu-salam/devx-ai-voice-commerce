@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+*.egg
+.venv/
+venv/
+
+# Hypothesis property-based testing database
+.hypothesis/
+
+# CDK
+cdk.out/
+cdk/cdk.out/
+
+# pytest
+.pytest_cache/
+
+# Node (frontend has its own .gitignore, but just in case)
+node_modules/
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
