@@ -5,11 +5,23 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb';
 import type { MenuItem, Category } from '../types';
+import { getRuntimeConfig } from '../config';
 
-const TABLE_NAME =
-  (import.meta as Record<string, any>).env?.VITE_MENU_TABLE_NAME ?? 'DriveThruMenu';
-const REGION =
-  (import.meta as Record<string, any>).env?.VITE_AWS_REGION ?? 'us-east-1';
+function getTableName(): string {
+  try {
+    return getRuntimeConfig().menuTableName;
+  } catch {
+    return 'DriveThruMenu';
+  }
+}
+
+function getRegion(): string {
+  try {
+    return getRuntimeConfig().awsRegion;
+  } catch {
+    return 'us-east-1';
+  }
+}
 
 /** Parse a raw DynamoDB item into a MenuItem. */
 export function parseMenuItem(item: Record<string, any>): MenuItem {
@@ -59,10 +71,11 @@ export function createMenuService(credentials: {
   sessionToken?: string;
 }) {
   const client = new DynamoDBClient({
-    region: REGION,
+    region: getRegion(),
     credentials,
   });
   const docClient = DynamoDBDocumentClient.from(client);
+  const tableName = getTableName();
 
   return {
     /** Scan for all METADATA items to get categories. */
@@ -70,7 +83,7 @@ export function createMenuService(credentials: {
       try {
         const result = await docClient.send(
           new ScanCommand({
-            TableName: TABLE_NAME,
+            TableName: tableName,
             FilterExpression: 'SK = :sk',
             ExpressionAttributeValues: { ':sk': 'METADATA' },
           }),
@@ -88,7 +101,7 @@ export function createMenuService(credentials: {
       try {
         const result = await docClient.send(
           new QueryCommand({
-            TableName: TABLE_NAME,
+            TableName: tableName,
             KeyConditionExpression: 'PK = :pk AND begins_with(SK, :skPrefix)',
             ExpressionAttributeValues: {
               ':pk': `CATEGORY#${categoryId}`,
@@ -109,7 +122,7 @@ export function createMenuService(credentials: {
       try {
         const result = await docClient.send(
           new ScanCommand({
-            TableName: TABLE_NAME,
+            TableName: tableName,
             FilterExpression: 'begins_with(SK, :skPrefix)',
             ExpressionAttributeValues: { ':skPrefix': 'ITEM#' },
           }),

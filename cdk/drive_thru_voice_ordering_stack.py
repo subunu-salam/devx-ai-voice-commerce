@@ -1,20 +1,25 @@
 """CDK Stack for the Drive-Thru Voice Ordering system.
 
 Provisions DynamoDB tables, S3 buckets, CloudFront distribution,
-Cognito User Pool, Identity Pool, and IAM policies.
+Cognito User Pool, Identity Pool, AgentCore Runtime, and deploys
+the frontend SPA with runtime configuration.
 """
 
+import json
+import os
 import aws_cdk as cdk
 from aws_cdk import (
     Stack,
     RemovalPolicy,
     aws_dynamodb as dynamodb,
     aws_s3 as s3,
+    aws_s3_deployment as s3deploy,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as origins,
     aws_cognito as cognito,
     aws_iam as iam,
 )
+import aws_cdk.aws_bedrock_agentcore_alpha as agentcore
 from constructs import Construct
 
 
@@ -217,21 +222,42 @@ class DriveThruVoiceOrderingStack(Stack):
             roles={"authenticated": self.authenticated_role.role_arn},
         )
 
-        # --- AgentCore Runtime Agent IAM Role ---
-        # Note: AgentCore Runtime does not yet have a native CDK L2 construct.
-        # The AgentCore endpoint should be configured via the AWS CLI, console,
-        # or a CfnResource (custom resource) once available. This role is
-        # intended to be associated with the AgentCore Runtime agent.
+        # --- AgentCore Runtime ---
 
-        self.agent_role = iam.Role(
+        # Package and upload agent code to S3 as a zip asset.
+        agent_code_path = os.path.join(os.path.dirname(__file__), "..", "agent")
+        agent_code_asset = cdk.aws_s3_assets.Asset(
             self,
-            "AgentCoreAgentRole",
-            assumed_by=iam.ServicePrincipal("bedrock.amazonaws.com"),
-            description="IAM role for the AgentCore Runtime drive-thru voice ordering agent",
+            "AgentCodeAsset",
+            path=agent_code_path,
         )
 
-        # Bedrock: invoke Nova Sonic model in us-east-1
-        self.agent_role.add_to_policy(
+        self.agent_runtime = agentcore.Runtime(
+            self,
+            "DriveThruAgentRuntime",
+            runtime_name="DriveThruVoiceAgent",
+            agent_runtime_artifact=agentcore.AgentRuntimeArtifact.from_s3(
+                s3.Location(
+                    bucket_name=agent_code_asset.s3_bucket_name,
+                    object_key=agent_code_asset.s3_object_key,
+                ),
+                agentcore.AgentCoreRuntime.PYTHON_3_13,
+                ["main.py"],
+            ),
+            authorizer_configuration=agentcore.RuntimeAuthorizerConfiguration.using_cognito(
+                self.user_pool,
+                [self.user_pool_client],
+            ),
+            environment_variables={
+                "MENU_TABLE_NAME": self.menu_table.table_name,
+                "ORDERS_TABLE_NAME": self.orders_table.table_name,
+                "IMAGES_BUCKET_NAME": self.images_bucket.bucket_name,
+            },
+            description="Drive-thru voice ordering agent powered by Nova Sonic",
+        )
+
+        # Grant the runtime permissions to invoke Nova Sonic
+        self.agent_runtime.role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 actions=[
@@ -246,13 +272,58 @@ class DriveThruVoiceOrderingStack(Stack):
         )
 
         # DynamoDB: read/write access to orders table
-        self.orders_table.grant_read_write_data(self.agent_role)
+        self.orders_table.grant_read_write_data(self.agent_runtime)
 
         # DynamoDB: read-only access to menu table
-        self.menu_table.grant_read_data(self.agent_role)
+        self.menu_table.grant_read_data(self.agent_runtime)
 
         # S3: read access to food images bucket
-        self.images_bucket.grant_read(self.agent_role)
+        self.images_bucket.grant_read(self.agent_runtime)
+
+        # --- Frontend Deployment ---
+
+        # Deploy the pre-built frontend to S3.
+        # Before running `cdk deploy`, build the frontend:
+        #   cd frontend && npm ci && npm run build
+        # CDK then uploads the dist/ directory to S3 and invalidates CloudFront.
+        frontend_dist_path = os.path.join(
+            os.path.dirname(__file__), "..", "frontend", "dist"
+        )
+
+        self.frontend_deployment = s3deploy.BucketDeployment(
+            self,
+            "DeployFrontend",
+            sources=[s3deploy.Source.asset(frontend_dist_path)],
+            destination_bucket=self.hosting_bucket,
+            distribution=self.distribution,
+            distribution_paths=["/*"],
+        )
+
+        # Deploy runtime-config.json with resource IDs the frontend needs.
+        # This is a separate deployment so it can reference CDK token values
+        # (Cognito IDs, agent endpoint) that are resolved at deploy time.
+        self.config_deployment = s3deploy.BucketDeployment(
+            self,
+            "DeployRuntimeConfig",
+            sources=[
+                s3deploy.Source.json_data(
+                    "runtime-config.json",
+                    {
+                        "userPoolId": self.user_pool.user_pool_id,
+                        "userPoolClientId": self.user_pool_client.user_pool_client_id,
+                        "identityPoolId": self.identity_pool.ref,
+                        "menuTableName": self.menu_table.table_name,
+                        "awsRegion": self.region,
+                        "agentEndpointUrl": f"wss://bedrock-agentcore.{self.region}.amazonaws.com/runtimes/{self.agent_runtime.agent_runtime_arn}/ws",
+                    },
+                ),
+            ],
+            destination_bucket=self.hosting_bucket,
+            distribution=self.distribution,
+            distribution_paths=["/runtime-config.json"],
+            # Don't delete existing files (the frontend build is already there)
+            prune=False,
+        )
 
         # --- Stack Outputs ---
 
@@ -282,6 +353,11 @@ class DriveThruVoiceOrderingStack(Stack):
         )
         cdk.CfnOutput(
             self,
-            "AgentRoleArn",
-            value=self.agent_role.role_arn,
+            "AgentRuntimeId",
+            value=self.agent_runtime.agent_runtime_id,
+        )
+        cdk.CfnOutput(
+            self,
+            "AgentEndpointUrl",
+            value=f"wss://bedrock-agentcore.{self.region}.amazonaws.com/runtimes/{self.agent_runtime.agent_runtime_arn}/ws",
         )

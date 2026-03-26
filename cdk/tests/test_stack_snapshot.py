@@ -56,7 +56,8 @@ class TestSnapshotStructure:
             "UserPoolId",
             "UserPoolClientId",
             "IdentityPoolId",
-            "AgentRoleArn",
+            "AgentRuntimeId",
+            "AgentEndpointUrl",
         ]
         for key in expected_output_keys:
             assert key in outputs, f"Missing output: {key}"

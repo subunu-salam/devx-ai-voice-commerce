@@ -54,7 +54,7 @@ describe('OrderConfirmation', () => {
   });
 
   it('shows confirmation after order_confirmed event is applied', () => {
-    const { container, unmount } = render(<OrderConfirmation />);
+    const { unmount } = render(<OrderConfirmation />);
     expect(screen.queryByText('Thank you for your order!')).not.toBeInTheDocument();
 
     useAppStore.getState().applyUIEvent({

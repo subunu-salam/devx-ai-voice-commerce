@@ -1,17 +1,16 @@
 import { Amplify, type ResourcesConfig } from 'aws-amplify';
-
-const authConfig: ResourcesConfig = {
-  Auth: {
-    Cognito: {
-      userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID ?? '',
-      userPoolClientId: import.meta.env.VITE_COGNITO_USER_POOL_CLIENT_ID ?? '',
-      identityPoolId: import.meta.env.VITE_COGNITO_IDENTITY_POOL_ID ?? '',
-    },
-  },
-};
+import { getRuntimeConfig } from '../config';
 
 export function configureAuth(): void {
+  const config = getRuntimeConfig();
+  const authConfig: ResourcesConfig = {
+    Auth: {
+      Cognito: {
+        userPoolId: config.userPoolId,
+        userPoolClientId: config.userPoolClientId,
+        identityPoolId: config.identityPoolId,
+      },
+    },
+  };
   Amplify.configure(authConfig);
 }
-
-export { authConfig };

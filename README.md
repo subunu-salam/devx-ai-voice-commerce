@@ -26,14 +26,18 @@ Browser (React SPA)
 ## Project Structure
 
 ```
-cdk/          – AWS CDK infrastructure (Python)
+cdk/          – AWS CDK infrastructure (Python), deploys everything
 agent/        – Strands BidiAgent with menu & order tools (Python)
 frontend/     – Vite + React + TypeScript SPA
 ```
 
 ---
 
-## 1. Deploy Infrastructure
+## 1. Deploy Everything
+
+A single `cdk deploy` builds and deploys the entire stack: DynamoDB tables, S3 buckets, CloudFront, Cognito, the AgentCore Runtime agent, and the frontend SPA.
+
+The agent is deployed via `@aws-cdk/aws-bedrock-agentcore-alpha` with direct code deployment. The frontend is built locally (or in Docker), uploaded to S3, and served via CloudFront. A `runtime-config.json` is generated with all resource IDs so the frontend doesn't need any manual `.env` configuration.
 
 ```bash
 cd cdk
@@ -41,30 +45,29 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Synthesize and review
-cdk synth
+# First time only
+cdk bootstrap
 
-# Deploy (first time requires bootstrap)
-cdk bootstrap   # only once per account/region
+# Deploy everything (infrastructure + agent + frontend)
 cdk deploy
 ```
 
-After deploy, note the stack outputs — you'll need them:
+After deploy, note the stack outputs:
 
-| Output                 | Used For                          |
-|------------------------|-----------------------------------|
-| `UserPoolId`           | Frontend auth config              |
-| `UserPoolClientId`     | Frontend auth config              |
-| `IdentityPoolId`       | Frontend auth config              |
-| `MenuTableName`        | Frontend menu service             |
-| `HostingBucketName`    | Frontend deployment target        |
-| `DistributionDomainName` | Your app URL                   |
-| `AgentRoleArn`         | AgentCore Runtime agent role      |
-| `ImagesBucketName`     | Upload food images here           |
+| Output                   | Description                  |
+|--------------------------|------------------------------|
+| `DistributionDomainName` | Your app URL                 |
+| `AgentEndpointUrl`       | Agent WebSocket endpoint     |
+| `UserPoolId`             | Cognito User Pool ID         |
+| `UserPoolClientId`       | Cognito client ID            |
+| `IdentityPoolId`         | Cognito Identity Pool ID     |
+| `MenuTableName`          | DynamoDB menu table          |
+| `ImagesBucketName`       | S3 bucket for food images    |
+| `AgentRuntimeId`         | AgentCore Runtime ID         |
 
 ## 2. Seed Menu Data
 
-Upload menu items to the `DriveThruMenu` DynamoDB table. Each category needs a METADATA record and ITEM records:
+Upload menu items to the `DriveThruMenu` DynamoDB table:
 
 ```bash
 # Category metadata
@@ -98,14 +101,12 @@ aws s3 cp ./my-images/ s3://<ImagesBucketName>/images/ --recursive
 ## 3. Create a Cognito User
 
 ```bash
-# Create a user
 aws cognito-idp admin-create-user \
   --user-pool-id <UserPoolId> \
   --username your@email.com \
   --temporary-password TempPass123! \
   --user-attributes Name=email,Value=your@email.com Name=email_verified,Value=true
 
-# Set permanent password
 aws cognito-idp admin-set-user-password \
   --user-pool-id <UserPoolId> \
   --username your@email.com \
@@ -113,56 +114,7 @@ aws cognito-idp admin-set-user-password \
   --permanent
 ```
 
-## 4. Deploy the Agent to AgentCore Runtime
-
-```bash
-cd agent
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-Deploy the agent to AgentCore Runtime using the AWS CLI or console. Associate it with the `AgentRoleArn` from the CDK outputs. The agent entry point is `agent/main.py`.
-
-Refer to the [Bedrock AgentCore documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/agentcore.html) for deployment steps. You'll get a WebSocket endpoint URL after deployment.
-
-## 5. Build and Deploy the Frontend
-
-```bash
-cd frontend
-npm install
-```
-
-Create a `.env` file with your stack outputs:
-
-```bash
-# frontend/.env
-VITE_COGNITO_USER_POOL_ID=us-east-1_XXXXXXXXX
-VITE_COGNITO_USER_POOL_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
-VITE_COGNITO_IDENTITY_POOL_ID=us-east-1:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-VITE_MENU_TABLE_NAME=DriveThruMenu
-VITE_AWS_REGION=us-east-1
-VITE_AGENT_ENDPOINT=wss://your-agentcore-endpoint.amazonaws.com
-```
-
-Build and deploy to S3:
-
-```bash
-npm run build
-aws s3 sync dist/ s3://<HostingBucketName>/ --delete
-```
-
-Invalidate CloudFront cache:
-
-```bash
-aws cloudfront create-invalidation \
-  --distribution-id <DistributionId> \
-  --paths "/*"
-```
-
-Your app is now live at `https://<DistributionDomainName>`.
-
-## 6. Try It Out
+## 4. Try It Out
 
 1. Open `https://<DistributionDomainName>` in your browser
 2. Sign in with the Cognito user you created
@@ -177,7 +129,20 @@ Your app is now live at `https://<DistributionDomainName>`.
 
 ## Local Development
 
-### Frontend (dev server)
+### Frontend dev server
+
+For local development, create `frontend/public/runtime-config.json` with your deployed resource IDs (or use `frontend/.env` with `VITE_*` vars as fallbacks):
+
+```json
+{
+  "userPoolId": "us-east-1_XXXXXXXXX",
+  "userPoolClientId": "xxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "identityPoolId": "us-east-1:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "menuTableName": "DriveThruMenu",
+  "awsRegion": "us-east-1",
+  "agentEndpointUrl": "wss://your-agent-endpoint"
+}
+```
 
 ```bash
 cd frontend
@@ -199,3 +164,7 @@ cd frontend && npm test
 ```
 
 All three layers have property-based tests (Hypothesis for Python, fast-check for TypeScript) that verify correctness properties across randomly generated inputs.
+
+## Redeploying
+
+After code changes, just run `cdk deploy` again — it rebuilds the frontend, repackages the agent, and updates everything in one shot.

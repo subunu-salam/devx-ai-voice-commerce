@@ -10,9 +10,8 @@ import {
   sendInitialState,
   sendItemSelection,
 } from './voice';
+import { getRuntimeConfig } from './config';
 import type { MenuItem } from './types';
-
-const AGENT_ENDPOINT = import.meta.env.VITE_AGENT_ENDPOINT ?? '';
 
 function AuthenticatedApp() {
   const { getJwtToken, getAwsCredentials } = useAuth();
@@ -67,7 +66,7 @@ function AuthenticatedApp() {
       voiceManagerRef.current = manager;
 
       const token = await getJwtToken();
-      await manager.startSession(AGENT_ENDPOINT, token);
+      await manager.startSession(getRuntimeConfig().agentEndpointUrl, token);
 
       // Send initial UI_State after connection
       sendInitialState(wsClient);
