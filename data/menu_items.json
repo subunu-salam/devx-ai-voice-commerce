@@ -1,0 +1,263 @@
+[
+  {
+    "PK": "CATEGORY#burgers",
+    "SK": "METADATA",
+    "name": "Burgers",
+    "sortOrder": 1
+  },
+  {
+    "PK": "CATEGORY#burgers",
+    "SK": "ITEM#classic-burger",
+    "name": "Classic Burger",
+    "description": "Quarter-pound beef patty with lettuce, tomato, onion, and pickles on a toasted sesame bun",
+    "price": 799,
+    "imageUrl": "images/classic-burger.svg",
+    "category": "Burgers",
+    "featured": true,
+    "sortOrder": 1
+  },
+  {
+    "PK": "CATEGORY#burgers",
+    "SK": "ITEM#cheeseburger",
+    "name": "Cheeseburger",
+    "description": "Quarter-pound beef patty with melted American cheese, lettuce, tomato, and special sauce",
+    "price": 899,
+    "imageUrl": "images/cheeseburger.svg",
+    "category": "Burgers",
+    "featured": true,
+    "sortOrder": 2
+  },
+  {
+    "PK": "CATEGORY#burgers",
+    "SK": "ITEM#bacon-burger",
+    "name": "Bacon Burger",
+    "description": "Quarter-pound beef patty with crispy bacon, cheddar cheese, lettuce, and BBQ sauce",
+    "price": 1099,
+    "imageUrl": "images/bacon-burger.svg",
+    "category": "Burgers",
+    "featured": false,
+    "sortOrder": 3
+  },
+  {
+    "PK": "CATEGORY#burgers",
+    "SK": "ITEM#double-burger",
+    "name": "Double Burger",
+    "description": "Two quarter-pound beef patties with cheese, lettuce, tomato, and pickles",
+    "price": 1199,
+    "imageUrl": "images/double-burger.svg",
+    "category": "Burgers",
+    "featured": false,
+    "sortOrder": 4
+  },
+  {
+    "PK": "CATEGORY#burgers",
+    "SK": "ITEM#veggie-burger",
+    "name": "Veggie Burger",
+    "description": "Plant-based patty with avocado, lettuce, tomato, and chipotle mayo",
+    "price": 999,
+    "imageUrl": "images/veggie-burger.svg",
+    "category": "Burgers",
+    "featured": false,
+    "sortOrder": 5
+  },
+  {
+    "PK": "CATEGORY#chicken",
+    "SK": "METADATA",
+    "name": "Chicken",
+    "sortOrder": 2
+  },
+  {
+    "PK": "CATEGORY#chicken",
+    "SK": "ITEM#chicken-sandwich",
+    "name": "Crispy Chicken Sandwich",
+    "description": "Crispy breaded chicken breast with pickles and mayo on a brioche bun",
+    "price": 899,
+    "imageUrl": "images/chicken-sandwich.svg",
+    "category": "Chicken",
+    "featured": true,
+    "sortOrder": 1
+  },
+  {
+    "PK": "CATEGORY#chicken",
+    "SK": "ITEM#spicy-chicken",
+    "name": "Spicy Chicken Sandwich",
+    "description": "Crispy chicken breast tossed in spicy sauce with jalape\u00f1os and pepper jack cheese",
+    "price": 999,
+    "imageUrl": "images/spicy-chicken.svg",
+    "category": "Chicken",
+    "featured": false,
+    "sortOrder": 2
+  },
+  {
+    "PK": "CATEGORY#chicken",
+    "SK": "ITEM#chicken-nuggets-6",
+    "name": "Chicken Nuggets (6 pc)",
+    "description": "Six crispy all-white-meat chicken nuggets with your choice of dipping sauce",
+    "price": 599,
+    "imageUrl": "images/chicken-nuggets.svg",
+    "category": "Chicken",
+    "featured": false,
+    "sortOrder": 3
+  },
+  {
+    "PK": "CATEGORY#chicken",
+    "SK": "ITEM#chicken-nuggets-10",
+    "name": "Chicken Nuggets (10 pc)",
+    "description": "Ten crispy all-white-meat chicken nuggets with two dipping sauces",
+    "price": 899,
+    "imageUrl": "images/chicken-nuggets-10.svg",
+    "category": "Chicken",
+    "featured": false,
+    "sortOrder": 4
+  },
+  {
+    "PK": "CATEGORY#sides",
+    "SK": "METADATA",
+    "name": "Sides",
+    "sortOrder": 3
+  },
+  {
+    "PK": "CATEGORY#sides",
+    "SK": "ITEM#fries",
+    "name": "French Fries",
+    "description": "Golden crispy fries seasoned with sea salt",
+    "price": 349,
+    "imageUrl": "images/fries.svg",
+    "category": "Sides",
+    "featured": true,
+    "sortOrder": 1
+  },
+  {
+    "PK": "CATEGORY#sides",
+    "SK": "ITEM#onion-rings",
+    "name": "Onion Rings",
+    "description": "Thick-cut onion rings with a crispy beer batter coating",
+    "price": 449,
+    "imageUrl": "images/onion-rings.svg",
+    "category": "Sides",
+    "featured": false,
+    "sortOrder": 2
+  },
+  {
+    "PK": "CATEGORY#sides",
+    "SK": "ITEM#mozzarella-sticks",
+    "name": "Mozzarella Sticks",
+    "description": "Six breaded mozzarella sticks served with marinara sauce",
+    "price": 549,
+    "imageUrl": "images/mozzarella-sticks.svg",
+    "category": "Sides",
+    "featured": false,
+    "sortOrder": 3
+  },
+  {
+    "PK": "CATEGORY#sides",
+    "SK": "ITEM#side-salad",
+    "name": "Side Salad",
+    "description": "Fresh mixed greens with tomato, cucumber, and your choice of dressing",
+    "price": 399,
+    "imageUrl": "images/side-salad.svg",
+    "category": "Sides",
+    "featured": false,
+    "sortOrder": 4
+  },
+  {
+    "PK": "CATEGORY#drinks",
+    "SK": "METADATA",
+    "name": "Drinks",
+    "sortOrder": 4
+  },
+  {
+    "PK": "CATEGORY#drinks",
+    "SK": "ITEM#cola",
+    "name": "Cola",
+    "description": "Ice-cold fountain cola",
+    "price": 249,
+    "imageUrl": "images/cola.svg",
+    "category": "Drinks",
+    "featured": false,
+    "sortOrder": 1
+  },
+  {
+    "PK": "CATEGORY#drinks",
+    "SK": "ITEM#lemonade",
+    "name": "Fresh Lemonade",
+    "description": "Freshly squeezed lemonade with a hint of mint",
+    "price": 349,
+    "imageUrl": "images/lemonade.svg",
+    "category": "Drinks",
+    "featured": true,
+    "sortOrder": 2
+  },
+  {
+    "PK": "CATEGORY#drinks",
+    "SK": "ITEM#iced-tea",
+    "name": "Iced Tea",
+    "description": "Brewed sweet or unsweetened iced tea",
+    "price": 249,
+    "imageUrl": "images/iced-tea.svg",
+    "category": "Drinks",
+    "featured": false,
+    "sortOrder": 3
+  },
+  {
+    "PK": "CATEGORY#drinks",
+    "SK": "ITEM#milkshake-chocolate",
+    "name": "Chocolate Milkshake",
+    "description": "Thick and creamy chocolate milkshake topped with whipped cream",
+    "price": 549,
+    "imageUrl": "images/milkshake-chocolate.svg",
+    "category": "Drinks",
+    "featured": false,
+    "sortOrder": 4
+  },
+  {
+    "PK": "CATEGORY#drinks",
+    "SK": "ITEM#milkshake-vanilla",
+    "name": "Vanilla Milkshake",
+    "description": "Classic vanilla milkshake made with real vanilla bean ice cream",
+    "price": 549,
+    "imageUrl": "images/milkshake-vanilla.svg",
+    "category": "Drinks",
+    "featured": false,
+    "sortOrder": 5
+  },
+  {
+    "PK": "CATEGORY#desserts",
+    "SK": "METADATA",
+    "name": "Desserts",
+    "sortOrder": 5
+  },
+  {
+    "PK": "CATEGORY#desserts",
+    "SK": "ITEM#apple-pie",
+    "name": "Apple Pie",
+    "description": "Warm baked apple pie with a flaky crust and cinnamon filling",
+    "price": 299,
+    "imageUrl": "images/apple-pie.svg",
+    "category": "Desserts",
+    "featured": false,
+    "sortOrder": 1
+  },
+  {
+    "PK": "CATEGORY#desserts",
+    "SK": "ITEM#sundae",
+    "name": "Hot Fudge Sundae",
+    "description": "Vanilla soft serve with hot fudge, whipped cream, and a cherry on top",
+    "price": 449,
+    "imageUrl": "images/sundae.svg",
+    "category": "Desserts",
+    "featured": true,
+    "sortOrder": 2
+  },
+  {
+    "PK": "CATEGORY#desserts",
+    "SK": "ITEM#cookie",
+    "name": "Chocolate Chip Cookie",
+    "description": "Warm freshly baked chocolate chip cookie",
+    "price": 199,
+    "imageUrl": "images/cookie.svg",
+    "category": "Desserts",
+    "featured": false,
+    "sortOrder": 3
+  }
+]

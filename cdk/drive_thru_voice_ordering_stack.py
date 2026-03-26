@@ -1,8 +1,8 @@
 """CDK Stack for the Drive-Thru Voice Ordering system.
 
 Provisions DynamoDB tables, S3 buckets, CloudFront distribution,
-Cognito User Pool, Identity Pool, AgentCore Runtime, and deploys
-the frontend SPA with runtime configuration.
+Cognito User Pool, Identity Pool, AgentCore Runtime, seeds sample
+menu data, uploads food images, and deploys the frontend SPA.
 """
 
 import json
@@ -12,12 +12,14 @@ from aws_cdk import (
     Stack,
     RemovalPolicy,
     aws_dynamodb as dynamodb,
+    aws_lambda as lambda_,
     aws_s3 as s3,
     aws_s3_deployment as s3deploy,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as origins,
     aws_cognito as cognito,
     aws_iam as iam,
+    custom_resources as cr,
 )
 import aws_cdk.aws_bedrock_agentcore_alpha as agentcore
 from constructs import Construct
@@ -77,6 +79,53 @@ class DriveThruVoiceOrderingStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
         )
+
+        # --- Seed Menu Data ---
+
+        # Lambda that writes menu items from bundled JSON to DynamoDB on deploy.
+        seed_lambda_path = os.path.join(os.path.dirname(__file__), "seed_lambda")
+
+        # Read menu data just to compute a hash for change detection
+        data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+        with open(os.path.join(data_dir, "menu_items.json")) as f:
+            menu_data = json.load(f)
+
+        seed_fn = lambda_.Function(
+            self,
+            "SeedMenuFunction",
+            runtime=lambda_.Runtime.PYTHON_3_13,
+            handler="index.handler",
+            code=lambda_.Code.from_asset(seed_lambda_path),
+            timeout=cdk.Duration.minutes(2),
+            environment={
+                "TABLE_NAME": self.menu_table.table_name,
+            },
+        )
+        self.menu_table.grant_write_data(seed_fn)
+
+        # Trigger the Lambda as a custom resource on every deploy
+        seed_provider = cr.Provider(
+            self, "SeedMenuProvider", on_event_handler=seed_fn
+        )
+        cdk.CustomResource(
+            self,
+            "SeedMenuData",
+            service_token=seed_provider.service_token,
+            # Change this property to force re-seeding on data changes
+            properties={"DataHash": str(hash(json.dumps(menu_data)))},
+        )
+
+        # --- Upload Food Images to S3 ---
+
+        images_dir = os.path.join(data_dir, "images")
+        if os.path.isdir(images_dir):
+            s3deploy.BucketDeployment(
+                self,
+                "DeployFoodImages",
+                sources=[s3deploy.Source.asset(images_dir)],
+                destination_bucket=self.images_bucket,
+                destination_key_prefix="images",
+            )
 
         # --- CloudFront Distribution ---
 

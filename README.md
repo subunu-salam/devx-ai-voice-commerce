@@ -29,15 +29,33 @@ Browser (React SPA)
 cdk/          – AWS CDK infrastructure (Python), deploys everything
 agent/        – Strands BidiAgent with menu & order tools (Python)
 frontend/     – Vite + React + TypeScript SPA
+data/         – Sample menu data and placeholder images
 ```
 
 ---
 
-## 1. Deploy Everything
+## 1. Build the Frontend
 
-A single `cdk deploy` builds and deploys the entire stack: DynamoDB tables, S3 buckets, CloudFront, Cognito, the AgentCore Runtime agent, and the frontend SPA.
+```bash
+cd frontend
+npm ci
+npm run build
+cd ..
+```
 
-The agent is deployed via `@aws-cdk/aws-bedrock-agentcore-alpha` with direct code deployment. The frontend is built locally (or in Docker), uploaded to S3, and served via CloudFront. A `runtime-config.json` is generated with all resource IDs so the frontend doesn't need any manual `.env` configuration.
+## 2. Deploy Everything
+
+A single `cdk deploy` handles the entire stack:
+
+- DynamoDB tables (menu + orders)
+- S3 buckets (food images + frontend hosting)
+- CloudFront distribution
+- Cognito User Pool + Identity Pool
+- AgentCore Runtime with the voice agent
+- Frontend SPA uploaded to S3
+- Runtime config injected automatically
+- Sample menu data seeded into DynamoDB
+- Placeholder food images uploaded to S3
 
 ```bash
 cd cdk
@@ -48,57 +66,15 @@ pip install -r requirements.txt
 # First time only
 cdk bootstrap
 
-# Deploy everything (infrastructure + agent + frontend)
+# Deploy everything
 cdk deploy
 ```
 
-After deploy, note the stack outputs:
-
-| Output                   | Description                  |
-|--------------------------|------------------------------|
-| `DistributionDomainName` | Your app URL                 |
-| `AgentEndpointUrl`       | Agent WebSocket endpoint     |
-| `UserPoolId`             | Cognito User Pool ID         |
-| `UserPoolClientId`       | Cognito client ID            |
-| `IdentityPoolId`         | Cognito Identity Pool ID     |
-| `MenuTableName`          | DynamoDB menu table          |
-| `ImagesBucketName`       | S3 bucket for food images    |
-| `AgentRuntimeId`         | AgentCore Runtime ID         |
-
-## 2. Seed Menu Data
-
-Upload menu items to the `DriveThruMenu` DynamoDB table:
-
-```bash
-# Category metadata
-aws dynamodb put-item --table-name DriveThruMenu --item '{
-  "PK": {"S": "CATEGORY#burgers"},
-  "SK": {"S": "METADATA"},
-  "name": {"S": "Burgers"},
-  "sortOrder": {"N": "1"}
-}'
-
-# Menu item
-aws dynamodb put-item --table-name DriveThruMenu --item '{
-  "PK": {"S": "CATEGORY#burgers"},
-  "SK": {"S": "ITEM#classic"},
-  "name": {"S": "Classic Burger"},
-  "description": {"S": "A juicy beef patty with lettuce, tomato, and pickles"},
-  "price": {"N": "899"},
-  "imageUrl": {"S": "images/classic-burger.jpg"},
-  "category": {"S": "Burgers"},
-  "featured": {"BOOL": true},
-  "sortOrder": {"N": "1"}
-}'
-```
-
-Prices are in cents (899 = $8.99). Upload food images to the S3 images bucket:
-
-```bash
-aws s3 cp ./my-images/ s3://<ImagesBucketName>/images/ --recursive
-```
+No manual data seeding or image uploads needed — it's all handled by CDK.
 
 ## 3. Create a Cognito User
+
+This is the only manual step after deploy:
 
 ```bash
 aws cognito-idp admin-create-user \
@@ -114,11 +90,13 @@ aws cognito-idp admin-set-user-password \
   --permanent
 ```
 
+Replace `<UserPoolId>` with the value from the `cdk deploy` output.
+
 ## 4. Try It Out
 
 1. Open `https://<DistributionDomainName>` in your browser
 2. Sign in with the Cognito user you created
-3. Browse the visual menu
+3. Browse the visual menu (5 categories, 21 items)
 4. Click "Start Voice Order" and allow microphone access
 5. Talk to the AI attendant — try things like:
    - "What do you have?"
@@ -127,11 +105,25 @@ aws cognito-idp admin-set-user-password \
    - "What's my total?"
    - "That's all, place my order"
 
+## Sample Menu
+
+The deploy seeds these categories automatically:
+
+| Category | Items | Price Range |
+|----------|-------|-------------|
+| Burgers  | Classic, Cheese, Bacon, Double, Veggie | $7.99–$11.99 |
+| Chicken  | Crispy Sandwich, Spicy, Nuggets 6pc/10pc | $5.99–$9.99 |
+| Sides    | Fries, Onion Rings, Mozz Sticks, Salad | $3.49–$5.49 |
+| Drinks   | Cola, Lemonade, Iced Tea, Milkshakes | $2.49–$5.49 |
+| Desserts | Apple Pie, Sundae, Cookie | $1.99–$4.49 |
+
+To modify the menu, edit `data/menu_items.json` and run `cdk deploy` again.
+
 ## Local Development
 
 ### Frontend dev server
 
-For local development, create `frontend/public/runtime-config.json` with your deployed resource IDs (or use `frontend/.env` with `VITE_*` vars as fallbacks):
+Create `frontend/public/runtime-config.json` with your deployed resource IDs:
 
 ```json
 {
@@ -145,26 +137,21 @@ For local development, create `frontend/public/runtime-config.json` with your de
 ```
 
 ```bash
-cd frontend
-npm install
-npm run dev        # starts at http://localhost:5173
+cd frontend && npm run dev
 ```
 
 ### Run Tests
 
 ```bash
-# CDK tests
-cd cdk && python -m pytest tests/ -v
-
-# Agent tests
-python -m pytest agent/ -v
-
-# Frontend tests
-cd frontend && npm test
+cd cdk && python -m pytest tests/ -v       # CDK (21 tests)
+python -m pytest agent/ -v                  # Agent (58 tests)
+cd frontend && npm test                     # Frontend (134 tests)
 ```
 
-All three layers have property-based tests (Hypothesis for Python, fast-check for TypeScript) that verify correctness properties across randomly generated inputs.
+### Redeploying
 
-## Redeploying
+After any code or data changes:
 
-After code changes, just run `cdk deploy` again — it rebuilds the frontend, repackages the agent, and updates everything in one shot.
+```bash
+cd frontend && npm run build && cd ../cdk && cdk deploy
+```
