@@ -39,7 +39,9 @@ export function MenuItemCard({ item, highlighted = false, onClick }: MenuItemCar
         height={200}
         style={{ width: 200, height: 200, objectFit: 'cover', borderRadius: '6px' }}
         onError={(e) => {
-          (e.target as HTMLImageElement).src = '/placeholder.png';
+          const img = e.target as HTMLImageElement;
+          img.onerror = null; // prevent infinite loop
+          img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="%23eee"/><text x="100" y="105" text-anchor="middle" font-family="sans-serif" font-size="14" fill="%23999">No image</text></svg>';
         }}
       />
       <h3 style={{ margin: '8px 0 4px' }}>{item.name}</h3>

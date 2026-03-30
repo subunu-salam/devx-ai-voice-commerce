@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { useAuth } from './auth';
-import { SignInForm } from './auth';
+import { useAuthenticator } from '@aws-amplify/ui-react';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import { MenuDisplay, OrderSummaryPanel, OrderConfirmation } from './components';
 import { useAppStore } from './store';
 import { createMenuService, groupItemsByCategory } from './services';
@@ -13,13 +13,27 @@ import {
 import { getRuntimeConfig } from './config';
 import type { MenuItem } from './types';
 
-function AuthenticatedApp() {
-  const { getJwtToken, getAwsCredentials } = useAuth();
-  const {
-    setMenuData,
-    setMenuLoading,
-    setMenuError,
-  } = useAppStore();
+async function getJwtToken(): Promise<string> {
+  const session = await fetchAuthSession();
+  const token = session.tokens?.idToken?.toString();
+  if (!token) throw new Error('No JWT token available');
+  return token;
+}
+
+async function getAwsCredentials() {
+  const session = await fetchAuthSession();
+  const creds = session.credentials;
+  if (!creds) throw new Error('No AWS credentials available');
+  return {
+    accessKeyId: creds.accessKeyId,
+    secretAccessKey: creds.secretAccessKey,
+    sessionToken: creds.sessionToken,
+  };
+}
+
+export default function App() {
+  const { signOut } = useAuthenticator();
+  const { setMenuData, setMenuLoading, setMenuError } = useAppStore();
 
   const sessionActive = useAppStore((s) => s.voice.sessionActive);
   const listening = useAppStore((s) => s.voice.listening);
@@ -55,7 +69,7 @@ function AuthenticatedApp() {
     }
     void loadMenu();
     return () => { cancelled = true; };
-  }, [getAwsCredentials, setMenuData, setMenuLoading, setMenuError]);
+  }, [setMenuData, setMenuLoading, setMenuError]);
 
   const handleStartVoice = useCallback(async () => {
     setVoiceError(null);
@@ -67,13 +81,11 @@ function AuthenticatedApp() {
 
       const token = await getJwtToken();
       await manager.startSession(getRuntimeConfig().agentEndpointUrl, token);
-
-      // Send initial UI_State after connection
       sendInitialState(wsClient);
     } catch (err) {
       setVoiceError((err as Error).message);
     }
-  }, [getJwtToken]);
+  }, []);
 
   const handleStopVoice = useCallback(() => {
     if (voiceManagerRef.current) {
@@ -99,7 +111,11 @@ function AuthenticatedApp() {
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: 16 }}>
-      {/* Voice controls */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h1 style={{ margin: 0 }}>Drive-Thru</h1>
+        <button onClick={signOut} type="button">Sign Out</button>
+      </div>
+
       <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
         {!sessionActive ? (
           <button onClick={handleStartVoice} type="button">
@@ -127,7 +143,6 @@ function AuthenticatedApp() {
         )}
       </div>
 
-      {/* Two-column layout: menu left, order right */}
       <div style={{ display: 'flex', gap: 24 }}>
         <div style={{ flex: 2 }}>
           <MenuDisplay onItemClick={handleItemClick} />
@@ -138,22 +153,4 @@ function AuthenticatedApp() {
       </div>
     </div>
   );
-}
-
-export default function App() {
-  const { authenticated, loading } = useAuth();
-
-  if (loading) {
-    return <div role="status">Loading…</div>;
-  }
-
-  if (!authenticated) {
-    return (
-      <div style={{ maxWidth: 400, margin: '80px auto', padding: 16 }}>
-        <SignInForm />
-      </div>
-    );
-  }
-
-  return <AuthenticatedApp />;
 }

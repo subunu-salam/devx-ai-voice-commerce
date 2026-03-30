@@ -19,14 +19,14 @@ import os
 # Add the cdk directory to the path so we can import the stack
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from drive_thru_voice_ordering_stack import DriveThruVoiceOrderingStack
+from backend_stack import BackendStack
 
 
 @pytest.fixture(scope="module")
 def template():
     """Synthesize the stack and return the CloudFormation template."""
     app = cdk.App()
-    stack = DriveThruVoiceOrderingStack(app, "TestStack")
+    stack = BackendStack(app, "TestStack")
     return Template.from_stack(stack)
 
 
@@ -52,6 +52,7 @@ class TestSnapshotStructure:
             "OrdersTableName",
             "ImagesBucketName",
             "HostingBucketName",
+            "DistributionId",
             "DistributionDomainName",
             "UserPoolId",
             "UserPoolClientId",

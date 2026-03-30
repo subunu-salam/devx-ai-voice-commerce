@@ -1,20 +1,21 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
+import '@aws-amplify/ui-react/styles.css';
 import App from './App.tsx';
-import { configureAuth, AuthProvider } from './auth';
+import { configureAuth } from './auth';
 import { loadRuntimeConfig } from './config';
+import { Authenticator } from '@aws-amplify/ui-react';
 
-// Load runtime config (from /runtime-config.json or env var fallbacks),
-// then configure auth and render the app.
+// Load runtime config, configure Amplify, then render with Authenticator.
 loadRuntimeConfig().then(() => {
   configureAuth();
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <AuthProvider>
+      <Authenticator>
         <App />
-      </AuthProvider>
+      </Authenticator>
     </StrictMode>,
   );
 });

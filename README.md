@@ -1,6 +1,6 @@
 # Drive-Thru Voice Ordering
 
-A drive-thru ordering app where customers place food orders using natural voice interaction powered by Amazon Nova Sonic via the Strands Agents SDK. Browse the menu visually, talk to an AI drive-thru attendant, and place your order hands-free.
+A drive-thru ordering app where customers place food orders using natural voice interaction powered by Amazon Nova Sonic via the Strands Agents SDK.
 
 ## Architecture
 
@@ -26,55 +26,56 @@ Browser (React SPA)
 ## Project Structure
 
 ```
-cdk/          – AWS CDK infrastructure (Python), deploys everything
-agent/        – Strands BidiAgent with menu & order tools (Python)
-frontend/     – Vite + React + TypeScript SPA
-data/         – Sample menu data and placeholder images
+cdk/              – Two CDK stacks (BackendStack + FrontendStack)
+agent/            – Strands BidiAgent with menu & order tools
+frontend/         – Vite + React + TypeScript SPA
+data/             – Sample menu data and placeholder images
+deploy.sh         – One-command deploy script
+generate_config.py – Generates runtime-config.json from backend outputs
 ```
 
 ---
 
-## 1. Build the Frontend
+## Deploy
+
+### One command
 
 ```bash
-cd frontend
-npm ci
-npm run build
-cd ..
+./deploy.sh
 ```
 
-## 2. Deploy Everything
+This runs all four steps automatically:
 
-A single `cdk deploy` handles the entire stack:
+1. Deploys the backend stack (DynamoDB, S3, CloudFront, Cognito, AgentCore Runtime, seeds menu data + images)
+2. Reads backend outputs and generates `frontend/public/runtime-config.json`
+3. Builds the frontend (`npm ci && npm run build`)
+4. Deploys the frontend stack (uploads dist/ to S3, invalidates CloudFront)
 
-- DynamoDB tables (menu + orders)
-- S3 buckets (food images + frontend hosting)
-- CloudFront distribution
-- Cognito User Pool + Identity Pool
-- AgentCore Runtime with the voice agent
-- Frontend SPA uploaded to S3
-- Runtime config injected automatically
-- Sample menu data seeded into DynamoDB
-- Placeholder food images uploaded to S3
+### Step by step (if you prefer)
 
 ```bash
+# 1. Deploy backend
 cd cdk
-python -m venv .venv
-source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+cdk bootstrap    # first time only
+cdk deploy BackendStack --outputs-file backend-outputs.json
 
-# First time only
-cdk bootstrap
+# 2. Generate frontend config
+cd ..
+python generate_config.py
 
-# Deploy everything
-cdk deploy
+# 3. Build frontend
+cd frontend && npm ci && npm run build && cd ..
+
+# 4. Deploy frontend
+cd cdk
+BUCKET=$(python3 -c "import json; print(json.load(open('backend-outputs.json'))['BackendStack']['HostingBucketName'])")
+DIST=$(python3 -c "import json; print(json.load(open('backend-outputs.json'))['BackendStack']['DistributionId'])")
+cdk deploy FrontendStack --context hostingBucketName="$BUCKET" --context distributionId="$DIST"
 ```
 
-No manual data seeding or image uploads needed — it's all handled by CDK.
-
-## 3. Create a Cognito User
-
-This is the only manual step after deploy:
+## Create a Cognito User
 
 ```bash
 aws cognito-idp admin-create-user \
@@ -90,24 +91,17 @@ aws cognito-idp admin-set-user-password \
   --permanent
 ```
 
-Replace `<UserPoolId>` with the value from the `cdk deploy` output.
-
-## 4. Try It Out
+## Try It Out
 
 1. Open `https://<DistributionDomainName>` in your browser
 2. Sign in with the Cognito user you created
 3. Browse the visual menu (5 categories, 21 items)
 4. Click "Start Voice Order" and allow microphone access
-5. Talk to the AI attendant — try things like:
-   - "What do you have?"
-   - "Tell me about the classic burger"
-   - "I'll take two cheeseburgers and a cola"
-   - "What's my total?"
-   - "That's all, place my order"
+5. Talk to the AI attendant
 
 ## Sample Menu
 
-The deploy seeds these categories automatically:
+Seeded automatically on deploy:
 
 | Category | Items | Price Range |
 |----------|-------|-------------|
@@ -117,41 +111,26 @@ The deploy seeds these categories automatically:
 | Drinks   | Cola, Lemonade, Iced Tea, Milkshakes | $2.49–$5.49 |
 | Desserts | Apple Pie, Sundae, Cookie | $1.99–$4.49 |
 
-To modify the menu, edit `data/menu_items.json` and run `cdk deploy` again.
+Edit `data/menu_items.json` and re-run `./deploy.sh` to update.
 
 ## Local Development
-
-### Frontend dev server
-
-Create `frontend/public/runtime-config.json` with your deployed resource IDs:
-
-```json
-{
-  "userPoolId": "us-east-1_XXXXXXXXX",
-  "userPoolClientId": "xxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "identityPoolId": "us-east-1:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "menuTableName": "DriveThruMenu",
-  "awsRegion": "us-east-1",
-  "agentEndpointUrl": "wss://your-agent-endpoint"
-}
-```
 
 ```bash
 cd frontend && npm run dev
 ```
 
+For local dev, copy `frontend/public/runtime-config.json` from a previous deploy, or create one manually.
+
 ### Run Tests
 
 ```bash
-cd cdk && python -m pytest tests/ -v       # CDK (21 tests)
-python -m pytest agent/ -v                  # Agent (58 tests)
-cd frontend && npm test                     # Frontend (134 tests)
+cd cdk && python -m pytest tests/ -v       # CDK
+python -m pytest agent/ -v                  # Agent
+cd frontend && npm test                     # Frontend
 ```
 
-### Redeploying
-
-After any code or data changes:
+## Redeploying
 
 ```bash
-cd frontend && npm run build && cd ../cdk && cdk deploy
+./deploy.sh
 ```
