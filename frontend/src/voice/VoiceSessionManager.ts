@@ -57,7 +57,9 @@ export class VoiceSessionManager {
     this.scriptProcessor.connect(this.audioContext.destination);
 
     // 4. Set up audio playback from received binary frames
-    this.playbackContext = new AudioContext({ sampleRate: 16000 });
+    // Use default sample rate — we specify the correct rate per buffer in playAudio()
+    this.playbackContext = new AudioContext();
+    this.nextPlayTime = 0;
     this.wsClient.onBinaryMessage((data: ArrayBuffer) => {
       this.playAudio(data);
     });
@@ -117,21 +119,32 @@ export class VoiceSessionManager {
     return this.active;
   }
 
+  // Tracks when the next audio chunk should start playing
+  private nextPlayTime = 0;
+
   private playAudio(data: ArrayBuffer): void {
     if (!this.playbackContext) return;
-    // Interpret received binary as Int16 PCM, convert to Float32 for Web Audio API
+    // Interpret received binary as Int16 PCM at 16000 Hz from Nova Sonic
     const int16 = new Int16Array(data);
+    if (int16.length === 0) return;
+
     const float32 = new Float32Array(int16.length);
     for (let i = 0; i < int16.length; i++) {
       float32[i] = int16[i] / 0x8000;
     }
 
-    const buffer = this.playbackContext.createBuffer(1, float32.length, this.playbackContext.sampleRate);
+    const sampleRate = 16000;
+    const buffer = this.playbackContext.createBuffer(1, float32.length, sampleRate);
     buffer.getChannelData(0).set(float32);
 
     const source = this.playbackContext.createBufferSource();
     source.buffer = buffer;
     source.connect(this.playbackContext.destination);
-    source.start();
+
+    // Schedule chunks sequentially so they don't overlap
+    const now = this.playbackContext.currentTime;
+    const startTime = Math.max(now, this.nextPlayTime);
+    source.start(startTime);
+    this.nextPlayTime = startTime + buffer.duration;
   }
 }
