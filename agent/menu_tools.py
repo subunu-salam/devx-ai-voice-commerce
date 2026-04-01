@@ -4,14 +4,20 @@ Each tool queries the DynamoDB DriveThruMenu table using PK/SK access patterns.
 The module-level `_table` variable can be overridden for testing.
 """
 
+import os
+
 import boto3
 from strands import tool
 
-from agent.ui_events import browse_category_event, highlight_category_event, highlight_item_event
+try:
+    from agent.ui_events import browse_category_event, highlight_category_event, highlight_item_event
+except ModuleNotFoundError:
+    from ui_events import browse_category_event, highlight_category_event, highlight_item_event
 
 # Module-level DynamoDB table resource — injectable for testing.
-_dynamodb = boto3.resource("dynamodb")
-_table = _dynamodb.Table("DriveThruMenu")
+_REGION = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "us-east-1"))
+_dynamodb = boto3.resource("dynamodb", region_name=_REGION)
+_table = _dynamodb.Table(os.environ.get("MENU_TABLE_NAME", "DriveThruMenu"))
 
 
 def set_table(table) -> None:

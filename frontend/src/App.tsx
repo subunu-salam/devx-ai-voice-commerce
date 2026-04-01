@@ -15,7 +15,7 @@ import type { MenuItem } from './types';
 
 async function getJwtToken(): Promise<string> {
   const session = await fetchAuthSession();
-  const token = session.tokens?.idToken?.toString();
+  const token = session.tokens?.accessToken?.toString();
   if (!token) throw new Error('No JWT token available');
   return token;
 }

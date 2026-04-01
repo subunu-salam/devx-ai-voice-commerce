@@ -4,5 +4,5 @@
   "identityPoolId": "us-east-1:2650fe22-584f-4659-b146-0d8cf2c0953f",
   "menuTableName": "DriveThruMenu",
   "awsRegion": "us-east-1",
-  "agentEndpointUrl": "wss://bedrock-agentcore.us-east-1.amazonaws.com/runtimes/arn:aws:bedrock-agentcore:us-east-1:659041207151:runtime/DriveThruVoiceAgent-vqofmiGITS/ws"
+  "agentEndpointUrl": "wss://bedrock-agentcore.us-east-1.amazonaws.com/runtimes/arn:aws:bedrock-agentcore:us-east-1:659041207151:runtime/DriveThruVoiceAgentV2-Ru1evZAiOf/ws"
 }

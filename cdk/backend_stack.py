@@ -188,17 +188,14 @@ class BackendStack(Stack):
 
         # --- AgentCore Runtime ---
 
+        # Build the agent Docker image and deploy to AgentCore Runtime.
+        # The Dockerfile installs all Python dependencies (strands-agents, boto3, etc.)
         agent_code_path = os.path.join(os.path.dirname(__file__), "..", "agent")
-        agent_code_asset = cdk.aws_s3_assets.Asset(self, "AgentCodeAsset", path=agent_code_path)
 
         self.agent_runtime = agentcore.Runtime(
-            self, "DriveThruAgentRuntime",
-            runtime_name="DriveThruVoiceAgent",
-            agent_runtime_artifact=agentcore.AgentRuntimeArtifact.from_s3(
-                s3.Location(bucket_name=agent_code_asset.s3_bucket_name, object_key=agent_code_asset.s3_object_key),
-                agentcore.AgentCoreRuntime.PYTHON_3_13,
-                ["main.py"],
-            ),
+            self, "DriveThruAgentRuntimeV2",
+            runtime_name="DriveThruVoiceAgentV2",
+            agent_runtime_artifact=agentcore.AgentRuntimeArtifact.from_asset(agent_code_path),
             authorizer_configuration=agentcore.RuntimeAuthorizerConfiguration.using_cognito(
                 self.user_pool, [self.user_pool_client],
             ),
@@ -206,6 +203,7 @@ class BackendStack(Stack):
                 "MENU_TABLE_NAME": self.menu_table.table_name,
                 "ORDERS_TABLE_NAME": self.orders_table.table_name,
                 "IMAGES_BUCKET_NAME": self.images_bucket.bucket_name,
+                "AWS_REGION": self.region,
             },
             description="Drive-thru voice ordering agent powered by Nova Sonic",
         )

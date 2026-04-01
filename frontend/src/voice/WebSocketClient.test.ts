@@ -10,6 +10,7 @@ class MockWebSocket {
   static instances: MockWebSocket[] = [];
 
   url: string;
+  protocols: string[];
   binaryType = '';
   readyState = 0; // CONNECTING
 
@@ -23,8 +24,9 @@ class MockWebSocket {
   closeCode?: number;
   closeReason?: string;
 
-  constructor(url: string) {
+  constructor(url: string, protocols?: string | string[]) {
     this.url = url;
+    this.protocols = Array.isArray(protocols) ? protocols : protocols ? [protocols] : [];
     MockWebSocket.instances.push(this);
   }
 
@@ -104,16 +106,20 @@ describe('AgentCoreWebSocketClient', () => {
   });
 
   describe('connect', () => {
-    it('creates WebSocket with JWT token in URL query param', () => {
+    it('creates WebSocket with JWT token via Sec-WebSocket-Protocol', () => {
       client.connect('wss://agent.example.com/ws', 'my-jwt');
       const ws = latestMockWs();
-      expect(ws.url).toBe('wss://agent.example.com/ws?token=my-jwt');
+      expect(ws.url).toBe('wss://agent.example.com/ws');
+      // Token should be base64url-encoded in protocols
+      const base64url = btoa('my-jwt').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+      expect(ws.protocols).toContain(`base64UrlBearerAuthorization.${base64url}`);
+      expect(ws.protocols).toContain('base64UrlBearerAuthorization');
     });
 
-    it('appends token with & when endpoint already has query params', () => {
+    it('uses the endpoint URL directly without query params', () => {
       client.connect('wss://agent.example.com/ws?session=abc', 'my-jwt');
       const ws = latestMockWs();
-      expect(ws.url).toBe('wss://agent.example.com/ws?session=abc&token=my-jwt');
+      expect(ws.url).toBe('wss://agent.example.com/ws?session=abc');
     });
 
     it('sets binaryType to arraybuffer', () => {

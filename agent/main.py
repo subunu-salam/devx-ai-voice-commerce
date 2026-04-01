@@ -1,33 +1,35 @@
-"""Drive-thru voice ordering agent entry point.
+"""Drive-thru voice ordering agent entry point for AgentCore Runtime.
 
-Creates and configures a Strands BidiAgent with BidiNovaSonicModel (Nova Sonic)
-for real-time bidirectional voice ordering. Registers all menu and order tools,
-and configures a drive-thru attendant persona with idle timeout handling and
-UI_State-aware deictic reference resolution.
-
-This module is the main entry point deployed to AgentCore Runtime.
+Uses BedrockAgentCoreApp with a WebSocket handler that bridges incoming
+audio/text frames to the Strands BidiAgent with Nova Sonic.
 """
 
 import asyncio
+import base64
+import json
+from collections.abc import Awaitable
 
+from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from strands.experimental.bidi import BidiAgent
-from strands.experimental.bidi.io import BidiAudioIO, BidiTextIO
+from strands.experimental.bidi.agent.agent import BidiInputEvent, BidiOutputEvent
 from strands.experimental.bidi.models import BidiNovaSonicModel
 from strands.experimental.bidi.tools import stop_conversation
+from strands.experimental.bidi.types.events import BidiAudioStreamEvent
 
-from agent.menu_tools import (
-    get_categories,
-    get_item_details,
-    get_items_by_category,
-    get_recommendations,
-)
-from agent.order_tools import (
-    add_to_order,
-    cancel_order,
-    get_order_summary,
-    place_order,
-    remove_from_order,
-)
+try:
+    from agent.menu_tools import (
+        get_categories, get_item_details, get_items_by_category, get_recommendations,
+    )
+    from agent.order_tools import (
+        add_to_order, cancel_order, get_order_summary, place_order, remove_from_order,
+    )
+except ModuleNotFoundError:
+    from menu_tools import (
+        get_categories, get_item_details, get_items_by_category, get_recommendations,
+    )
+    from order_tools import (
+        add_to_order, cancel_order, get_order_summary, place_order, remove_from_order,
+    )
 
 SYSTEM_PROMPT = """\
 You are a friendly and upbeat drive-thru attendant at a fast-food restaurant. \
@@ -82,63 +84,154 @@ Have a great day!"
 - If something goes wrong (item not found, order error), apologize briefly and offer help.
 """
 
+app = BedrockAgentCoreApp()
+
 
 def create_model() -> BidiNovaSonicModel:
-    """Create and return a configured BidiNovaSonicModel instance."""
     return BidiNovaSonicModel(
         model_id="amazon.nova-sonic-v1:0",
-        provider_config={
-            "audio": {
-                "voice": "tiffany",
-            },
-        },
+        provider_config={"audio": {"voice": "tiffany"}},
         client_config={"region": "us-east-1"},
     )
 
 
 def create_agent() -> BidiAgent:
-    """Create and return a configured BidiAgent with all tools registered.
-
-    Returns:
-        BidiAgent configured with Nova Sonic model, drive-thru system prompt,
-        and all 9 menu/order tools plus stop_conversation.
-    """
-    model = create_model()
-
-    tools = [
-        # Menu tools
-        get_categories,
-        get_items_by_category,
-        get_item_details,
-        get_recommendations,
-        # Order tools
-        add_to_order,
-        remove_from_order,
-        get_order_summary,
-        place_order,
-        cancel_order,
-        # Session control
-        stop_conversation,
-    ]
-
     return BidiAgent(
-        model=model,
-        tools=tools,
+        model=create_model(),
+        tools=[
+            get_categories, get_items_by_category, get_item_details, get_recommendations,
+            add_to_order, remove_from_order, get_order_summary, place_order, cancel_order,
+            stop_conversation,
+        ],
         system_prompt=SYSTEM_PROMPT,
     )
 
 
-async def run_agent() -> None:
-    """Create the agent and run it with audio and text I/O."""
-    agent = create_agent()
+class WebSocketAudioInput:
+    """BidiInput that reads audio from a WebSocket connection.
 
-    audio_io = BidiAudioIO()
-    text_io = BidiTextIO()
-    await agent.run(
-        inputs=[audio_io.input()],
-        outputs=[audio_io.output(), text_io.output()],
-    )
+    Implements the BidiInput protocol: callable that returns BidiInputEvent,
+    with start() and stop() lifecycle methods.
+    """
+
+    def __init__(self, websocket):
+        self._ws = websocket
+        self._queue: asyncio.Queue = asyncio.Queue()
+        self._running = False
+        self._reader_task = None
+
+    async def start(self, agent: BidiAgent) -> None:
+        self._running = True
+        self._reader_task = asyncio.create_task(self._read_loop())
+
+    async def stop(self) -> None:
+        self._running = False
+        if self._reader_task:
+            self._reader_task.cancel()
+            try:
+                await self._reader_task
+            except asyncio.CancelledError:
+                pass
+
+    async def _read_loop(self):
+        """Read WebSocket messages and enqueue as BidiInputEvents."""
+        from strands.experimental.bidi.agent.agent import BidiAudioInputEvent, BidiTextInputEvent
+
+        try:
+            while self._running:
+                message = await self._ws.receive()
+                msg_type = message.get("type", "")
+
+                if msg_type == "websocket.disconnect":
+                    break
+
+                if "bytes" in message and message["bytes"]:
+                    # Binary frame = audio from microphone
+                    audio_b64 = base64.b64encode(message["bytes"]).decode("ascii")
+                    event = BidiAudioInputEvent(
+                        audio=audio_b64,
+                        format="pcm",
+                        sample_rate=16000,
+                        channels=1,
+                    )
+                    await self._queue.put(event)
+
+                elif "text" in message and message["text"]:
+                    # Text frame = UI_State JSON (pass as text input for context)
+                    text = message["text"]
+                    try:
+                        # Validate it's JSON but send as text input
+                        json.loads(text)
+                        event = BidiTextInputEvent(text=f"[UI_STATE] {text}", role="user")
+                        await self._queue.put(event)
+                    except json.JSONDecodeError:
+                        pass
+        except Exception:
+            pass
+
+    def __call__(self) -> Awaitable[BidiInputEvent]:
+        return self._queue.get()
+
+
+class WebSocketAudioOutput:
+    """BidiOutput that sends audio/text back over a WebSocket connection.
+
+    Implements the BidiOutput protocol: callable that receives BidiOutputEvent,
+    with start() and stop() lifecycle methods.
+    """
+
+    def __init__(self, websocket):
+        self._ws = websocket
+
+    async def start(self, agent: BidiAgent) -> None:
+        pass
+
+    async def stop(self) -> None:
+        pass
+
+    async def __call__(self, event: BidiOutputEvent) -> None:
+        try:
+            if isinstance(event, BidiAudioStreamEvent):
+                # Send audio back as binary frame
+                audio_bytes = base64.b64decode(event.audio)
+                await self._ws.send_bytes(audio_bytes)
+            elif hasattr(event, "get") and event.get("type") == "tool_use_stream":
+                # Tool results may contain UI_Events — send as text frame
+                result = event.get("result", {})
+                if isinstance(result, dict) and "ui_event" in result:
+                    await self._ws.send_text(json.dumps(result["ui_event"]))
+        except Exception:
+            pass
+
+
+@app.websocket
+async def websocket_handler(websocket, context):
+    """Handle bidirectional audio/text streaming via WebSocket."""
+    await websocket.accept()
+
+    agent = create_agent()
+    ws_input = WebSocketAudioInput(websocket)
+    ws_output = WebSocketAudioOutput(websocket)
+
+    try:
+        await agent.run(
+            inputs=[ws_input],
+            outputs=[ws_output],
+        )
+    except Exception as e:
+        print(f"Agent error: {e}")
+    finally:
+        try:
+            await websocket.close()
+        except Exception:
+            pass
+
+
+@app.entrypoint
+def invoke(payload):
+    """HTTP fallback for non-WebSocket invocations."""
+    return {"message": "Use WebSocket endpoint at /ws for voice ordering."}
 
 
 if __name__ == "__main__":
-    asyncio.run(run_agent())
+    app.run()

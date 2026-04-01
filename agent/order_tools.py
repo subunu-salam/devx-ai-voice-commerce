@@ -5,16 +5,23 @@ place_order persists the order to DynamoDB.
 Module-level variables can be overridden for testing via set_tables/set_order_state.
 """
 
+import os
+
 import boto3
 from strands import tool
 
-from agent.order_state import OrderState
-from agent.ui_events import order_confirmed_event, order_update_event
+try:
+    from agent.order_state import OrderState
+    from agent.ui_events import order_confirmed_event, order_update_event
+except ModuleNotFoundError:
+    from order_state import OrderState
+    from ui_events import order_confirmed_event, order_update_event
 
 # Module-level state — injectable for testing.
-_dynamodb = boto3.resource("dynamodb")
-_menu_table = _dynamodb.Table("DriveThruMenu")
-_orders_table = _dynamodb.Table("DriveThruOrders")
+_REGION = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "us-east-1"))
+_dynamodb = boto3.resource("dynamodb", region_name=_REGION)
+_menu_table = _dynamodb.Table(os.environ.get("MENU_TABLE_NAME", "DriveThruMenu"))
+_orders_table = _dynamodb.Table(os.environ.get("ORDERS_TABLE_NAME", "DriveThruOrders"))
 _order_state = OrderState()
 
 

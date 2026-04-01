@@ -84,11 +84,23 @@ export class AgentCoreWebSocketClient implements WebSocketClient {
     return new Promise<void>((resolve, reject) => {
       this.state = this.retryCount > 0 ? 'reconnecting' : 'connecting';
 
-      const separator = this.endpoint.includes('?') ? '&' : '?';
-      const url = `${this.endpoint}${separator}token=${this.jwtToken}`;
+      const url = this.endpoint;
+
+      // Browser WebSocket API can't set custom headers, so AgentCore accepts
+      // the OAuth bearer token via Sec-WebSocket-Protocol header:
+      // base64url-encode the token, prefix with "base64UrlBearerAuthorization.",
+      // and include the sentinel subprotocol "base64UrlBearerAuthorization".
+      const base64url = btoa(this.jwtToken)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+      const protocols = [
+        `base64UrlBearerAuthorization.${base64url}`,
+        'base64UrlBearerAuthorization',
+      ];
 
       try {
-        this.ws = new WebSocket(url);
+        this.ws = new WebSocket(url, protocols);
         this.ws.binaryType = 'arraybuffer';
       } catch (err) {
         this.state = 'disconnected';
