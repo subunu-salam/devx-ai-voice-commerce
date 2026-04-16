@@ -40,16 +40,23 @@ def get_order_state() -> OrderState:
 
 
 @tool(context=True)
-def add_to_order(item_id: str, category_id: str, quantity: int = 1, tool_context=None) -> dict:
-    """Adds a menu item to the current order."""
-    logger.info("add_to_order: %s %s qty=%s", item_id, category_id, quantity)
+def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_instructions: str = "", tool_context=None) -> dict:
+    """Adds a menu item to the current order.
+
+    Args:
+        item_id: The menu item identifier.
+        category_id: The category the item belongs to.
+        quantity: Number of items to add (must be >= 1).
+        special_instructions: Customer notes like "no pickles" or "extra sauce".
+    """
+    logger.info("add_to_order: %s %s qty=%s notes=%s", item_id, category_id, quantity, special_instructions)
     if quantity < 1:
         return {"error": "Quantity must be at least 1."}
     response = _menu_table.get_item(Key={"PK": f"CATEGORY#{category_id}", "SK": f"ITEM#{item_id}"})
     menu_item = response.get("Item")
     if not menu_item:
         return {"error": f"Item '{item_id}' not found in category '{category_id}'."}
-    _order_state.add_item(item_id, menu_item.get("name", ""), quantity, int(menu_item.get("price", 0)))
+    _order_state.add_item(item_id, menu_item.get("name", ""), quantity, int(menu_item.get("price", 0)), special_instructions)
     summary = _order_state.get_summary()
     ui_evt = order_update_event(summary)
     summary["ui_event"] = ui_evt

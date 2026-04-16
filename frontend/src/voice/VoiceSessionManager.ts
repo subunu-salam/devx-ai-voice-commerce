@@ -129,7 +129,7 @@ export class VoiceSessionManager {
   }
 
   private tryApplyUIEvent(event: BidiEvent): void {
-    const uiTypes = ['order_update', 'highlight_category', 'browse_category', 'highlight_item', 'order_confirmed'];
+    const uiTypes = ['order_update', 'highlight_category', 'browse_category', 'highlight_item', 'order_confirmed', 'show_item_detail'];
     if (uiTypes.includes(event.type)) {
       useAppStore.getState().applyUIEvent(event as unknown as UIEvent);
     }

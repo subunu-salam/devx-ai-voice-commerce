@@ -98,3 +98,26 @@ def highlight_item_event(item_id: str, item_name: str) -> dict:
             "itemName": item_name,
         },
     }
+
+
+def show_item_detail_event(item_data: dict) -> dict:
+    """Construct a show_item_detail UI_Event that opens the item detail modal.
+
+    Args:
+        item_data: Dict with item details (itemId, name, description, price, etc.)
+
+    Returns:
+        UI_Event dict with type 'show_item_detail'.
+    """
+    return {
+        "type": "show_item_detail",
+        "payload": {
+            "itemId": item_data.get("itemId", ""),
+            "categoryId": item_data.get("categoryId", ""),
+            "name": item_data.get("name", ""),
+            "description": item_data.get("description", ""),
+            "price": item_data.get("price", 0),
+            "imageUrl": item_data.get("imageUrl", ""),
+            "category": item_data.get("category", ""),
+        },
+    }

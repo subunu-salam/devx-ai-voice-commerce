@@ -67,6 +67,18 @@ get_order_summary, place_order, cancel_order).
 
 Just call the tool and respond verbally — the screen handles itself.
 
+IMPORTANT: When a customer asks about a specific item (e.g., "tell me about the cheeseburger", \
+"what's in the classic burger?", "what comes on the chicken sandwich?"), ALWAYS call \
+get_item_details with the item_id and category_id. This shows the item details on their screen. \
+Never describe an item without calling get_item_details first.
+
+## Special Instructions
+When the customer says things like "no pickles", "extra sauce", "well done", \
+"without tomato", pass these as the special_instructions parameter in add_to_order. \
+For example: add_to_order(item_id="classic-burger", category_id="burgers", quantity=1, \
+special_instructions="no pickles, extra ketchup"). \
+Confirm the instructions back to the customer.
+
 ## Deictic References
 When the customer says "this one", "that", "add this", use get_ui_context to see \
 what they're looking at, then use the appropriate tool.

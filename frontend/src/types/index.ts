@@ -23,6 +23,7 @@ export interface OrderItem {
   name: string;
   quantity: number;
   unitPrice: number; // cents
+  specialInstructions?: string; // e.g. "no pickles, extra sauce"
 }
 
 // Agent -> Frontend UI_Event protocol
@@ -49,12 +50,23 @@ export interface OrderConfirmedPayload {
   timestamp: string;
 }
 
+export interface ItemDetailPayload {
+  itemId: string;
+  categoryId: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  category: string;
+}
+
 export type UIEvent =
   | { type: 'order_update'; payload: OrderUpdatePayload }
   | { type: 'highlight_category'; payload: CategoryPayload }
   | { type: 'browse_category'; payload: CategoryPayload }
   | { type: 'highlight_item'; payload: ItemPayload }
-  | { type: 'order_confirmed'; payload: OrderConfirmedPayload };
+  | { type: 'order_confirmed'; payload: OrderConfirmedPayload }
+  | { type: 'show_item_detail'; payload: ItemDetailPayload };
 
 // Frontend -> Agent UI_State protocol
 
@@ -91,4 +103,5 @@ export interface AppState {
     authenticated: boolean;
     userId: string | null;
   };
+  itemDetail: ItemDetailPayload | null;
 }

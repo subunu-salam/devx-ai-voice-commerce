@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AppState, Category, MenuItem, UIEvent } from '../types';
+import type { AppState, Category, MenuItem, UIEvent, ItemDetailPayload } from '../types';
 
 interface AppActions {
   applyUIEvent: (event: UIEvent) => void;
@@ -11,6 +11,8 @@ interface AppActions {
   setMicPermission: (permission: 'granted' | 'denied' | 'prompt') => void;
   endVoiceSession: () => void;
   resetOrder: () => void;
+  showItemDetail: (item: ItemDetailPayload) => void;
+  closeItemDetail: () => void;
 }
 
 const initialState: AppState = {
@@ -37,6 +39,7 @@ const initialState: AppState = {
     authenticated: false,
     userId: null,
   },
+  itemDetail: null,
 };
 
 export const useAppStore = create<AppState & AppActions>()((set) => ({
@@ -92,6 +95,12 @@ export const useAppStore = create<AppState & AppActions>()((set) => ({
           },
         }));
         break;
+
+      case 'show_item_detail':
+        set(() => ({
+          itemDetail: event.payload,
+        }));
+        break;
     }
   },
 
@@ -139,4 +148,10 @@ export const useAppStore = create<AppState & AppActions>()((set) => ({
         orderNumber: null,
       },
     })),
+
+  showItemDetail: (item) =>
+    set(() => ({ itemDetail: item })),
+
+  closeItemDetail: () =>
+    set(() => ({ itemDetail: null })),
 }));

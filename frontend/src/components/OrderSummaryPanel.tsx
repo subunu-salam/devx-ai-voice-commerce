@@ -17,21 +17,24 @@ export function OrderSummaryPanel() {
               <li
                 key={item.itemId}
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
                   padding: '8px 0',
                   borderBottom: '1px solid #eee',
                 }}
               >
-                <span>
-                  {item.name} × {item.quantity}
-                </span>
-                <span style={{ display: 'flex', gap: '12px' }}>
-                  <span>{formatPrice(item.unitPrice)} ea</span>
-                  <span style={{ fontWeight: 'bold' }}>
-                    {formatPrice(item.unitPrice * item.quantity)}
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{item.name} × {item.quantity}</span>
+                  <span style={{ display: 'flex', gap: '12px' }}>
+                    <span>{formatPrice(item.unitPrice)} ea</span>
+                    <span style={{ fontWeight: 'bold' }}>
+                      {formatPrice(item.unitPrice * item.quantity)}
+                    </span>
                   </span>
-                </span>
+                </div>
+                {item.specialInstructions && (
+                  <div style={{ color: '#888', fontSize: '0.85em', fontStyle: 'italic', marginTop: 2 }}>
+                    📝 {item.specialInstructions}
+                  </div>
+                )}
               </li>
             ))}
           </ul>

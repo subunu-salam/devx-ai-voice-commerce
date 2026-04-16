@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import { MenuDisplay, OrderSummaryPanel, OrderConfirmation } from './components';
+import { MenuDisplay, OrderSummaryPanel, OrderConfirmation, ItemDetailModal } from './components';
 import { useAppStore } from './store';
 import { createMenuService, groupItemsByCategory } from './services';
 import { createWebSocketClient, VoiceSessionManager } from './voice';
@@ -79,8 +79,16 @@ export default function App() {
     }
   }, []);
 
-  const handleItemClick = useCallback((_item: MenuItem) => {
-    // UI_State sending can be added here if needed
+  const handleItemClick = useCallback((item: MenuItem) => {
+    useAppStore.getState().showItemDetail({
+      itemId: item.itemId,
+      categoryId: item.categoryId,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      imageUrl: item.imageUrl,
+      category: item.category,
+    });
   }, []);
 
   if (orderConfirmed) {
@@ -113,6 +121,8 @@ export default function App() {
         <div style={{ flex: 2 }}><MenuDisplay onItemClick={handleItemClick} /></div>
         <div style={{ flex: 1 }}><OrderSummaryPanel /></div>
       </div>
+
+      <ItemDetailModal />
     </div>
   );
 }

@@ -13,6 +13,7 @@ class OrderLineItem:
     name: str
     quantity: int
     unit_price: int  # cents
+    special_instructions: str = ""
 
 
 @dataclass
@@ -24,28 +25,21 @@ class OrderState:
 
     items: dict[str, OrderLineItem] = field(default_factory=dict)
 
-    def add_item(self, item_id: str, name: str, quantity: int, unit_price: int) -> None:
-        """Add an item or increment its quantity if already present.
-
-        Args:
-            item_id: Unique menu item identifier.
-            name: Display name of the item.
-            quantity: Number to add (must be >= 1).
-            unit_price: Price per unit in cents.
-
-        Raises:
-            ValueError: If quantity < 1.
-        """
+    def add_item(self, item_id: str, name: str, quantity: int, unit_price: int, special_instructions: str = "") -> None:
+        """Add an item or increment its quantity if already present."""
         if quantity < 1:
             raise ValueError("Quantity must be >= 1")
         if item_id in self.items:
             self.items[item_id].quantity += quantity
+            if special_instructions:
+                self.items[item_id].special_instructions = special_instructions
         else:
             self.items[item_id] = OrderLineItem(
                 item_id=item_id,
                 name=name,
                 quantity=quantity,
                 unit_price=unit_price,
+                special_instructions=special_instructions,
             )
 
     def remove_item(self, item_id: str, quantity: int = 1) -> bool:
@@ -87,6 +81,7 @@ class OrderState:
                     "name": item.name,
                     "quantity": item.quantity,
                     "unitPrice": item.unit_price,
+                    **({"specialInstructions": item.special_instructions} if item.special_instructions else {}),
                 }
                 for item in self.items.values()
             ],

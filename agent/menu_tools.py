@@ -6,10 +6,10 @@ import boto3
 from strands import tool
 
 try:
-    from agent.ui_events import browse_category_event, highlight_category_event, highlight_item_event
+    from agent.ui_events import browse_category_event, highlight_category_event, highlight_item_event, show_item_detail_event
     from agent.ui_sender import send_ui_event
 except ModuleNotFoundError:
-    from ui_events import browse_category_event, highlight_category_event, highlight_item_event
+    from ui_events import browse_category_event, highlight_category_event, highlight_item_event, show_item_detail_event
     from ui_sender import send_ui_event
 
 _REGION = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "us-east-1"))
@@ -90,15 +90,16 @@ def get_item_details(item_id: str, category_id: str, tool_context=None) -> dict:
         return {"error": f"Item '{item_id}' not found in category '{category_id}'."}
     result = {
         "itemId": item_id,
+        "categoryId": category_id,
         "name": item.get("name", ""),
         "description": item.get("description", ""),
-        "price": item.get("price", 0),
+        "price": int(item.get("price", 0)),
         "imageUrl": item.get("imageUrl", ""),
         "category": item.get("category", ""),
-        "featured": item.get("featured", False),
-        "sortOrder": item.get("sortOrder", 0),
+        "featured": bool(item.get("featured", False)),
+        "sortOrder": int(item.get("sortOrder", 0)),
     }
-    ui_evt = highlight_item_event(item_id, result["name"])
+    ui_evt = show_item_detail_event(result)
     result["ui_event"] = ui_evt
     send_ui_event(ui_evt, tool_context)
     return result
