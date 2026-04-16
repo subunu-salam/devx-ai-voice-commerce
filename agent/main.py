@@ -123,6 +123,16 @@ async def voice_chat(websocket: WebSocket) -> None:
 
     try:
         await websocket.accept()
+
+        # Store websocket + event loop so tools can send UI_Events directly
+        try:
+            from agent.ui_sender import set_websocket, clear_websocket
+        except ModuleNotFoundError:
+            from ui_sender import set_websocket, clear_websocket
+
+        import asyncio
+        set_websocket(websocket, asyncio.get_running_loop())
+
         await agent.run(
             inputs=[websocket.receive_json],
             outputs=[websocket.send_json],
@@ -134,6 +144,10 @@ async def voice_chat(websocket: WebSocket) -> None:
         import traceback
         traceback.print_exc()
     finally:
+        try:
+            clear_websocket()
+        except Exception:
+            pass
         try:
             await websocket.close()
             await agent.stop()

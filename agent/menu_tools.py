@@ -1,7 +1,4 @@
-"""Menu browsing tools for the drive-thru voice ordering agent.
-
-Each tool queries the DynamoDB DriveThruMenu table using PK/SK access patterns.
-"""
+"""Menu browsing tools for the drive-thru voice ordering agent."""
 
 import os
 
@@ -31,11 +28,7 @@ def get_table():
 
 @tool(context=True)
 def get_categories(tool_context=None) -> dict:
-    """Returns all menu categories.
-
-    Returns:
-        dict with 'categories' list, each containing categoryId and name.
-    """
+    """Returns all menu categories."""
     response = get_table().scan(
         FilterExpression="SK = :sk",
         ExpressionAttributeValues={":sk": "METADATA"},
@@ -54,23 +47,17 @@ def get_categories(tool_context=None) -> dict:
     if categories:
         first = categories[0]
         ui_evt = highlight_category_event(first["categoryId"], first["name"])
+        result["ui_event"] = ui_evt
         send_ui_event(ui_evt, tool_context)
     return result
 
 
 @tool(context=True)
 def get_items_by_category(category_id: str, tool_context=None) -> dict:
-    """Returns all menu items in a given category.
-
-    Args:
-        category_id: The category identifier (e.g. 'burgers').
-    """
+    """Returns all menu items in a given category."""
     response = get_table().query(
         KeyConditionExpression="PK = :pk AND begins_with(SK, :sk_prefix)",
-        ExpressionAttributeValues={
-            ":pk": f"CATEGORY#{category_id}",
-            ":sk_prefix": "ITEM#",
-        },
+        ExpressionAttributeValues={":pk": f"CATEGORY#{category_id}", ":sk_prefix": "ITEM#"},
     )
     items = []
     for item in response.get("Items", []):
@@ -89,21 +76,15 @@ def get_items_by_category(category_id: str, tool_context=None) -> dict:
     items.sort(key=lambda i: i["sortOrder"])
     result = {"items": items}
     ui_evt = browse_category_event(category_id, items[0]["category"] if items else category_id)
+    result["ui_event"] = ui_evt
     send_ui_event(ui_evt, tool_context)
     return result
 
 
 @tool(context=True)
 def get_item_details(item_id: str, category_id: str, tool_context=None) -> dict:
-    """Returns full details for a specific menu item.
-
-    Args:
-        item_id: The item identifier.
-        category_id: The category the item belongs to.
-    """
-    response = get_table().get_item(
-        Key={"PK": f"CATEGORY#{category_id}", "SK": f"ITEM#{item_id}"}
-    )
+    """Returns full details for a specific menu item."""
+    response = get_table().get_item(Key={"PK": f"CATEGORY#{category_id}", "SK": f"ITEM#{item_id}"})
     item = response.get("Item")
     if not item:
         return {"error": f"Item '{item_id}' not found in category '{category_id}'."}
@@ -118,6 +99,7 @@ def get_item_details(item_id: str, category_id: str, tool_context=None) -> dict:
         "sortOrder": item.get("sortOrder", 0),
     }
     ui_evt = highlight_item_event(item_id, result["name"])
+    result["ui_event"] = ui_evt
     send_ui_event(ui_evt, tool_context)
     return result
 
@@ -136,14 +118,10 @@ def get_recommendations(tool_context=None) -> dict:
         category_id = pk.replace("CATEGORY#", "") if pk.startswith("CATEGORY#") else pk
         item_id = sk.replace("ITEM#", "") if sk.startswith("ITEM#") else sk
         items.append({
-            "itemId": item_id,
-            "categoryId": category_id,
-            "name": item.get("name", ""),
-            "description": item.get("description", ""),
-            "price": item.get("price", 0),
-            "imageUrl": item.get("imageUrl", ""),
-            "category": item.get("category", ""),
-            "featured": True,
+            "itemId": item_id, "categoryId": category_id,
+            "name": item.get("name", ""), "description": item.get("description", ""),
+            "price": item.get("price", 0), "imageUrl": item.get("imageUrl", ""),
+            "category": item.get("category", ""), "featured": True,
             "sortOrder": item.get("sortOrder", 0),
         })
     items.sort(key=lambda i: i["sortOrder"])
