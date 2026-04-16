@@ -95,7 +95,9 @@ def update_ui(
         current["orderNumber"] = order_number
 
     set_ui_state(current)
-    return {"status": "updated", "ui_state": current}
+    # Return a minimal confirmation — don't send the full state back to Nova Sonic
+    # (large tool results can cause stream errors)
+    return {"status": "updated"}
 
 
 SYSTEM_PROMPT = """\
