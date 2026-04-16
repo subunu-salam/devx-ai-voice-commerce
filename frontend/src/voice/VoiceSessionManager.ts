@@ -1,150 +1,174 @@
-import type { WebSocketClient } from './WebSocketClient';
+/**
+ * Voice session manager using Strands BidiAgent JSON protocol.
+ * Audio is base64-encoded inside JSON events — no raw binary frames.
+ * Handles mic capture, audio playback, interruptions, and UI_Events.
+ */
+
+import type { AgentCoreWebSocketClient, BidiEvent } from './WebSocketClient';
 import type { UIEvent } from '../types';
 import { useAppStore } from '../store/appStore';
 
 export class VoiceSessionManager {
-  private wsClient: WebSocketClient;
+  private client: AgentCoreWebSocketClient;
   private mediaStream: MediaStream | null = null;
-  private audioContext: AudioContext | null = null;
-  private scriptProcessor: ScriptProcessorNode | null = null;
+  private captureContext: AudioContext | null = null;
   private playbackContext: AudioContext | null = null;
+  private audioQueue: AudioBuffer[] = [];
+  private isPlaying = false;
   private active = false;
 
-  constructor(wsClient: WebSocketClient) {
-    this.wsClient = wsClient;
+  constructor(client: AgentCoreWebSocketClient) {
+    this.client = client;
   }
 
-  async startSession(endpoint: string, jwtToken: string): Promise<void> {
-    // 1. Request microphone access
+  async startSession(
+    runtimeArn: string,
+    region: string,
+    jwtToken: string,
+  ): Promise<void> {
+    // 1. Request microphone
     try {
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: { channelCount: 1, sampleRate: 16000, echoCancellation: true, noiseSuppression: true },
+      });
     } catch (err: unknown) {
-      const store = useAppStore.getState();
-      store.setMicPermission('denied');
-      if (err instanceof DOMException && err.name === 'NotAllowedError') {
-        throw new Error('Microphone access is required for voice ordering. Please allow microphone access and try again.');
-      }
-      throw new Error('Failed to access microphone. Please check your device settings.');
+      useAppStore.getState().setMicPermission('denied');
+      throw new Error('Microphone access is required for voice ordering.');
     }
-
-    // Mic granted
-    const store = useAppStore.getState();
-    store.setMicPermission('granted');
+    useAppStore.getState().setMicPermission('granted');
 
     // 2. Connect WebSocket
-    await this.wsClient.connect(endpoint, jwtToken);
+    await this.client.connect(runtimeArn, region, jwtToken);
 
-    // 3. Set up audio capture
-    this.audioContext = new AudioContext({ sampleRate: 16000 });
-    const source = this.audioContext.createMediaStreamSource(this.mediaStream);
-    // Buffer size 4096, 1 input channel, 1 output channel
-    this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
+    // 3. Set up audio capture → send as bidi_audio_input JSON events
+    this.captureContext = new AudioContext({ sampleRate: 16000 });
+    const source = this.captureContext.createMediaStreamSource(this.mediaStream);
+    const processor = this.captureContext.createScriptProcessor(4096, 1, 1);
 
-    this.scriptProcessor.onaudioprocess = (event: AudioProcessingEvent) => {
+    processor.onaudioprocess = (e: AudioProcessingEvent) => {
       if (!this.active) return;
-      const inputData = event.inputBuffer.getChannelData(0);
-      // Convert Float32 PCM to Int16 PCM
-      const pcm16 = new ArrayBuffer(inputData.length * 2);
-      const view = new DataView(pcm16);
-      for (let i = 0; i < inputData.length; i++) {
-        const s = Math.max(-1, Math.min(1, inputData[i]));
-        view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+      const float32 = e.inputBuffer.getChannelData(0);
+      const int16 = new Int16Array(float32.length);
+      for (let i = 0; i < float32.length; i++) {
+        const s = Math.max(-1, Math.min(1, float32[i]));
+        int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
       }
-      this.wsClient.sendAudio(pcm16);
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(int16.buffer)));
+      this.client.send({
+        type: 'bidi_audio_input',
+        audio: base64,
+        format: 'pcm',
+        sample_rate: 16000,
+        channels: 1,
+      });
     };
 
-    source.connect(this.scriptProcessor);
-    this.scriptProcessor.connect(this.audioContext.destination);
+    source.connect(processor);
+    processor.connect(this.captureContext.destination);
 
-    // 4. Set up audio playback from received binary frames
-    // Use default sample rate — we specify the correct rate per buffer in playAudio()
-    this.playbackContext = new AudioContext();
-    this.nextPlayTime = 0;
-    this.wsClient.onBinaryMessage((data: ArrayBuffer) => {
-      this.playAudio(data);
-    });
+    // 4. Handle incoming events from agent
+    this.playbackContext = new AudioContext({ sampleRate: 16000 });
+    this.client.onEvent((event: BidiEvent) => this.handleEvent(event));
 
-    // 5. Set up UI_Event handling from text frames
-    this.wsClient.onTextMessage((data: string) => {
-      try {
-        const event = JSON.parse(data) as UIEvent;
-        const currentStore = useAppStore.getState();
-        currentStore.applyUIEvent(event);
-      } catch {
-        // Ignore malformed JSON per error handling spec
-      }
-    });
-
-    // 6. Mark session as active
+    // 5. Mark active
     this.active = true;
-    store.setVoiceSession(true);
-    store.setListening(true);
+    useAppStore.getState().setVoiceSession(true);
+    useAppStore.getState().setListening(true);
   }
 
   endSession(): void {
-    // 1. Stop all media tracks
     if (this.mediaStream) {
-      for (const track of this.mediaStream.getTracks()) {
-        track.stop();
-      }
+      this.mediaStream.getTracks().forEach((t) => t.stop());
       this.mediaStream = null;
     }
-
-    // 2. Close AudioContext (capture)
-    if (this.scriptProcessor) {
-      this.scriptProcessor.disconnect();
-      this.scriptProcessor = null;
+    if (this.captureContext) {
+      this.captureContext.close().catch(() => {});
+      this.captureContext = null;
     }
-    if (this.audioContext) {
-      this.audioContext.close().catch(() => {});
-      this.audioContext = null;
-    }
-
-    // 3. Close playback AudioContext
     if (this.playbackContext) {
       this.playbackContext.close().catch(() => {});
       this.playbackContext = null;
     }
-
-    // 4. Disconnect WebSocket
-    this.wsClient.disconnect();
-
-    // 5. Mark session as inactive (preserves order items via endVoiceSession)
+    this.audioQueue = [];
+    this.isPlaying = false;
+    this.client.disconnect();
     this.active = false;
-    const store = useAppStore.getState();
-    store.endVoiceSession();
+    useAppStore.getState().endVoiceSession();
   }
 
   isActive(): boolean {
     return this.active;
   }
 
-  // Tracks when the next audio chunk should start playing
-  private nextPlayTime = 0;
+  private handleEvent(event: BidiEvent): void {
+    switch (event.type) {
+      case 'bidi_audio_stream':
+        this.queueAudio(event.audio as string, (event.sample_rate as number) || 16000);
+        break;
 
-  private playAudio(data: ArrayBuffer): void {
-    if (!this.playbackContext) return;
-    // Interpret received binary as Int16 PCM at 16000 Hz from Nova Sonic
-    const int16 = new Int16Array(data);
-    if (int16.length === 0) return;
+      case 'bidi_interruption':
+        // Clear audio queue — user is speaking
+        this.audioQueue = [];
+        this.isPlaying = false;
+        // Close and recreate playback context to kill any playing audio
+        if (this.playbackContext) {
+          this.playbackContext.close().catch(() => {});
+          this.playbackContext = new AudioContext({ sampleRate: 16000 });
+        }
+        break;
 
-    const float32 = new Float32Array(int16.length);
-    for (let i = 0; i < int16.length; i++) {
-      float32[i] = int16[i] / 0x8000;
+      case 'bidi_transcript_stream':
+        // Could display transcripts in UI if desired
+        break;
+
+      default:
+        // Check if it's a UI_Event from our tools
+        this.tryApplyUIEvent(event);
+        break;
+    }
+  }
+
+  private tryApplyUIEvent(event: BidiEvent): void {
+    const uiTypes = ['order_update', 'highlight_category', 'browse_category', 'highlight_item', 'order_confirmed'];
+    if (uiTypes.includes(event.type)) {
+      useAppStore.getState().applyUIEvent(event as unknown as UIEvent);
+    }
+  }
+
+  private queueAudio(base64Audio: string, sampleRate: number): void {
+    if (!this.playbackContext || this.playbackContext.state === 'closed') {
+      this.playbackContext = new AudioContext({ sampleRate });
     }
 
-    const sampleRate = 16000;
+    const binary = atob(base64Audio);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+    const pcm = new Int16Array(bytes.buffer);
+    const float32 = new Float32Array(pcm.length);
+    for (let i = 0; i < pcm.length; i++) {
+      float32[i] = pcm[i] / (pcm[i] < 0 ? 0x8000 : 0x7fff);
+    }
+
     const buffer = this.playbackContext.createBuffer(1, float32.length, sampleRate);
     buffer.getChannelData(0).set(float32);
+    this.audioQueue.push(buffer);
 
+    if (!this.isPlaying) this.playNext();
+  }
+
+  private playNext(): void {
+    if (this.audioQueue.length === 0 || !this.playbackContext || this.playbackContext.state === 'closed') {
+      this.isPlaying = false;
+      return;
+    }
+
+    this.isPlaying = true;
+    const buffer = this.audioQueue.shift()!;
     const source = this.playbackContext.createBufferSource();
     source.buffer = buffer;
     source.connect(this.playbackContext.destination);
-
-    // Schedule chunks sequentially so they don't overlap
-    const now = this.playbackContext.currentTime;
-    const startTime = Math.max(now, this.nextPlayTime);
-    source.start(startTime);
-    this.nextPlayTime = startTime + buffer.duration;
+    source.onended = () => this.playNext();
+    source.start();
   }
 }

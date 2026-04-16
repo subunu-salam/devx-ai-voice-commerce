@@ -19,7 +19,7 @@ def main():
         "identityPoolId": outputs["IdentityPoolId"],
         "menuTableName": outputs["MenuTableName"],
         "awsRegion": "us-east-1",
-        "agentEndpointUrl": outputs["AgentEndpointUrl"],
+        "agentRuntimeArn": outputs["AgentRuntimeArn"],
     }
 
     os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)

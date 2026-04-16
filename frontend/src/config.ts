@@ -15,7 +15,7 @@ export interface RuntimeConfig {
   identityPoolId: string;
   menuTableName: string;
   awsRegion: string;
-  agentEndpointUrl: string;
+  agentRuntimeArn: string;
 }
 
 let _config: RuntimeConfig | null = null;
@@ -40,7 +40,7 @@ export async function loadRuntimeConfig(): Promise<RuntimeConfig> {
     identityPoolId: import.meta.env.VITE_COGNITO_IDENTITY_POOL_ID ?? '',
     menuTableName: import.meta.env.VITE_MENU_TABLE_NAME ?? 'DriveThruMenu',
     awsRegion: import.meta.env.VITE_AWS_REGION ?? 'us-east-1',
-    agentEndpointUrl: import.meta.env.VITE_AGENT_ENDPOINT ?? '',
+    agentRuntimeArn: import.meta.env.VITE_AGENT_RUNTIME_ARN ?? '',
   };
   return _config;
 }

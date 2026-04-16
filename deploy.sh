@@ -10,6 +10,11 @@ FRONTEND_DIR="$SCRIPT_DIR/frontend"
 
 echo "=== Step 1: Deploy backend stack ==="
 cd "$CDK_DIR"
+# Activate the CDK venv so aws_cdk modules are available
+if [ -d ".venv" ]; then
+  source .venv/bin/activate
+fi
+pip install -q -r requirements.txt
 cdk deploy BackendStack --outputs-file "$CDK_DIR/backend-outputs.json" --require-approval never
 
 echo ""

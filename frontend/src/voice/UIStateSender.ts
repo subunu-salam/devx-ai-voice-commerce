@@ -1,10 +1,7 @@
-import type { WebSocketClient } from './WebSocketClient';
+import type { AgentCoreWebSocketClient } from './WebSocketClient';
 import type { UIState } from '../types';
 import { useAppStore } from '../store/appStore';
 
-/**
- * Builds the current UIState from the Zustand store.
- */
 export function buildUIState(): UIState {
   const state = useAppStore.getState();
   return {
@@ -15,28 +12,18 @@ export function buildUIState(): UIState {
   };
 }
 
-/**
- * Sends the full current UIState over WebSocket (used on initial connect).
- */
-export function sendInitialState(wsClient: WebSocketClient): void {
-  const uiState = buildUIState();
-  wsClient.sendTextMessage(JSON.stringify(uiState));
+export function sendInitialState(client: AgentCoreWebSocketClient): void {
+  client.send({ type: 'ui_state', ...buildUIState() });
 }
 
-/**
- * Sends a UIState with the updated visibleCategory.
- */
-export function sendCategoryChange(wsClient: WebSocketClient, categoryId: string): void {
-  const uiState = buildUIState();
-  uiState.visibleCategory = categoryId;
-  wsClient.sendTextMessage(JSON.stringify(uiState));
+export function sendCategoryChange(client: AgentCoreWebSocketClient, categoryId: string): void {
+  const state = buildUIState();
+  state.visibleCategory = categoryId;
+  client.send({ type: 'ui_state', ...state });
 }
 
-/**
- * Sends a UIState with the updated selectedItem.
- */
-export function sendItemSelection(wsClient: WebSocketClient, itemId: string): void {
-  const uiState = buildUIState();
-  uiState.selectedItem = itemId;
-  wsClient.sendTextMessage(JSON.stringify(uiState));
+export function sendItemSelection(client: AgentCoreWebSocketClient, itemId: string): void {
+  const state = buildUIState();
+  state.selectedItem = itemId;
+  client.send({ type: 'ui_state', ...state });
 }

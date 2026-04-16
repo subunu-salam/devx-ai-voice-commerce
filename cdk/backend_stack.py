@@ -193,8 +193,8 @@ class BackendStack(Stack):
         agent_code_path = os.path.join(os.path.dirname(__file__), "..", "agent")
 
         self.agent_runtime = agentcore.Runtime(
-            self, "DriveThruAgentRuntimeV2",
-            runtime_name="DriveThruVoiceAgentV2",
+            self, "DriveThruAgentRuntimeV4",
+            runtime_name="DriveThruVoiceAgentV4",
             agent_runtime_artifact=agentcore.AgentRuntimeArtifact.from_asset(agent_code_path),
             authorizer_configuration=agentcore.RuntimeAuthorizerConfiguration.using_cognito(
                 self.user_pool, [self.user_pool_client],
@@ -220,6 +220,16 @@ class BackendStack(Stack):
         self.menu_table.grant_read_data(self.agent_runtime)
         self.images_bucket.grant_read(self.agent_runtime)
 
+        # Grant authenticated users permission to invoke the agent via WebSocket
+        self.authenticated_role.add_to_policy(iam.PolicyStatement(
+            effect=iam.Effect.ALLOW,
+            actions=[
+                "bedrock-agentcore:InvokeAgentRuntime",
+                "bedrock-agentcore:InvokeAgentRuntimeWithWebSocketStream",
+            ],
+            resources=[self.agent_runtime.agent_runtime_arn],
+        ))
+
         # --- Outputs ---
 
         cdk.CfnOutput(self, "MenuTableName", value=self.menu_table.table_name)
@@ -232,7 +242,4 @@ class BackendStack(Stack):
         cdk.CfnOutput(self, "UserPoolClientId", value=self.user_pool_client.user_pool_client_id)
         cdk.CfnOutput(self, "IdentityPoolId", value=self.identity_pool.ref)
         cdk.CfnOutput(self, "AgentRuntimeId", value=self.agent_runtime.agent_runtime_id)
-        cdk.CfnOutput(
-            self, "AgentEndpointUrl",
-            value=f"wss://bedrock-agentcore.{self.region}.amazonaws.com/runtimes/{self.agent_runtime.agent_runtime_arn}/ws",
-        )
+        cdk.CfnOutput(self, "AgentRuntimeArn", value=self.agent_runtime.agent_runtime_arn)

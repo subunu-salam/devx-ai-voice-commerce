@@ -4,21 +4,9 @@ import { fetchAuthSession } from 'aws-amplify/auth';
 import { MenuDisplay, OrderSummaryPanel, OrderConfirmation } from './components';
 import { useAppStore } from './store';
 import { createMenuService, groupItemsByCategory } from './services';
-import {
-  AgentCoreWebSocketClient,
-  VoiceSessionManager,
-  sendInitialState,
-  sendItemSelection,
-} from './voice';
+import { createWebSocketClient, VoiceSessionManager } from './voice';
 import { getRuntimeConfig } from './config';
 import type { MenuItem } from './types';
-
-async function getJwtToken(): Promise<string> {
-  const session = await fetchAuthSession();
-  const token = session.tokens?.accessToken?.toString();
-  if (!token) throw new Error('No JWT token available');
-  return token;
-}
 
 async function getAwsCredentials() {
   const session = await fetchAuthSession();
@@ -41,10 +29,8 @@ export default function App() {
   const orderConfirmed = useAppStore((s) => s.order.confirmed);
 
   const voiceManagerRef = useRef<VoiceSessionManager | null>(null);
-  const wsClientRef = useRef<AgentCoreWebSocketClient | null>(null);
   const [voiceError, setVoiceError] = useState<string | null>(null);
 
-  // Load menu data on mount
   useEffect(() => {
     let cancelled = false;
     async function loadMenu() {
@@ -58,8 +44,7 @@ export default function App() {
           menuService.getAllMenuItems(),
         ]);
         if (cancelled) return;
-        const grouped = groupItemsByCategory(allItems);
-        setMenuData(categories, grouped);
+        setMenuData(categories, groupItemsByCategory(allItems));
       } catch (err) {
         if (cancelled) return;
         setMenuError((err as Error).message);
@@ -74,14 +59,14 @@ export default function App() {
   const handleStartVoice = useCallback(async () => {
     setVoiceError(null);
     try {
-      const wsClient = new AgentCoreWebSocketClient();
-      wsClientRef.current = wsClient;
-      const manager = new VoiceSessionManager(wsClient);
+      const config = getRuntimeConfig();
+      const session = await fetchAuthSession();
+      const token = session.tokens?.accessToken?.toString();
+      if (!token) throw new Error('No access token available');
+      const client = createWebSocketClient();
+      const manager = new VoiceSessionManager(client);
       voiceManagerRef.current = manager;
-
-      const token = await getJwtToken();
-      await manager.startSession(getRuntimeConfig().agentEndpointUrl, token);
-      sendInitialState(wsClient);
+      await manager.startSession(config.agentRuntimeArn, config.awsRegion, token);
     } catch (err) {
       setVoiceError((err as Error).message);
     }
@@ -91,15 +76,12 @@ export default function App() {
     if (voiceManagerRef.current) {
       voiceManagerRef.current.endSession();
       voiceManagerRef.current = null;
-      wsClientRef.current = null;
     }
   }, []);
 
-  const handleItemClick = useCallback((item: MenuItem) => {
-    if (wsClientRef.current && sessionActive) {
-      sendItemSelection(wsClientRef.current, item.itemId);
-    }
-  }, [sessionActive]);
+  const handleItemClick = useCallback((_item: MenuItem) => {
+    // UI_State sending can be added here if needed
+  }, []);
 
   if (orderConfirmed) {
     return (
@@ -118,38 +100,18 @@ export default function App() {
 
       <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
         {!sessionActive ? (
-          <button onClick={handleStartVoice} type="button">
-            Start Voice Order
-          </button>
+          <button onClick={handleStartVoice} type="button">Start Voice Order</button>
         ) : (
-          <button onClick={handleStopVoice} type="button">
-            Stop
-          </button>
+          <button onClick={handleStopVoice} type="button">Stop</button>
         )}
-        {listening && (
-          <span role="status" aria-label="Listening" style={{ color: 'green' }}>
-            🎙️ Listening…
-          </span>
-        )}
-        {micPermission === 'denied' && (
-          <span role="alert" style={{ color: 'red' }}>
-            Microphone access denied. Please allow microphone access to use voice ordering.
-          </span>
-        )}
-        {voiceError && (
-          <span role="alert" style={{ color: 'red' }}>
-            {voiceError}
-          </span>
-        )}
+        {listening && <span role="status" aria-label="Listening" style={{ color: 'green' }}>🎙️ Listening…</span>}
+        {micPermission === 'denied' && <span role="alert" style={{ color: 'red' }}>Microphone access denied.</span>}
+        {voiceError && <span role="alert" style={{ color: 'red' }}>{voiceError}</span>}
       </div>
 
       <div style={{ display: 'flex', gap: 24 }}>
-        <div style={{ flex: 2 }}>
-          <MenuDisplay onItemClick={handleItemClick} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <OrderSummaryPanel />
-        </div>
+        <div style={{ flex: 2 }}><MenuDisplay onItemClick={handleItemClick} /></div>
+        <div style={{ flex: 1 }}><OrderSummaryPanel /></div>
       </div>
     </div>
   );
