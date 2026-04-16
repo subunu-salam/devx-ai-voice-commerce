@@ -26,7 +26,7 @@ export default function App() {
   const sessionActive = useAppStore((s) => s.voice.sessionActive);
   const listening = useAppStore((s) => s.voice.listening);
   const micPermission = useAppStore((s) => s.voice.micPermission);
-  const orderConfirmed = useAppStore((s) => s.order.confirmed);
+  const orderConfirmed = useAppStore((s) => s.agentUI.orderConfirmed);
 
   const voiceManagerRef = useRef<VoiceSessionManager | null>(null);
   const [voiceError, setVoiceError] = useState<string | null>(null);
@@ -80,14 +80,19 @@ export default function App() {
   }, []);
 
   const handleItemClick = useCallback((item: MenuItem) => {
-    useAppStore.getState().showItemDetail({
-      itemId: item.itemId,
-      categoryId: item.categoryId,
-      name: item.name,
-      description: item.description,
-      price: item.price,
-      imageUrl: item.imageUrl,
-      category: item.category,
+    // When clicking an item directly, update the agent UI state locally
+    const current = useAppStore.getState().agentUI;
+    useAppStore.getState().applyAgentUIState({
+      ...current,
+      itemDetail: {
+        itemId: item.itemId,
+        categoryId: item.categoryId,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        imageUrl: item.imageUrl,
+        category: item.category,
+      },
     });
   }, []);
 

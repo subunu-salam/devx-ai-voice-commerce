@@ -8,12 +8,8 @@ from strands import tool
 
 try:
     from agent.order_state import OrderState
-    from agent.ui_events import order_confirmed_event, order_update_event
-    from agent.ui_sender import send_ui_event
 except ModuleNotFoundError:
     from order_state import OrderState
-    from ui_events import order_confirmed_event, order_update_event
-    from ui_sender import send_ui_event
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +35,8 @@ def get_order_state() -> OrderState:
     return _order_state
 
 
-@tool(context=True)
-def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_instructions: str = "", tool_context=None) -> dict:
+@tool
+def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_instructions: str = "") -> dict:
     """Adds a menu item to the current order.
 
     Args:
@@ -58,54 +54,39 @@ def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_inst
         return {"error": f"Item '{item_id}' not found in category '{category_id}'."}
     _order_state.add_item(item_id, menu_item.get("name", ""), quantity, int(menu_item.get("price", 0)), special_instructions)
     summary = _order_state.get_summary()
-    ui_evt = order_update_event(summary)
-    summary["ui_event"] = ui_evt
-    send_ui_event(ui_evt, tool_context)
     return summary
 
 
-@tool(context=True)
-def remove_from_order(item_id: str, quantity: int = 1, tool_context=None) -> dict:
+@tool
+def remove_from_order(item_id: str, quantity: int = 1) -> dict:
     """Removes a menu item from the current order."""
     if not _order_state.remove_item(item_id, quantity):
         return {"error": f"Item '{item_id}' is not in the current order."}
     summary = _order_state.get_summary()
-    ui_evt = order_update_event(summary)
-    summary["ui_event"] = ui_evt
-    send_ui_event(ui_evt, tool_context)
     return summary
 
 
-@tool(context=True)
+@tool
 def get_order_summary(tool_context=None) -> dict:
     """Returns the current order summary."""
     summary = _order_state.get_summary()
-    ui_evt = order_update_event(summary)
-    summary["ui_event"] = ui_evt
-    send_ui_event(ui_evt, tool_context)
     return summary
 
 
-@tool(context=True)
-def place_order(user_id: str, tool_context=None) -> dict:
+@tool
+def place_order(user_id: str) -> dict:
     """Finalizes the order, persists to DynamoDB, returns order number."""
     if _order_state.is_empty():
         return {"error": "Cannot place an empty order."}
     order_record = _order_state.place_order(user_id)
     _orders_table.put_item(Item=order_record)
     _order_state.cancel()
-    ui_evt = order_confirmed_event(order_record)
-    order_record["ui_event"] = ui_evt
-    send_ui_event(ui_evt, tool_context)
     return order_record
 
 
-@tool(context=True)
+@tool
 def cancel_order(tool_context=None) -> dict:
     """Clears all items from the current order."""
     _order_state.cancel()
     summary = {"message": "Order cancelled.", **_order_state.get_summary()}
-    ui_evt = order_update_event(_order_state.get_summary())
-    summary["ui_event"] = ui_evt
-    send_ui_event(ui_evt, tool_context)
     return summary

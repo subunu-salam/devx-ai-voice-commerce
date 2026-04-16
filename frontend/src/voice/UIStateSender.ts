@@ -5,10 +5,10 @@ import { useAppStore } from '../store/appStore';
 export function buildUIState(): UIState {
   const state = useAppStore.getState();
   return {
-    visibleCategory: state.menu.highlightedCategory,
-    selectedItem: state.menu.highlightedItem,
-    orderItems: state.order.items,
-    orderTotal: state.order.total,
+    visibleCategory: state.agentUI.highlightedCategory,
+    selectedItem: state.agentUI.highlightedItem,
+    orderItems: state.agentUI.orderItems,
+    orderTotal: state.agentUI.orderTotal,
   };
 }
 

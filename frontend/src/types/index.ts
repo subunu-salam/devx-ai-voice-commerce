@@ -23,53 +23,38 @@ export interface OrderItem {
   name: string;
   quantity: number;
   unitPrice: number; // cents
-  specialInstructions?: string; // e.g. "no pickles, extra sauce"
+  specialInstructions?: string;
 }
 
-// Agent -> Frontend UI_Event protocol
-
-export interface OrderUpdatePayload {
-  items: OrderItem[];
-  total: number;
+// Agent-controlled UI state — sent as a complete snapshot via update_ui tool
+export interface AgentUIState {
+  highlightedCategory: string | null;
+  highlightedItem: string | null;
+  itemDetail: {
+    itemId: string;
+    categoryId: string;
+    name: string;
+    description: string;
+    price: number;
+    imageUrl: string;
+    category: string;
+  } | null;
+  orderItems: OrderItem[];
+  orderTotal: number;
+  orderConfirmed: boolean;
+  orderNumber: string | null;
 }
 
-export interface CategoryPayload {
-  categoryId: string;
-  categoryName: string;
+// The event the agent sends over WebSocket
+export interface UIStateUpdateEvent {
+  type: 'ui_state_update';
+  state: AgentUIState;
 }
 
-export interface ItemPayload {
-  itemId: string;
-  itemName: string;
-}
+// Legacy UI_Event types kept for backward compat (can be removed later)
+export type UIEvent = UIStateUpdateEvent;
 
-export interface OrderConfirmedPayload {
-  orderNumber: string;
-  items: OrderItem[];
-  total: number;
-  timestamp: string;
-}
-
-export interface ItemDetailPayload {
-  itemId: string;
-  categoryId: string;
-  name: string;
-  description: string;
-  price: number;
-  imageUrl: string;
-  category: string;
-}
-
-export type UIEvent =
-  | { type: 'order_update'; payload: OrderUpdatePayload }
-  | { type: 'highlight_category'; payload: CategoryPayload }
-  | { type: 'browse_category'; payload: CategoryPayload }
-  | { type: 'highlight_item'; payload: ItemPayload }
-  | { type: 'order_confirmed'; payload: OrderConfirmedPayload }
-  | { type: 'show_item_detail'; payload: ItemDetailPayload };
-
-// Frontend -> Agent UI_State protocol
-
+// Frontend -> Agent
 export interface UIState {
   visibleCategory: string | null;
   selectedItem: string | null;
@@ -77,23 +62,16 @@ export interface UIState {
   orderTotal: number;
 }
 
-// Application state
-
+// Full application state
 export interface AppState {
   menu: {
     categories: Category[];
     items: Record<string, MenuItem[]>;
-    highlightedCategory: string | null;
-    highlightedItem: string | null;
     loading: boolean;
     error: string | null;
   };
-  order: {
-    items: OrderItem[];
-    total: number;
-    confirmed: boolean;
-    orderNumber: string | null;
-  };
+  // Agent-controlled display state
+  agentUI: AgentUIState;
   voice: {
     sessionActive: boolean;
     listening: boolean;
@@ -103,5 +81,4 @@ export interface AppState {
     authenticated: boolean;
     userId: string | null;
   };
-  itemDetail: ItemDetailPayload | null;
 }

@@ -5,7 +5,6 @@
  */
 
 import type { AgentCoreWebSocketClient, BidiEvent } from './WebSocketClient';
-import type { UIEvent } from '../types';
 import { useAppStore } from '../store/appStore';
 
 export class VoiceSessionManager {
@@ -107,10 +106,8 @@ export class VoiceSessionManager {
         break;
 
       case 'bidi_interruption':
-        // Clear audio queue — user is speaking
         this.audioQueue = [];
         this.isPlaying = false;
-        // Close and recreate playback context to kill any playing audio
         if (this.playbackContext) {
           this.playbackContext.close().catch(() => {});
           this.playbackContext = new AudioContext({ sampleRate: 16000 });
@@ -118,20 +115,17 @@ export class VoiceSessionManager {
         break;
 
       case 'bidi_transcript_stream':
-        // Could display transcripts in UI if desired
+        break;
+
+      case 'ui_state_update':
+        // Agent sent the full UI state — apply it directly
+        if (event.state && typeof event.state === 'object') {
+          useAppStore.getState().applyAgentUIState(event.state as any);
+        }
         break;
 
       default:
-        // Check if it's a UI_Event from our tools
-        this.tryApplyUIEvent(event);
         break;
-    }
-  }
-
-  private tryApplyUIEvent(event: BidiEvent): void {
-    const uiTypes = ['order_update', 'highlight_category', 'browse_category', 'highlight_item', 'order_confirmed', 'show_item_detail'];
-    if (uiTypes.includes(event.type)) {
-      useAppStore.getState().applyUIEvent(event as unknown as UIEvent);
     }
   }
 

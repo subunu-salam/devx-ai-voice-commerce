@@ -7,8 +7,9 @@ interface MenuDisplayProps {
 }
 
 export function MenuDisplay({ onItemClick }: MenuDisplayProps) {
-  const { categories, items, highlightedCategory, highlightedItem, loading, error } =
-    useAppStore((s) => s.menu);
+  const { categories, items, loading, error } = useAppStore((s) => s.menu);
+  const highlightedCategory = useAppStore((s) => s.agentUI.highlightedCategory);
+  const highlightedItem = useAppStore((s) => s.agentUI.highlightedItem);
 
   if (loading) {
     return (

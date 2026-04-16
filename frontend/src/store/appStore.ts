@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import type { AppState, Category, MenuItem, UIEvent, ItemDetailPayload } from '../types';
+import type { AppState, AgentUIState, Category, MenuItem } from '../types';
 
 interface AppActions {
-  applyUIEvent: (event: UIEvent) => void;
+  applyAgentUIState: (state: AgentUIState) => void;
   setMenuData: (categories: Category[], items: Record<string, MenuItem[]>) => void;
   setMenuLoading: (loading: boolean) => void;
   setMenuError: (error: string | null) => void;
@@ -10,26 +10,26 @@ interface AppActions {
   setListening: (listening: boolean) => void;
   setMicPermission: (permission: 'granted' | 'denied' | 'prompt') => void;
   endVoiceSession: () => void;
-  resetOrder: () => void;
-  showItemDetail: (item: ItemDetailPayload) => void;
-  closeItemDetail: () => void;
 }
+
+const initialAgentUI: AgentUIState = {
+  highlightedCategory: null,
+  highlightedItem: null,
+  itemDetail: null,
+  orderItems: [],
+  orderTotal: 0,
+  orderConfirmed: false,
+  orderNumber: null,
+};
 
 const initialState: AppState = {
   menu: {
     categories: [],
     items: {},
-    highlightedCategory: null,
-    highlightedItem: null,
     loading: false,
     error: null,
   },
-  order: {
-    items: [],
-    total: 0,
-    confirmed: false,
-    orderNumber: null,
-  },
+  agentUI: initialAgentUI,
   voice: {
     sessionActive: false,
     listening: false,
@@ -39,119 +39,33 @@ const initialState: AppState = {
     authenticated: false,
     userId: null,
   },
-  itemDetail: null,
 };
 
 export const useAppStore = create<AppState & AppActions>()((set) => ({
   ...initialState,
 
-  applyUIEvent: (event: UIEvent) => {
-    switch (event.type) {
-      case 'order_update':
-        set((state) => ({
-          order: {
-            ...state.order,
-            items: event.payload.items,
-            total: event.payload.total,
-          },
-        }));
-        break;
-
-      case 'browse_category':
-        set((state) => ({
-          menu: {
-            ...state.menu,
-            highlightedCategory: event.payload.categoryId,
-          },
-        }));
-        break;
-
-      case 'highlight_item':
-        set((state) => ({
-          menu: {
-            ...state.menu,
-            highlightedItem: event.payload.itemId,
-          },
-        }));
-        break;
-
-      case 'highlight_category':
-        set((state) => ({
-          menu: {
-            ...state.menu,
-            highlightedCategory: event.payload.categoryId,
-          },
-        }));
-        break;
-
-      case 'order_confirmed':
-        set((state) => ({
-          order: {
-            ...state.order,
-            confirmed: true,
-            orderNumber: event.payload.orderNumber,
-            items: event.payload.items,
-            total: event.payload.total,
-          },
-        }));
-        break;
-
-      case 'show_item_detail':
-        set(() => ({
-          itemDetail: event.payload,
-        }));
-        break;
-    }
-  },
+  // Replace the entire agent-controlled UI state
+  applyAgentUIState: (agentUI: AgentUIState) =>
+    set(() => ({ agentUI })),
 
   setMenuData: (categories, items) =>
-    set((state) => ({
-      menu: { ...state.menu, categories, items },
-    })),
+    set((s) => ({ menu: { ...s.menu, categories, items } })),
 
   setMenuLoading: (loading) =>
-    set((state) => ({
-      menu: { ...state.menu, loading },
-    })),
+    set((s) => ({ menu: { ...s.menu, loading } })),
 
   setMenuError: (error) =>
-    set((state) => ({
-      menu: { ...state.menu, error },
-    })),
+    set((s) => ({ menu: { ...s.menu, error } })),
 
   setVoiceSession: (active) =>
-    set((state) => ({
-      voice: { ...state.voice, sessionActive: active },
-    })),
+    set((s) => ({ voice: { ...s.voice, sessionActive: active } })),
 
   setListening: (listening) =>
-    set((state) => ({
-      voice: { ...state.voice, listening },
-    })),
+    set((s) => ({ voice: { ...s.voice, listening } })),
 
   setMicPermission: (permission) =>
-    set((state) => ({
-      voice: { ...state.voice, micPermission: permission },
-    })),
+    set((s) => ({ voice: { ...s.voice, micPermission: permission } })),
 
   endVoiceSession: () =>
-    set((state) => ({
-      voice: { ...state.voice, sessionActive: false, listening: false },
-    })),
-
-  resetOrder: () =>
-    set(() => ({
-      order: {
-        items: [],
-        total: 0,
-        confirmed: false,
-        orderNumber: null,
-      },
-    })),
-
-  showItemDetail: (item) =>
-    set(() => ({ itemDetail: item })),
-
-  closeItemDetail: () =>
-    set(() => ({ itemDetail: null })),
+    set((s) => ({ voice: { ...s.voice, sessionActive: false, listening: false } })),
 }));

@@ -3,8 +3,7 @@ import { useAppStore } from '../store';
 import { formatPrice } from '../utils/formatPrice';
 
 export function ItemDetailModal() {
-  const itemDetail = useAppStore((s) => s.itemDetail);
-  const closeItemDetail = useAppStore((s) => s.closeItemDetail);
+  const itemDetail = useAppStore((s) => s.agentUI.itemDetail);
   const [instructions, setInstructions] = useState('');
 
   if (!itemDetail) return null;
@@ -16,7 +15,6 @@ export function ItemDetailModal() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         backgroundColor: 'rgba(0,0,0,0.5)',
       }}
-      onClick={closeItemDetail}
     >
       <div
         style={{
@@ -36,44 +34,22 @@ export function ItemDetailModal() {
             img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="%23eee"/></svg>';
           }}
         />
-
         <h2 style={{ margin: '16px 0 4px' }}>{itemDetail.name}</h2>
         <p style={{ color: '#666', margin: '0 0 8px' }}>{itemDetail.description}</p>
         <p style={{ fontSize: '1.3em', fontWeight: 'bold', color: '#27ae60', margin: '0 0 16px' }}>
           {formatPrice(itemDetail.price)}
         </p>
-
-        <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>
-          Special instructions
-        </label>
+        <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>Special instructions</label>
         <textarea
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
           placeholder="e.g. no pickles, extra sauce, well done..."
           rows={3}
-          style={{
-            width: '100%', padding: 10, borderRadius: 8,
-            border: '1px solid #ddd', fontSize: 14, resize: 'vertical',
-            boxSizing: 'border-box',
-          }}
+          style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
         />
-
         <p style={{ color: '#888', fontSize: 12, margin: '8px 0 16px' }}>
           You can also tell the voice agent your preferences
         </p>
-
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            onClick={closeItemDetail}
-            style={{
-              flex: 1, padding: '10px 0', borderRadius: 8,
-              border: '1px solid #ddd', background: '#f5f5f5',
-              cursor: 'pointer', fontSize: 14,
-            }}
-          >
-            Close
-          </button>
-        </div>
       </div>
     </div>
   );

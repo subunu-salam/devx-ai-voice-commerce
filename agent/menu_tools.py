@@ -5,13 +5,6 @@ import os
 import boto3
 from strands import tool
 
-try:
-    from agent.ui_events import browse_category_event, highlight_category_event, highlight_item_event, show_item_detail_event
-    from agent.ui_sender import send_ui_event
-except ModuleNotFoundError:
-    from ui_events import browse_category_event, highlight_category_event, highlight_item_event, show_item_detail_event
-    from ui_sender import send_ui_event
-
 _REGION = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "us-east-1"))
 _dynamodb = boto3.resource("dynamodb", region_name=_REGION)
 _table = _dynamodb.Table(os.environ.get("MENU_TABLE_NAME", "DriveThruMenu"))
@@ -26,7 +19,7 @@ def get_table():
     return _table
 
 
-@tool(context=True)
+@tool
 def get_categories(tool_context=None) -> dict:
     """Returns all menu categories."""
     response = get_table().scan(
@@ -46,14 +39,11 @@ def get_categories(tool_context=None) -> dict:
     result = {"categories": categories}
     if categories:
         first = categories[0]
-        ui_evt = highlight_category_event(first["categoryId"], first["name"])
-        result["ui_event"] = ui_evt
-        send_ui_event(ui_evt, tool_context)
     return result
 
 
-@tool(context=True)
-def get_items_by_category(category_id: str, tool_context=None) -> dict:
+@tool
+def get_items_by_category(category_id: str) -> dict:
     """Returns all menu items in a given category."""
     response = get_table().query(
         KeyConditionExpression="PK = :pk AND begins_with(SK, :sk_prefix)",
@@ -75,14 +65,11 @@ def get_items_by_category(category_id: str, tool_context=None) -> dict:
         })
     items.sort(key=lambda i: i["sortOrder"])
     result = {"items": items}
-    ui_evt = browse_category_event(category_id, items[0]["category"] if items else category_id)
-    result["ui_event"] = ui_evt
-    send_ui_event(ui_evt, tool_context)
     return result
 
 
-@tool(context=True)
-def get_item_details(item_id: str, category_id: str, tool_context=None) -> dict:
+@tool
+def get_item_details(item_id: str, category_id: str) -> dict:
     """Returns full details for a specific menu item."""
     response = get_table().get_item(Key={"PK": f"CATEGORY#{category_id}", "SK": f"ITEM#{item_id}"})
     item = response.get("Item")
@@ -99,13 +86,10 @@ def get_item_details(item_id: str, category_id: str, tool_context=None) -> dict:
         "featured": bool(item.get("featured", False)),
         "sortOrder": int(item.get("sortOrder", 0)),
     }
-    ui_evt = show_item_detail_event(result)
-    result["ui_event"] = ui_evt
-    send_ui_event(ui_evt, tool_context)
     return result
 
 
-@tool(context=True)
+@tool
 def get_recommendations(tool_context=None) -> dict:
     """Returns a list of featured/popular menu items."""
     response = get_table().scan(
