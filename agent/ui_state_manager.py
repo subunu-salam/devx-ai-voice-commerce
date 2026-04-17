@@ -53,11 +53,15 @@ def _send_to_frontend():
     if ws is None or loop is None:
         return
 
-    message = {"type": "ui_state_update", "state": dict(_ui_state)}
+    # Use a copy to avoid mutation during serialization
+    state_copy = {k: v for k, v in _ui_state.items()}
+    message = {"type": "ui_state_update", "state": state_copy}
 
     async def _do_send():
         try:
-            await ws.send_json(message)
+            # Use send_text with manual JSON to avoid conflicts with Starlette's send_json
+            import json as _json
+            await ws.send_text(_json.dumps(message, default=str))
         except Exception as e:
             print(f"[ui_state] send failed: {e}")
 

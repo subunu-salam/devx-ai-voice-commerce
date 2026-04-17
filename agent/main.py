@@ -94,6 +94,13 @@ def update_ui(
     if order_number is not None:
         current["orderNumber"] = order_number
 
+    # If the agent is updating category, order, or other fields but didn't
+    # explicitly set item_detail, auto-close the modal. The agent opens modals
+    # explicitly but cleanup happens automatically.
+    explicitly_set_detail = item_detail is not None
+    if not explicitly_set_detail and (highlighted_category is not None or order_items is not None or order_confirmed is not None):
+        current["itemDetail"] = None
+
     set_ui_state(current)
     # Return a minimal confirmation — don't send the full state back to Nova Sonic
     # (large tool results can cause stream errors)
@@ -132,7 +139,7 @@ customer can see what you're describing.
 WHEN YOU ADD/REMOVE/CHANGE THE ORDER → call update_ui with the updated order_items \
 and order_total.
 
-WHEN THE TOPIC CHANGES → close any open modal with item_detail={}.
+WHEN THE TOPIC CHANGES → the item detail modal closes automatically.
 
 Examples:
 - "We have burgers, chicken, sides..." → update_ui(highlighted_category="burgers")
@@ -141,9 +148,7 @@ Examples:
 - "Let me show you our drinks" → update_ui(highlighted_category="drinks", item_detail={})
 - Customer: "what about sides?" → update_ui(highlighted_category="sides", item_detail={})
 
-IMPORTANT: You MUST close the item detail modal by passing item_detail={} in update_ui \
-whenever the conversation moves away from that item. If you don't close it, the modal \
-blocks the screen and the customer can't see the menu.
+IMPORTANT: Always use get_item_details before showing item details — never make up item data.
 
 ## Tools
 Menu tools: get_categories, get_items_by_category, get_item_details, get_recommendations
@@ -198,9 +203,21 @@ async def voice_chat(websocket: WebSocket) -> None:
         set_websocket(websocket, asyncio.get_running_loop())
         reset_ui_state()
 
+        async def safe_send_json(data):
+            """Send JSON, skip non-serializable events."""
+            try:
+                await websocket.send_json(data)
+            except (TypeError, ValueError):
+                # Skip events that can't be serialized (e.g. BidiModelTimeoutError)
+                try:
+                    import json as _json
+                    await websocket.send_text(_json.dumps(data, default=str))
+                except Exception:
+                    pass
+
         await agent.run(
             inputs=[websocket.receive_json],
-            outputs=[websocket.send_json],
+            outputs=[safe_send_json],
         )
     except WebSocketDisconnect:
         print("Client disconnected")
