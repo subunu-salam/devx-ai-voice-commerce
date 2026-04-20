@@ -80,19 +80,10 @@ export default function App() {
   }, []);
 
   const handleItemClick = useCallback((item: MenuItem) => {
-    // When clicking an item directly, update the agent UI state locally
     const current = useAppStore.getState().agentUI;
     useAppStore.getState().applyAgentUIState({
       ...current,
-      itemDetail: {
-        itemId: item.itemId,
-        categoryId: item.categoryId,
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        imageUrl: item.imageUrl,
-        category: item.category,
-      },
+      highlightedItem: item.itemId,
     });
   }, []);
 

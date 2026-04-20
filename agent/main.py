@@ -15,7 +15,7 @@ from strands import tool
 
 try:
     from agent.menu_tools import (
-        get_categories, get_item_details, get_items_by_category, get_recommendations,
+        get_categories, get_items_by_category, get_recommendations,
     )
     from agent.order_tools import (
         add_to_order, cancel_order, get_order_summary, place_order, remove_from_order,
@@ -23,7 +23,7 @@ try:
     from agent.ui_state_manager import set_websocket, clear_websocket, set_ui_state, get_ui_state, reset_ui_state
 except ModuleNotFoundError:
     from menu_tools import (
-        get_categories, get_item_details, get_items_by_category, get_recommendations,
+        get_categories, get_items_by_category, get_recommendations,
     )
     from order_tools import (
         add_to_order, cancel_order, get_order_summary, place_order, remove_from_order,
@@ -49,7 +49,6 @@ def get_ui_context() -> dict:
 def update_ui(
     highlighted_category: str = None,
     highlighted_item: str = None,
-    item_detail: dict = None,
     order_items: list = None,
     order_total: int = None,
     order_confirmed: bool = None,
@@ -61,11 +60,7 @@ def update_ui(
 
     Args:
         highlighted_category: Category ID to highlight/scroll to (e.g. "burgers"). Set to "" to clear.
-        highlighted_item: Item ID to highlight (e.g. "classic-burger"). Set to "" to clear.
-        item_detail: Full item details to show in a detail modal. Set to None to close the modal.
-            Example: {"itemId": "classic-burger", "categoryId": "burgers", "name": "Classic Burger",
-                      "description": "...", "price": 799, "imageUrl": "images/classic-burger.svg",
-                      "category": "Burgers"}
+        highlighted_item: Item ID to highlight and show details for (e.g. "classic-burger"). Set to "" to clear.
         order_items: Full list of items in the order. Each item:
             {"itemId": "...", "name": "...", "quantity": 1, "unitPrice": 799, "specialInstructions": "..."}
         order_total: Total price in cents.
@@ -73,7 +68,7 @@ def update_ui(
         order_number: The order number (set when order is confirmed).
 
     Returns:
-        The current UI state after the update.
+        Confirmation that the update was sent.
     """
     current = get_ui_state()
 
@@ -81,10 +76,6 @@ def update_ui(
         current["highlightedCategory"] = highlighted_category or None
     if highlighted_item is not None:
         current["highlightedItem"] = highlighted_item or None
-    if item_detail is not None:
-        current["itemDetail"] = item_detail if item_detail else None
-    elif item_detail == {}:
-        current["itemDetail"] = None
     if order_items is not None:
         current["orderItems"] = order_items
     if order_total is not None:
@@ -94,16 +85,11 @@ def update_ui(
     if order_number is not None:
         current["orderNumber"] = order_number
 
-    # If the agent is updating category, order, or other fields but didn't
-    # explicitly set item_detail, auto-close the modal. The agent opens modals
-    # explicitly but cleanup happens automatically.
-    explicitly_set_detail = item_detail is not None
-    if not explicitly_set_detail and (highlighted_category is not None or order_items is not None or order_confirmed is not None):
-        current["itemDetail"] = None
+    # Auto-clear highlighted item when navigating to a category or updating order
+    if highlighted_item is None and (highlighted_category is not None or order_items is not None or order_confirmed is not None):
+        current["highlightedItem"] = None
 
     set_ui_state(current)
-    # Return a minimal confirmation — don't send the full state back to Nova Sonic
-    # (large tool results can cause stream errors)
     return {"status": "updated"}
 
 
@@ -144,8 +130,8 @@ this order in for you?"
 ## Screen Control
 You control the customer's screen via update_ui. Keep it in sync with the conversation:
 
-WHEN YOU MENTION AN ITEM → call get_item_details, then update_ui(item_detail={...}) \
-so the customer sees it. Every time, no exceptions.
+WHEN YOU MENTION AN ITEM → call update_ui(highlighted_item="classic-burger") to show \
+its details on screen. The frontend looks up the item data automatically.
 
 WHEN YOU MENTION A CATEGORY → call update_ui(highlighted_category=...) to scroll there.
 
@@ -154,7 +140,7 @@ WHEN THE ORDER CHANGES → call update_ui(order_items=[...], order_total=...).
 The item detail modal closes automatically when you update categories or order.
 
 ## Tools
-Menu: get_categories, get_items_by_category, get_item_details, get_recommendations
+Menu: get_categories, get_items_by_category, get_recommendations
 Order: add_to_order, remove_from_order, get_order_summary, place_order, cancel_order
 Screen: update_ui
 Context: get_ui_context (use when customer says "this one", "that", etc.)
@@ -187,7 +173,7 @@ async def voice_chat(websocket: WebSocket) -> None:
     agent = BidiAgent(
         model=sonic_model,
         tools=[
-            get_categories, get_items_by_category, get_item_details, get_recommendations,
+            get_categories, get_items_by_category, get_recommendations,
             add_to_order, remove_from_order, get_order_summary, place_order, cancel_order,
             update_ui, get_ui_context, stop_conversation,
         ],

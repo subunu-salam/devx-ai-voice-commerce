@@ -15,7 +15,6 @@ interface AppActions {
 const initialAgentUI: AgentUIState = {
   highlightedCategory: null,
   highlightedItem: null,
-  itemDetail: null,
   orderItems: [],
   orderTotal: 0,
   orderConfirmed: false,

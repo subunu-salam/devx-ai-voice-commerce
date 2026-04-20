@@ -30,15 +30,6 @@ export interface OrderItem {
 export interface AgentUIState {
   highlightedCategory: string | null;
   highlightedItem: string | null;
-  itemDetail: {
-    itemId: string;
-    categoryId: string;
-    name: string;
-    description: string;
-    price: number;
-    imageUrl: string;
-    category: string;
-  } | null;
   orderItems: OrderItem[];
   orderTotal: number;
   orderConfirmed: boolean;

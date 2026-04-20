@@ -11,7 +11,6 @@ import json
 _ui_state = {
     "highlightedCategory": None,
     "highlightedItem": None,
-    "itemDetail": None,
     "orderItems": [],
     "orderTotal": 0,
     "orderConfirmed": False,
@@ -77,7 +76,6 @@ def reset_ui_state():
     _ui_state = {
         "highlightedCategory": None,
         "highlightedItem": None,
-        "itemDetail": None,
         "orderItems": [],
         "orderTotal": 0,
         "orderConfirmed": False,

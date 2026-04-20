@@ -1,12 +1,24 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppStore } from '../store';
 import { formatPrice } from '../utils/formatPrice';
+import type { MenuItem } from '../types';
 
 export function ItemDetailModal() {
-  const itemDetail = useAppStore((s) => s.agentUI.itemDetail);
+  const highlightedItem = useAppStore((s) => s.agentUI.highlightedItem);
+  const menuItems = useAppStore((s) => s.menu.items);
   const [instructions, setInstructions] = useState('');
 
-  if (!itemDetail) return null;
+  // Look up the highlighted item from local menu data
+  const item: MenuItem | null = useMemo(() => {
+    if (!highlightedItem) return null;
+    for (const items of Object.values(menuItems)) {
+      const found = items.find((i) => i.itemId === highlightedItem);
+      if (found) return found;
+    }
+    return null;
+  }, [highlightedItem, menuItems]);
+
+  if (!item) return null;
 
   return (
     <div
@@ -15,6 +27,10 @@ export function ItemDetailModal() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         backgroundColor: 'rgba(0,0,0,0.5)',
       }}
+      onClick={() => useAppStore.getState().applyAgentUIState({
+        ...useAppStore.getState().agentUI,
+        highlightedItem: null,
+      })}
     >
       <div
         style={{
@@ -25,8 +41,8 @@ export function ItemDetailModal() {
         onClick={(e) => e.stopPropagation()}
       >
         <img
-          src={itemDetail.imageUrl}
-          alt={itemDetail.name}
+          src={item.imageUrl}
+          alt={item.name}
           style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 12 }}
           onError={(e) => {
             const img = e.target as HTMLImageElement;
@@ -34,10 +50,10 @@ export function ItemDetailModal() {
             img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="%23eee"/></svg>';
           }}
         />
-        <h2 style={{ margin: '16px 0 4px' }}>{itemDetail.name}</h2>
-        <p style={{ color: '#666', margin: '0 0 8px' }}>{itemDetail.description}</p>
+        <h2 style={{ margin: '16px 0 4px' }}>{item.name}</h2>
+        <p style={{ color: '#666', margin: '0 0 8px' }}>{item.description}</p>
         <p style={{ fontSize: '1.3em', fontWeight: 'bold', color: '#27ae60', margin: '0 0 16px' }}>
-          {formatPrice(itemDetail.price)}
+          {formatPrice(item.price)}
         </p>
         <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>Special instructions</label>
         <textarea
@@ -47,7 +63,7 @@ export function ItemDetailModal() {
           rows={3}
           style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
         />
-        <p style={{ color: '#888', fontSize: 12, margin: '8px 0 16px' }}>
+        <p style={{ color: '#888', fontSize: 12, margin: '8px 0 0' }}>
           You can also tell the voice agent your preferences
         </p>
       </div>
