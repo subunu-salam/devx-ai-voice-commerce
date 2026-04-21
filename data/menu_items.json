@@ -29,17 +29,6 @@
   },
   {
     "PK": "CATEGORY#burgers",
-    "SK": "ITEM#bacon-burger",
-    "name": "Bacon Burger",
-    "description": "Quarter-pound beef patty with crispy bacon, cheddar cheese, lettuce, and BBQ sauce",
-    "price": 1099,
-    "imageUrl": "images/bacon-burger.svg",
-    "category": "Burgers",
-    "featured": false,
-    "sortOrder": 3
-  },
-  {
-    "PK": "CATEGORY#burgers",
     "SK": "ITEM#double-burger",
     "name": "Double Burger",
     "description": "Two quarter-pound beef patties with cheese, lettuce, tomato, and pickles",

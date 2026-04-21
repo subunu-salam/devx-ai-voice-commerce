@@ -62,16 +62,27 @@ class BackendStack(Stack):
 
         # --- Seed Menu Data ---
 
-        seed_lambda_path = os.path.join(os.path.dirname(__file__), "seed_lambda")
         data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
-        with open(os.path.join(data_dir, "menu_items.json")) as f:
+        seed_lambda_path = os.path.join(os.path.dirname(__file__), "seed_lambda")
+        menu_json_src = os.path.join(data_dir, "menu_items.json")
+
+        with open(menu_json_src) as f:
             menu_data = json.load(f)
+
+        # Build a temp directory with Lambda code + menu data for bundling
+        import tempfile
+        import shutil
+        bundle_dir = tempfile.mkdtemp()
+        # Copy Lambda handler
+        shutil.copy2(os.path.join(seed_lambda_path, "index.py"), os.path.join(bundle_dir, "index.py"))
+        # Copy menu data from single source of truth
+        shutil.copy2(menu_json_src, os.path.join(bundle_dir, "menu_items.json"))
 
         seed_fn = lambda_.Function(
             self, "SeedMenuFunction",
             runtime=lambda_.Runtime.PYTHON_3_13,
             handler="index.handler",
-            code=lambda_.Code.from_asset(seed_lambda_path),
+            code=lambda_.Code.from_asset(bundle_dir),
             timeout=cdk.Duration.minutes(2),
             environment={"TABLE_NAME": self.menu_table.table_name},
         )
