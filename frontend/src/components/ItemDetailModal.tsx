@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useAppStore } from '../store';
 import { formatPrice } from '../utils/formatPrice';
 import type { MenuItem } from '../types';
@@ -6,7 +6,6 @@ import type { MenuItem } from '../types';
 export function ItemDetailModal() {
   const highlightedItem = useAppStore((s) => s.agentUI.highlightedItem);
   const menuItems = useAppStore((s) => s.menu.items);
-  const [instructions, setInstructions] = useState('');
 
   // Look up the highlighted item from local menu data
   const item: MenuItem | null = useMemo(() => {
@@ -54,17 +53,6 @@ export function ItemDetailModal() {
         <p style={{ color: '#666', margin: '0 0 8px' }}>{item.description}</p>
         <p style={{ fontSize: '1.3em', fontWeight: 'bold', color: '#27ae60', margin: '0 0 16px' }}>
           {formatPrice(item.price)}
-        </p>
-        <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>Special instructions</label>
-        <textarea
-          value={instructions}
-          onChange={(e) => setInstructions(e.target.value)}
-          placeholder="e.g. no pickles, extra sauce, well done..."
-          rows={3}
-          style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
-        />
-        <p style={{ color: '#888', fontSize: 12, margin: '8px 0 0' }}>
-          You can also tell the voice agent your preferences
         </p>
       </div>
     </div>
