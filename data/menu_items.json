@@ -11,7 +11,7 @@
     "name": "Classic Burger",
     "description": "Quarter-pound beef patty with lettuce, tomato, onion, and pickles on a toasted sesame bun",
     "price": 799,
-    "imageUrl": "images/classic-burger.svg",
+    "imageUrl": "images/classic-burger.png",
     "category": "Burgers",
     "featured": true,
     "sortOrder": 1
@@ -22,7 +22,7 @@
     "name": "Cheeseburger",
     "description": "Quarter-pound beef patty with melted American cheese, lettuce, tomato, and special sauce",
     "price": 899,
-    "imageUrl": "images/cheeseburger.svg",
+    "imageUrl": "images/cheeseburger.png",
     "category": "Burgers",
     "featured": true,
     "sortOrder": 2
@@ -33,7 +33,7 @@
     "name": "Double Burger",
     "description": "Two quarter-pound beef patties with cheese, lettuce, tomato, and pickles",
     "price": 1199,
-    "imageUrl": "images/double-burger.svg",
+    "imageUrl": "images/double-burger.png",
     "category": "Burgers",
     "featured": false,
     "sortOrder": 4
@@ -44,7 +44,7 @@
     "name": "Veggie Burger",
     "description": "Plant-based patty with avocado, lettuce, tomato, and chipotle mayo",
     "price": 999,
-    "imageUrl": "images/veggie-burger.svg",
+    "imageUrl": "images/veggie-burger.png",
     "category": "Burgers",
     "featured": false,
     "sortOrder": 5
@@ -61,7 +61,7 @@
     "name": "Crispy Chicken Sandwich",
     "description": "Crispy breaded chicken breast with pickles and mayo on a brioche bun",
     "price": 899,
-    "imageUrl": "images/chicken-sandwich.svg",
+    "imageUrl": "images/chicken-sandwich.png",
     "category": "Chicken",
     "featured": true,
     "sortOrder": 1
@@ -70,9 +70,9 @@
     "PK": "CATEGORY#chicken",
     "SK": "ITEM#spicy-chicken",
     "name": "Spicy Chicken Sandwich",
-    "description": "Crispy chicken breast tossed in spicy sauce with jalape\u00f1os and pepper jack cheese",
+    "description": "Crispy chicken breast tossed in spicy sauce with jalapeños and pepper jack cheese",
     "price": 999,
-    "imageUrl": "images/spicy-chicken.svg",
+    "imageUrl": "images/spicy-chicken.png",
     "category": "Chicken",
     "featured": false,
     "sortOrder": 2
@@ -83,7 +83,7 @@
     "name": "Chicken Nuggets (6 pc)",
     "description": "Six crispy all-white-meat chicken nuggets with your choice of dipping sauce",
     "price": 599,
-    "imageUrl": "images/chicken-nuggets.svg",
+    "imageUrl": "images/chicken-nuggets.png",
     "category": "Chicken",
     "featured": false,
     "sortOrder": 3
@@ -94,7 +94,7 @@
     "name": "Chicken Nuggets (10 pc)",
     "description": "Ten crispy all-white-meat chicken nuggets with two dipping sauces",
     "price": 899,
-    "imageUrl": "images/chicken-nuggets-10.svg",
+    "imageUrl": "images/chicken-nuggets-10.png",
     "category": "Chicken",
     "featured": false,
     "sortOrder": 4
@@ -111,7 +111,7 @@
     "name": "French Fries",
     "description": "Golden crispy fries seasoned with sea salt",
     "price": 349,
-    "imageUrl": "images/fries.svg",
+    "imageUrl": "images/fries.png",
     "category": "Sides",
     "featured": true,
     "sortOrder": 1
@@ -122,7 +122,7 @@
     "name": "Onion Rings",
     "description": "Thick-cut onion rings with a crispy beer batter coating",
     "price": 449,
-    "imageUrl": "images/onion-rings.svg",
+    "imageUrl": "images/onion-rings.png",
     "category": "Sides",
     "featured": false,
     "sortOrder": 2
@@ -133,7 +133,7 @@
     "name": "Mozzarella Sticks",
     "description": "Six breaded mozzarella sticks served with marinara sauce",
     "price": 549,
-    "imageUrl": "images/mozzarella-sticks.svg",
+    "imageUrl": "images/mozzarella-sticks.png",
     "category": "Sides",
     "featured": false,
     "sortOrder": 3
@@ -144,7 +144,7 @@
     "name": "Side Salad",
     "description": "Fresh mixed greens with tomato, cucumber, and your choice of dressing",
     "price": 399,
-    "imageUrl": "images/side-salad.svg",
+    "imageUrl": "images/side-salad.png",
     "category": "Sides",
     "featured": false,
     "sortOrder": 4
@@ -161,7 +161,7 @@
     "name": "Cola",
     "description": "Ice-cold fountain cola",
     "price": 249,
-    "imageUrl": "images/cola.svg",
+    "imageUrl": "images/cola.png",
     "category": "Drinks",
     "featured": false,
     "sortOrder": 1
@@ -172,7 +172,7 @@
     "name": "Fresh Lemonade",
     "description": "Freshly squeezed lemonade with a hint of mint",
     "price": 349,
-    "imageUrl": "images/lemonade.svg",
+    "imageUrl": "images/lemonade.png",
     "category": "Drinks",
     "featured": true,
     "sortOrder": 2
@@ -183,7 +183,7 @@
     "name": "Iced Tea",
     "description": "Brewed sweet or unsweetened iced tea",
     "price": 249,
-    "imageUrl": "images/iced-tea.svg",
+    "imageUrl": "images/iced-tea.png",
     "category": "Drinks",
     "featured": false,
     "sortOrder": 3
@@ -194,7 +194,7 @@
     "name": "Chocolate Milkshake",
     "description": "Thick and creamy chocolate milkshake topped with whipped cream",
     "price": 549,
-    "imageUrl": "images/milkshake-chocolate.svg",
+    "imageUrl": "images/milkshake-chocolate.png",
     "category": "Drinks",
     "featured": false,
     "sortOrder": 4
@@ -205,7 +205,7 @@
     "name": "Vanilla Milkshake",
     "description": "Classic vanilla milkshake made with real vanilla bean ice cream",
     "price": 549,
-    "imageUrl": "images/milkshake-vanilla.svg",
+    "imageUrl": "images/milkshake-vanilla.png",
     "category": "Drinks",
     "featured": false,
     "sortOrder": 5
@@ -222,7 +222,7 @@
     "name": "Apple Pie",
     "description": "Warm baked apple pie with a flaky crust and cinnamon filling",
     "price": 299,
-    "imageUrl": "images/apple-pie.svg",
+    "imageUrl": "images/apple-pie.png",
     "category": "Desserts",
     "featured": false,
     "sortOrder": 1
@@ -233,7 +233,7 @@
     "name": "Hot Fudge Sundae",
     "description": "Vanilla soft serve with hot fudge, whipped cream, and a cherry on top",
     "price": 449,
-    "imageUrl": "images/sundae.svg",
+    "imageUrl": "images/sundae.png",
     "category": "Desserts",
     "featured": true,
     "sortOrder": 2
@@ -244,7 +244,7 @@
     "name": "Chocolate Chip Cookie",
     "description": "Warm freshly baked chocolate chip cookie",
     "price": 199,
-    "imageUrl": "images/cookie.svg",
+    "imageUrl": "images/cookie.png",
     "category": "Desserts",
     "featured": false,
     "sortOrder": 3
