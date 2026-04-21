@@ -108,7 +108,14 @@ export default function App() {
         ) : (
           <button onClick={handleStopVoice} type="button">Stop</button>
         )}
-        {listening && <span role="status" aria-label="Listening" style={{ color: 'green' }}>🎙️ Listening…</span>}
+        {listening && (
+          <span role="status" aria-label="Listening" className="voice-indicator">
+            <span className="voice-bars">
+              <span /><span /><span /><span /><span />
+            </span>
+            Listening…
+          </span>
+        )}
         {micPermission === 'denied' && <span role="alert" style={{ color: 'red' }}>Microphone access denied.</span>}
         {voiceError && <span role="alert" style={{ color: 'red' }}>{voiceError}</span>}
       </div>
