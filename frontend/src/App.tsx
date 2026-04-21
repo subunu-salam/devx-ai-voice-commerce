@@ -113,9 +113,9 @@ export default function App() {
         {voiceError && <span role="alert" style={{ color: 'red' }}>{voiceError}</span>}
       </div>
 
-      <div style={{ display: 'flex', gap: 24 }}>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
         <div style={{ flex: 2 }}><MenuDisplay onItemClick={handleItemClick} /></div>
-        <div style={{ flex: 1 }}><OrderSummaryPanel /></div>
+        <div style={{ flex: 1, position: 'sticky', top: 16, alignSelf: 'flex-start' }}><OrderSummaryPanel /></div>
       </div>
 
       <ItemDetailModal />
