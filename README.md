@@ -4,26 +4,7 @@ A voice-powered drive-thru ordering app built with Amazon Nova Sonic, Strands Ag
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────┐
-│  Browser (React SPA)                                │
-│  ┌───────────┐  ┌──────────┐  ┌──────────────────┐ │
-│  │ Start     │→ │ WebSocket│→ │ Menu + Order UI   │ │
-│  │ Order btn │  │ (OAuth)  │  │ (agent-controlled)│ │
-│  └───────────┘  └──────────┘  └──────────────────┘ │
-└────────────────────┬────────────────────────────────┘
-                     │ wss:// (JSON protocol)
-┌────────────────────▼────────────────────────────────┐
-│  AgentCore Runtime (microVM per session)             │
-│  ┌──────────────────────────────────────────────┐   │
-│  │  Strands BidiAgent + Nova Sonic              │   │
-│  │  ┌────────────┐ ┌───────────┐ ┌───────────┐ │   │
-│  │  │ Menu Tools │ │Order Tools│ │ update_ui  │ │   │
-│  │  │ (DynamoDB) │ │ (DynamoDB)│ │ (WebSocket)│ │   │
-│  │  └────────────┘ └───────────┘ └───────────┘ │   │
-│  └──────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────┘
-```
+![Architecture Diagram](architecture.png)
 
 **Key design decisions:**
 - **Agent controls the UI** — the agent has a single `update_ui` tool that sets the entire frontend display state. The frontend just renders what it receives.
