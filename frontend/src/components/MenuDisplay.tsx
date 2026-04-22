@@ -7,31 +7,17 @@ interface MenuDisplayProps {
 }
 
 export function MenuDisplay({ onItemClick }: MenuDisplayProps) {
-  const { categories, items, loading, error } = useAppStore((s) => s.menu);
-  const highlightedCategory = useAppStore((s) => s.agentUI.highlightedCategory);
-  const highlightedItem = useAppStore((s) => s.agentUI.highlightedItem);
+  const { categories, menuItems, highlightedCategory, highlightedItem } = useAppStore((s) => s.agentUI);
 
-  if (loading) {
-    return (
-      <div className="menu-loading" role="status" aria-label="Loading menu">
-        <p>Loading menu…</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="menu-error" role="alert">
-        <p>Menu unavailable. Please try again.</p>
-      </div>
-    );
+  if (categories.length === 0) {
+    return null; // No menu data yet — agent hasn't sent it
   }
 
   return (
     <div className="menu-display">
       <CategoryList
         categories={categories}
-        items={items}
+        items={menuItems}
         highlightedCategory={highlightedCategory}
         highlightedItem={highlightedItem}
         onItemClick={onItemClick}

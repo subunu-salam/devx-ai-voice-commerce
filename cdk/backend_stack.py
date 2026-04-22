@@ -106,6 +106,7 @@ class BackendStack(Stack):
                 destination_bucket=self.hosting_bucket,
                 destination_key_prefix="images",
                 prune=False,
+                memory_limit=512,
             )
 
         # --- CloudFront Distribution ---
@@ -156,47 +157,6 @@ class BackendStack(Stack):
             generate_secret=False,
         )
 
-        self.identity_pool = cognito.CfnIdentityPool(
-            self, "DriveThruIdentityPool",
-            identity_pool_name="DriveThruIdentityPool",
-            allow_unauthenticated_identities=False,
-            cognito_identity_providers=[
-                cognito.CfnIdentityPool.CognitoIdentityProviderProperty(
-                    client_id=self.user_pool_client.user_pool_client_id,
-                    provider_name=self.user_pool.user_pool_provider_name,
-                )
-            ],
-        )
-
-        # --- Authenticated IAM Role ---
-
-        self.authenticated_role = iam.Role(
-            self, "CognitoAuthenticatedRole",
-            assumed_by=iam.FederatedPrincipal(
-                "cognito-identity.amazonaws.com",
-                conditions={
-                    "StringEquals": {"cognito-identity.amazonaws.com:aud": self.identity_pool.ref},
-                    "ForAnyValue:StringLike": {"cognito-identity.amazonaws.com:amr": "authenticated"},
-                },
-                assume_role_action="sts:AssumeRoleWithWebIdentity",
-            ),
-        )
-        self.authenticated_role.add_to_policy(iam.PolicyStatement(
-            effect=iam.Effect.ALLOW,
-            actions=["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan", "dynamodb:BatchGetItem"],
-            resources=[self.menu_table.table_arn, f"{self.menu_table.table_arn}/index/*"],
-        ))
-        self.authenticated_role.add_to_policy(iam.PolicyStatement(
-            effect=iam.Effect.ALLOW,
-            actions=["s3:GetObject"],
-            resources=[f"{self.images_bucket.bucket_arn}/*"],
-        ))
-        cognito.CfnIdentityPoolRoleAttachment(
-            self, "IdentityPoolRoleAttachment",
-            identity_pool_id=self.identity_pool.ref,
-            roles={"authenticated": self.authenticated_role.role_arn},
-        )
-
         # --- AgentCore Runtime ---
 
         # Build the agent Docker image and deploy to AgentCore Runtime.
@@ -231,16 +191,6 @@ class BackendStack(Stack):
         self.menu_table.grant_read_data(self.agent_runtime)
         self.images_bucket.grant_read(self.agent_runtime)
 
-        # Grant authenticated users permission to invoke the agent via WebSocket
-        self.authenticated_role.add_to_policy(iam.PolicyStatement(
-            effect=iam.Effect.ALLOW,
-            actions=[
-                "bedrock-agentcore:InvokeAgentRuntime",
-                "bedrock-agentcore:InvokeAgentRuntimeWithWebSocketStream",
-            ],
-            resources=[self.agent_runtime.agent_runtime_arn],
-        ))
-
         # --- Outputs ---
 
         cdk.CfnOutput(self, "MenuTableName", value=self.menu_table.table_name)
@@ -251,6 +201,5 @@ class BackendStack(Stack):
         cdk.CfnOutput(self, "DistributionDomainName", value=self.distribution.distribution_domain_name)
         cdk.CfnOutput(self, "UserPoolId", value=self.user_pool.user_pool_id)
         cdk.CfnOutput(self, "UserPoolClientId", value=self.user_pool_client.user_pool_client_id)
-        cdk.CfnOutput(self, "IdentityPoolId", value=self.identity_pool.ref)
         cdk.CfnOutput(self, "AgentRuntimeId", value=self.agent_runtime.agent_runtime_id)
         cdk.CfnOutput(self, "AgentRuntimeArn", value=self.agent_runtime.agent_runtime_arn)

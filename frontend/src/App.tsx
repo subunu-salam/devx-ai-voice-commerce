@@ -1,63 +1,28 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { MenuDisplay, OrderSummaryPanel, OrderConfirmation, ItemDetailModal } from './components';
 import { useAppStore } from './store';
-import { createMenuService, groupItemsByCategory } from './services';
 import { createWebSocketClient, VoiceSessionManager } from './voice';
 import { getRuntimeConfig } from './config';
 import type { MenuItem } from './types';
 
-async function getAwsCredentials() {
-  const session = await fetchAuthSession();
-  const creds = session.credentials;
-  if (!creds) throw new Error('No AWS credentials available');
-  return {
-    accessKeyId: creds.accessKeyId,
-    secretAccessKey: creds.secretAccessKey,
-    sessionToken: creds.sessionToken,
-  };
-}
-
 export default function App() {
   const { signOut } = useAuthenticator();
-  const { setMenuData, setMenuLoading, setMenuError } = useAppStore();
 
   const sessionActive = useAppStore((s) => s.voice.sessionActive);
   const listening = useAppStore((s) => s.voice.listening);
   const micPermission = useAppStore((s) => s.voice.micPermission);
   const orderConfirmed = useAppStore((s) => s.agentUI.orderConfirmed);
+  const hasMenu = useAppStore((s) => s.agentUI.categories.length > 0);
 
   const voiceManagerRef = useRef<VoiceSessionManager | null>(null);
   const [voiceError, setVoiceError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function loadMenu() {
-      setMenuLoading(true);
-      setMenuError(null);
-      try {
-        const creds = await getAwsCredentials();
-        const menuService = createMenuService(creds);
-        const [categories, allItems] = await Promise.all([
-          menuService.getCategories(),
-          menuService.getAllMenuItems(),
-        ]);
-        if (cancelled) return;
-        setMenuData(categories, groupItemsByCategory(allItems));
-      } catch (err) {
-        if (cancelled) return;
-        setMenuError((err as Error).message);
-      } finally {
-        if (!cancelled) setMenuLoading(false);
-      }
-    }
-    void loadMenu();
-    return () => { cancelled = true; };
-  }, [setMenuData, setMenuLoading, setMenuError]);
+  const [connecting, setConnecting] = useState(false);
 
   const handleStartVoice = useCallback(async () => {
     setVoiceError(null);
+    setConnecting(true);
     try {
       const config = getRuntimeConfig();
       const session = await fetchAuthSession();
@@ -69,6 +34,8 @@ export default function App() {
       await manager.startSession(config.agentRuntimeArn, config.awsRegion, token);
     } catch (err) {
       setVoiceError((err as Error).message);
+    } finally {
+      setConnecting(false);
     }
   }, []);
 
@@ -87,6 +54,7 @@ export default function App() {
     });
   }, []);
 
+  // Order confirmed screen
   if (orderConfirmed) {
     return (
       <div style={{ maxWidth: 600, margin: '0 auto', padding: 16 }}>
@@ -95,34 +63,64 @@ export default function App() {
     );
   }
 
+  // Landing page — no voice session yet
+  if (!sessionActive && !hasMenu) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <h1 style={{ fontSize: '2.5em', marginBottom: 8 }}>🍔 Drive-Thru</h1>
+        <p style={{ color: '#666', fontSize: '1.1em', marginBottom: 32 }}>Voice-powered ordering</p>
+
+        <button
+          onClick={handleStartVoice}
+          disabled={connecting}
+          style={{
+            padding: '20px 48px', fontSize: '1.3em', fontWeight: 'bold',
+            borderRadius: 16, border: 'none', cursor: connecting ? 'wait' : 'pointer',
+            background: connecting ? '#95a5a6' : '#27ae60', color: '#fff',
+            boxShadow: '0 4px 16px rgba(39,174,96,0.3)',
+            transition: 'background 0.2s',
+          }}
+        >
+          {connecting ? 'Connecting…' : '🎙️ Start Your Order'}
+        </button>
+
+        {micPermission === 'denied' && (
+          <p style={{ color: 'red', marginTop: 16 }}>Microphone access denied. Please allow it and try again.</p>
+        )}
+        {voiceError && (
+          <p style={{ color: 'red', marginTop: 16 }}>{voiceError}</p>
+        )}
+
+        <button onClick={signOut} type="button" style={{ marginTop: 48, color: '#999', background: 'none', border: 'none', cursor: 'pointer' }}>
+          Sign Out
+        </button>
+      </div>
+    );
+  }
+
+  // Active session — menu + order
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ margin: 0 }}>Drive-Thru</h1>
-        <button onClick={signOut} type="button">Sign Out</button>
+        <h1 style={{ margin: 0 }}>🍔 Drive-Thru</h1>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {sessionActive && (
+            <button onClick={handleStopVoice} type="button">Stop</button>
+          )}
+          <button onClick={signOut} type="button">Sign Out</button>
+        </div>
       </div>
 
-      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-        {!sessionActive ? (
-          <button onClick={handleStartVoice} type="button">Start Voice Order</button>
-        ) : (
-          <button onClick={handleStopVoice} type="button">Stop</button>
-        )}
-        {listening && (
-          <span role="status" aria-label="Listening" className="voice-indicator">
-            <span className="voice-bars">
-              <span /><span /><span /><span /><span />
-            </span>
-            Listening…
-          </span>
-        )}
-        {micPermission === 'denied' && <span role="alert" style={{ color: 'red' }}>Microphone access denied.</span>}
-        {voiceError && <span role="alert" style={{ color: 'red' }}>{voiceError}</span>}
-      </div>
+      {listening && (
+        <div style={{ marginBottom: 12, color: 'green', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span role="status" aria-label="Listening">🎙️ Listening…</span>
+        </div>
+      )}
+      {voiceError && <p style={{ color: 'red' }}>{voiceError}</p>}
 
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 24 }}>
         <div style={{ flex: 2 }}><MenuDisplay onItemClick={handleItemClick} /></div>
-        <div style={{ flex: 1, position: 'sticky', top: 16, alignSelf: 'flex-start' }}><OrderSummaryPanel /></div>
+        <div style={{ flex: 1 }}><OrderSummaryPanel /></div>
       </div>
 
       <ItemDetailModal />

@@ -5,7 +5,7 @@ import type { MenuItem } from '../types';
 
 export function ItemDetailModal() {
   const highlightedItem = useAppStore((s) => s.agentUI.highlightedItem);
-  const menuItems = useAppStore((s) => s.menu.items);
+  const menuItems = useAppStore((s) => s.agentUI.menuItems);
 
   // Look up the highlighted item from local menu data
   const item: MenuItem | null = useMemo(() => {

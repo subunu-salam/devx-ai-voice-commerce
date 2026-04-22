@@ -9,6 +9,8 @@ import json
 
 # Current UI state — the single source of truth for what the frontend shows
 _ui_state = {
+    "categories": [],
+    "menuItems": {},
     "highlightedCategory": None,
     "highlightedItem": None,
     "orderItems": [],
@@ -74,6 +76,8 @@ def reset_ui_state():
     """Reset UI state to defaults."""
     global _ui_state
     _ui_state = {
+        "categories": [],
+        "menuItems": {},
         "highlightedCategory": None,
         "highlightedItem": None,
         "orderItems": [],

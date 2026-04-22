@@ -8,7 +8,6 @@ export function configureAuth(): void {
       Cognito: {
         userPoolId: config.userPoolId,
         userPoolClientId: config.userPoolClientId,
-        identityPoolId: config.identityPoolId,
       },
     },
   };

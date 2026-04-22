@@ -28,6 +28,8 @@ export interface OrderItem {
 
 // Agent-controlled UI state — sent as a complete snapshot via update_ui tool
 export interface AgentUIState {
+  categories: Category[];
+  menuItems: Record<string, MenuItem[]>; // categoryId -> items
   highlightedCategory: string | null;
   highlightedItem: string | null;
   orderItems: OrderItem[];
@@ -55,21 +57,10 @@ export interface UIState {
 
 // Full application state
 export interface AppState {
-  menu: {
-    categories: Category[];
-    items: Record<string, MenuItem[]>;
-    loading: boolean;
-    error: string | null;
-  };
-  // Agent-controlled display state
   agentUI: AgentUIState;
   voice: {
     sessionActive: boolean;
     listening: boolean;
     micPermission: 'granted' | 'denied' | 'prompt';
-  };
-  auth: {
-    authenticated: boolean;
-    userId: string | null;
   };
 }

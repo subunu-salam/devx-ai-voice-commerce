@@ -16,8 +16,6 @@ def main():
     config = {
         "userPoolId": outputs["UserPoolId"],
         "userPoolClientId": outputs["UserPoolClientId"],
-        "identityPoolId": outputs["IdentityPoolId"],
-        "menuTableName": outputs["MenuTableName"],
         "awsRegion": "us-east-1",
         "agentRuntimeArn": outputs["AgentRuntimeArn"],
     }

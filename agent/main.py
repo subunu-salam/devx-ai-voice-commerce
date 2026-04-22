@@ -186,12 +186,31 @@ async def voice_chat(websocket: WebSocket) -> None:
         set_websocket(websocket, asyncio.get_running_loop())
         reset_ui_state()
 
+        # Load menu data and send to frontend immediately
+        cats_result = get_categories()
+        categories = cats_result.get("categories", [])
+        menu_items = {}
+        for cat in categories:
+            cat_id = cat["categoryId"]
+            items_result = get_items_by_category(category_id=cat_id)
+            raw_items = items_result.get("items", [])
+            # Convert Decimals to native types for JSON serialization
+            menu_items[cat_id] = [
+                {k: (int(v) if isinstance(v, (int, float)) and k in ("price", "sortOrder") else
+                     bool(v) if k == "featured" else v)
+                 for k, v in item.items()}
+                for item in raw_items
+            ]
+
+        set_ui_state({
+            "categories": categories,
+            "menuItems": menu_items,
+        })
+
         async def safe_send_json(data):
-            """Send JSON, skip non-serializable events."""
             try:
                 await websocket.send_json(data)
             except (TypeError, ValueError):
-                # Skip events that can't be serialized (e.g. BidiModelTimeoutError)
                 try:
                     import json as _json
                     await websocket.send_text(_json.dumps(data, default=str))

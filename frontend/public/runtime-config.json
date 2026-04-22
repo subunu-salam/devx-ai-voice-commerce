@@ -1,8 +1,6 @@
 {
   "userPoolId": "us-east-1_HuV73Twmt",
   "userPoolClientId": "mc98d27fbfk9bva837sockt77",
-  "identityPoolId": "us-east-1:2650fe22-584f-4659-b146-0d8cf2c0953f",
-  "menuTableName": "DriveThruMenu",
   "awsRegion": "us-east-1",
   "agentRuntimeArn": "arn:aws:bedrock-agentcore:us-east-1:659041207151:runtime/DriveThruVoiceAgentV4-SD7rIy33Di"
 }
