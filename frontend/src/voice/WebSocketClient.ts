@@ -69,6 +69,7 @@ export function createWebSocketClient(): AgentCoreWebSocketClient {
         ws.onmessage = (msg) => {
           try {
             const event = JSON.parse(msg.data) as BidiEvent;
+            console.log('[WS] Event:', event.type);
             for (const cb of eventCallbacks) cb(event);
           } catch { /* ignore non-JSON */ }
         };

@@ -46,7 +46,45 @@ def get_ui_context() -> dict:
 
 
 @tool
+def load_menu() -> dict:
+    """Load the full menu and display it on the customer's screen.
+
+    Call this ONCE at the start of every conversation. It fetches all categories
+    and items, updates the screen, and returns a summary.
+    """
+    cats_result = get_categories()
+    categories = cats_result.get("categories", [])
+    menu_items = {}
+    for cat in categories:
+        cat_id = cat["categoryId"]
+        items_result = get_items_by_category(category_id=cat_id)
+        raw_items = items_result.get("items", [])
+        menu_items[cat_id] = [
+            {k: (int(v) if k in ("price", "sortOrder") and isinstance(v, (int, float)) else
+                 bool(v) if k == "featured" else v)
+             for k, v in item.items()}
+            for item in raw_items
+        ]
+
+    set_ui_state({
+        "categories": categories,
+        "menuItems": menu_items,
+    })
+
+    # Return a brief summary so the agent knows what's available
+    summary = []
+    for cat in categories:
+        cat_id = cat["categoryId"]
+        items = menu_items.get(cat_id, [])
+        names = [i["name"] for i in items]
+        summary.append(f"{cat['name']}: {', '.join(names)}")
+    return {"status": "menu_loaded", "summary": summary}
+
+
+@tool
 def update_ui(
+    categories: list = None,
+    menu_items: dict = None,
     highlighted_category: str = None,
     highlighted_item: str = None,
     order_items: list = None,
@@ -58,6 +96,9 @@ def update_ui(
 
     Only include the fields you want to change — others keep their current value.
 
+    Args:
+        categories: List of menu categories. Each: {"categoryId": "burgers", "name": "Burgers", "sortOrder": 1}
+        menu_items: Dict of categoryId to list of items. Each item: {"itemId": "...", "name": "...", "description": "...", "price": 799, "imageUrl": "...", "category": "...", "featured": true, "sortOrder": 1}
     Args:
         highlighted_category: Category ID to highlight/scroll to (e.g. "burgers"). Set to "" to clear.
         highlighted_item: Item ID to highlight and show details for (e.g. "classic-burger"). Set to "" to clear.
@@ -72,6 +113,10 @@ def update_ui(
     """
     current = get_ui_state()
 
+    if categories is not None:
+        current["categories"] = categories
+    if menu_items is not None:
+        current["menuItems"] = menu_items
     if highlighted_category is not None:
         current["highlightedCategory"] = highlighted_category or None
     if highlighted_item is not None:
@@ -106,8 +151,13 @@ and love making personalized suggestions.
 - Conversational — ask follow-up questions like "Are you in the mood for something \
 hearty or something lighter?" or "Want to add fries and a drink with that?"
 
+## First Action (MANDATORY)
+When the conversation starts, BEFORE greeting the customer, you MUST call load_menu. \
+This single call loads the entire menu and displays it on the customer's screen. \
+Do this silently — don't mention it.
+
 ## Greeting
-Start with a warm welcome and offer to help: \
+After loading the menu, greet with: \
 "Hey there, welcome! Hungry? I can walk you through our menu or you can just tell me \
 what you're craving and I'll get it started for you!"
 
@@ -140,7 +190,7 @@ WHEN THE ORDER CHANGES → call update_ui(order_items=[...], order_total=...).
 The item detail modal closes automatically when you update categories or order.
 
 ## Tools
-Menu: get_categories, get_items_by_category, get_recommendations
+Menu: load_menu (initial load), get_categories, get_items_by_category, get_recommendations
 Order: add_to_order, remove_from_order, get_order_summary, place_order, cancel_order
 Screen: update_ui
 Context: get_ui_context (use when customer says "this one", "that", etc.)
@@ -173,6 +223,7 @@ async def voice_chat(websocket: WebSocket) -> None:
     agent = BidiAgent(
         model=sonic_model,
         tools=[
+            load_menu,
             get_categories, get_items_by_category, get_recommendations,
             add_to_order, remove_from_order, get_order_summary, place_order, cancel_order,
             update_ui, get_ui_context, stop_conversation,
@@ -183,36 +234,15 @@ async def voice_chat(websocket: WebSocket) -> None:
     try:
         await websocket.accept()
         import asyncio
+        import json as _json
         set_websocket(websocket, asyncio.get_running_loop())
         reset_ui_state()
-
-        # Load menu data and send to frontend immediately
-        cats_result = get_categories()
-        categories = cats_result.get("categories", [])
-        menu_items = {}
-        for cat in categories:
-            cat_id = cat["categoryId"]
-            items_result = get_items_by_category(category_id=cat_id)
-            raw_items = items_result.get("items", [])
-            # Convert Decimals to native types for JSON serialization
-            menu_items[cat_id] = [
-                {k: (int(v) if isinstance(v, (int, float)) and k in ("price", "sortOrder") else
-                     bool(v) if k == "featured" else v)
-                 for k, v in item.items()}
-                for item in raw_items
-            ]
-
-        set_ui_state({
-            "categories": categories,
-            "menuItems": menu_items,
-        })
 
         async def safe_send_json(data):
             try:
                 await websocket.send_json(data)
             except (TypeError, ValueError):
                 try:
-                    import json as _json
                     await websocket.send_text(_json.dumps(data, default=str))
                 except Exception:
                     pass

@@ -36,10 +36,14 @@ export class VoiceSessionManager {
     }
     useAppStore.getState().setMicPermission('granted');
 
-    // 2. Connect WebSocket
+    // 2. Register event handler BEFORE connecting so we don't miss the initial state
+    this.playbackContext = new AudioContext({ sampleRate: 16000 });
+    this.client.onEvent((event: BidiEvent) => this.handleEvent(event));
+
+    // 3. Connect WebSocket
     await this.client.connect(runtimeArn, region, jwtToken);
 
-    // 3. Set up audio capture → send as bidi_audio_input JSON events
+    // 4. Set up audio capture → send as bidi_audio_input JSON events
     this.captureContext = new AudioContext({ sampleRate: 16000 });
     const source = this.captureContext.createMediaStreamSource(this.mediaStream);
     const processor = this.captureContext.createScriptProcessor(4096, 1, 1);
@@ -64,10 +68,6 @@ export class VoiceSessionManager {
 
     source.connect(processor);
     processor.connect(this.captureContext.destination);
-
-    // 4. Handle incoming events from agent
-    this.playbackContext = new AudioContext({ sampleRate: 16000 });
-    this.client.onEvent((event: BidiEvent) => this.handleEvent(event));
 
     // 5. Mark active
     this.active = true;
@@ -119,6 +119,7 @@ export class VoiceSessionManager {
 
       case 'ui_state_update':
         // Agent sent the full UI state — apply it directly
+        console.log('[Voice] UI state update received, categories:', (event.state as any)?.categories?.length);
         if (event.state && typeof event.state === 'object') {
           useAppStore.getState().applyAgentUIState(event.state as any);
         }
