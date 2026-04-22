@@ -1,40 +1,55 @@
 # Drive-Thru Voice Ordering
 
-A drive-thru ordering app where customers place food orders using natural voice interaction powered by Amazon Nova Sonic via the Strands Agents SDK.
+A voice-powered drive-thru ordering app built with Amazon Nova Sonic, Strands Agents SDK, and React. Customers talk to an AI attendant who takes their order, browses the menu, and manages the entire UI — all through natural conversation.
 
 ## Architecture
 
 ```
-Browser (React SPA)
-  ├── CloudFront → S3 (static hosting)
-  ├── Cognito (auth + AWS credentials)
-  ├── DynamoDB (menu data, read via AWS SDK)
-  └── WebSocket → AgentCore Runtime
-                    └── Strands BidiAgent + Nova Sonic
-                          ├── Menu Tools → DynamoDB
-                          └── Order Tools → DynamoDB
+┌─────────────────────────────────────────────────────┐
+│  Browser (React SPA)                                │
+│  ┌───────────┐  ┌──────────┐  ┌──────────────────┐ │
+│  │ Start     │→ │ WebSocket│→ │ Menu + Order UI   │ │
+│  │ Order btn │  │ (OAuth)  │  │ (agent-controlled)│ │
+│  └───────────┘  └──────────┘  └──────────────────┘ │
+└────────────────────┬────────────────────────────────┘
+                     │ wss:// (JSON protocol)
+┌────────────────────▼────────────────────────────────┐
+│  AgentCore Runtime (microVM per session)             │
+│  ┌──────────────────────────────────────────────┐   │
+│  │  Strands BidiAgent + Nova Sonic              │   │
+│  │  ┌────────────┐ ┌───────────┐ ┌───────────┐ │   │
+│  │  │ Menu Tools │ │Order Tools│ │ update_ui  │ │   │
+│  │  │ (DynamoDB) │ │ (DynamoDB)│ │ (WebSocket)│ │   │
+│  │  └────────────┘ └───────────┘ └───────────┘ │   │
+│  └──────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
 ```
+
+**Key design decisions:**
+- **Agent controls the UI** — the agent has a single `update_ui` tool that sets the entire frontend display state. The frontend just renders what it receives.
+- **No direct AWS calls from browser** — the frontend doesn't talk to DynamoDB or S3 directly. All data flows through the agent via WebSocket.
+- **JSON protocol** — all WebSocket communication is JSON (audio is base64-encoded). Strands BidiAgent handles routing natively.
+- **OAuth auth** — Cognito JWT token via `Sec-WebSocket-Protocol` header for WebSocket authentication.
 
 ## Prerequisites
 
 - Node.js 18+
 - Python 3.11+
+- Docker (for building the agent container)
 - AWS CLI configured with credentials
 - AWS CDK CLI (`npm install -g aws-cdk`)
-- An AWS account with access to Amazon Bedrock Nova Sonic in us-east-1
+- Amazon Bedrock Nova Sonic access in us-east-1
 
 ## Project Structure
 
 ```
+agent/            – Strands BidiAgent (FastAPI + Nova Sonic, containerized)
+frontend/         – React SPA (Vite + TypeScript)
 cdk/              – Two CDK stacks (BackendStack + FrontendStack)
-agent/            – Strands BidiAgent with menu & order tools
-frontend/         – Vite + React + TypeScript SPA
-data/             – Sample menu data and placeholder images
-deploy.sh         – One-command deploy script
-generate_config.py – Generates runtime-config.json from backend outputs
+data/             – Menu data (JSON) and food images
+deploy.sh         – One-command deploy
+generate_config.py – Generates frontend config from CDK outputs
 ```
-
----
 
 ## Deploy
 
@@ -44,14 +59,13 @@ generate_config.py – Generates runtime-config.json from backend outputs
 ./deploy.sh
 ```
 
-This runs all four steps automatically:
+This runs four steps:
+1. Deploys BackendStack (DynamoDB, S3, CloudFront, Cognito, AgentCore Runtime, seeds menu data + images)
+2. Generates `frontend/public/runtime-config.json` from backend outputs
+3. Builds the frontend
+4. Deploys FrontendStack (uploads to S3, invalidates CloudFront)
 
-1. Deploys the backend stack (DynamoDB, S3, CloudFront, Cognito, AgentCore Runtime, seeds menu data + images)
-2. Reads backend outputs and generates `frontend/public/runtime-config.json`
-3. Builds the frontend (`npm ci && npm run build`)
-4. Deploys the frontend stack (uploads dist/ to S3, invalidates CloudFront)
-
-### Step by step (if you prefer)
+### Step by step
 
 ```bash
 # 1. Deploy backend
@@ -91,43 +105,54 @@ aws cognito-idp admin-set-user-password \
   --permanent
 ```
 
-## Try It Out
+## How It Works
 
-1. Open `https://<DistributionDomainName>` in your browser
-2. Sign in with the Cognito user you created
-3. Browse the visual menu (5 categories, 21 items)
-4. Click "Start Voice Order" and allow microphone access
-5. Talk to the AI attendant
+1. **Sign in** → Cognito Authenticator handles sign-in, sign-up, password reset
+2. **Start Your Order** → big centered button, connects WebSocket to AgentCore
+3. **Agent loads menu** → calls `load_menu` tool, sends full menu to frontend via `update_ui`
+4. **Voice conversation** → bidirectional audio streaming with Nova Sonic
+5. **Agent controls the screen** → highlights categories, shows item details, updates order panel
+6. **Place order** → agent persists to DynamoDB, shows confirmation
 
 ## Sample Menu
 
-Seeded automatically on deploy:
+Seeded automatically on deploy from `data/menu_items.json`:
 
-| Category | Items | Price Range |
-|----------|-------|-------------|
-| Burgers  | Classic, Cheese, Bacon, Double, Veggie | $7.99–$11.99 |
-| Chicken  | Crispy Sandwich, Spicy, Nuggets 6pc/10pc | $5.99–$9.99 |
-| Sides    | Fries, Onion Rings, Mozz Sticks, Salad | $3.49–$5.49 |
-| Drinks   | Cola, Lemonade, Iced Tea, Milkshakes | $2.49–$5.49 |
-| Desserts | Apple Pie, Sundae, Cookie | $1.99–$4.49 |
+| Category | Items |
+|----------|-------|
+| Burgers  | Classic Burger, Cheeseburger, Double Burger, Veggie Burger |
+| Chicken  | Crispy Chicken Sandwich, Spicy Chicken, Nuggets 6pc/10pc |
+| Sides    | French Fries, Onion Rings, Mozzarella Sticks, Side Salad |
+| Drinks   | Cola, Lemonade, Iced Tea, Chocolate/Vanilla Milkshake |
+| Desserts | Apple Pie, Hot Fudge Sundae, Chocolate Chip Cookie |
 
-Edit `data/menu_items.json` and re-run `./deploy.sh` to update.
+Edit `data/menu_items.json` and redeploy to update.
 
 ## Local Development
 
 ```bash
-cd frontend && npm run dev
+cd frontend
+npm install
+npm run dev
 ```
 
-For local dev, copy `frontend/public/runtime-config.json` from a previous deploy, or create one manually.
+Create `frontend/public/runtime-config.json` with your deployed resource IDs for local dev.
 
-### Run Tests
+## Agent Tools
 
-```bash
-cd cdk && python -m pytest tests/ -v       # CDK
-python -m pytest agent/ -v                  # Agent
-cd frontend && npm test                     # Frontend
-```
+| Tool | Purpose |
+|------|---------|
+| `load_menu` | Loads full menu from DynamoDB, sends to frontend |
+| `get_categories` | Returns menu categories |
+| `get_items_by_category` | Returns items in a category |
+| `get_recommendations` | Returns featured items |
+| `add_to_order` | Adds item with optional special instructions |
+| `remove_from_order` | Removes item from order |
+| `get_order_summary` | Returns current order |
+| `place_order` | Persists order to DynamoDB |
+| `cancel_order` | Clears the order |
+| `update_ui` | Sets the frontend display state |
+| `get_ui_context` | Returns what the customer is looking at |
 
 ## Redeploying
 
