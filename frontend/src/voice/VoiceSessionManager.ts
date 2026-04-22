@@ -43,7 +43,14 @@ export class VoiceSessionManager {
     // 3. Connect WebSocket
     await this.client.connect(runtimeArn, region, jwtToken);
 
-    // 4. Set up audio capture → send as bidi_audio_input JSON events
+    // 4. Send initial greeting to trigger the agent
+    this.client.send({
+      type: 'bidi_text_input',
+      text: 'Hello',
+      role: 'user',
+    });
+
+    // 5. Set up audio capture → send as bidi_audio_input JSON events
     this.captureContext = new AudioContext({ sampleRate: 16000 });
     const source = this.captureContext.createMediaStreamSource(this.mediaStream);
     const processor = this.captureContext.createScriptProcessor(4096, 1, 1);

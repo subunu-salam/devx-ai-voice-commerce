@@ -107,7 +107,7 @@ export default function App() {
           {sessionActive && (
             <button onClick={handleStopVoice} type="button">Stop</button>
           )}
-          <button onClick={signOut} type="button">Sign Out</button>
+
         </div>
       </div>
 
