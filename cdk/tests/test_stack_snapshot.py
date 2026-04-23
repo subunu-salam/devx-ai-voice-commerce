@@ -111,7 +111,7 @@ class TestS3Buckets:
     """Verify S3 buckets — Requirements 7.3, 7.4."""
 
     def test_has_two_s3_buckets(self, template):
-        template.resource_count_is("AWS::S3::Bucket", 2)
+        template.resource_count_is("AWS::S3::Bucket", 4)
 
     def test_buckets_block_public_access(self, template):
         """Both buckets should block all public access."""

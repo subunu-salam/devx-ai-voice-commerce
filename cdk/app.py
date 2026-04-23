@@ -8,10 +8,18 @@ Deploy flow:
 """
 import os
 import aws_cdk as cdk
+from cdk_nag import AwsSolutionsChecks, NagSuppressions, NagReportFormat
 from backend_stack import BackendStack
 from frontend_stack import FrontendStack
 
 app = cdk.App()
+
+# Apply CDK Nag AWS Solutions checks to all stacks
+cdk.Aspects.of(app).add(AwsSolutionsChecks(
+    verbose=True,
+    reports=True,
+    report_formats=[NagReportFormat.CSV, NagReportFormat.JSON],
+))
 
 backend = BackendStack(app, "BackendStack")
 
@@ -26,5 +34,38 @@ frontend = FrontendStack(
     distribution_id=distribution_id,
 )
 frontend.add_dependency(backend)
+
+# --- CDK Nag Suppressions for FrontendStack ---
+# FrontendStack only contains a CDK BucketDeployment (managed construct)
+NagSuppressions.add_stack_suppressions(
+    frontend,
+    [
+        {
+            "id": "AwsSolutions-L1",
+            "reason": "Lambda runtime version is controlled by the CDK BucketDeployment construct.",
+        },
+        {
+            "id": "AwsSolutions-IAM4",
+            "reason": "AWSLambdaBasicExecutionRole is the standard managed policy for Lambda CloudWatch Logs access.",
+            "applies_to": [
+                "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+            ],
+        },
+        {
+            "id": "AwsSolutions-IAM5",
+            "reason": "Wildcard permissions are required by CDK BucketDeployment for S3 operations on deployment assets and destination bucket.",
+            "applies_to": [
+                "Action::s3:GetObject*",
+                "Action::s3:GetBucket*",
+                "Action::s3:List*",
+                "Action::s3:DeleteObject*",
+                "Action::s3:Abort*",
+                "Resource::arn:<AWS::Partition>:s3:::cdk-hnb659fds-assets-<AWS::AccountId>-<AWS::Region>/*",
+                "Resource::arn:<AWS::Partition>:s3:::placeholder/*",
+                "Resource::*",
+            ],
+        },
+    ],
+)
 
 app.synth()

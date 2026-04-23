@@ -17,6 +17,7 @@ from aws_cdk import (
     custom_resources as cr,
 )
 import aws_cdk.aws_bedrock_agentcore_alpha as agentcore
+from cdk_nag import NagSuppressions
 from constructs import Construct
 
 
@@ -33,6 +34,9 @@ class BackendStack(Stack):
             partition_key=dynamodb.Attribute(name="PK", type=dynamodb.AttributeType.STRING),
             sort_key=dynamodb.Attribute(name="SK", type=dynamodb.AttributeType.STRING),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            point_in_time_recovery_specification=dynamodb.PointInTimeRecoverySpecification(
+                point_in_time_recovery_enabled=True,
+            ),
             removal_policy=RemovalPolicy.DESTROY,
         )
 
@@ -41,14 +45,30 @@ class BackendStack(Stack):
             table_name="DriveThruOrders",
             partition_key=dynamodb.Attribute(name="orderId", type=dynamodb.AttributeType.STRING),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            point_in_time_recovery_specification=dynamodb.PointInTimeRecoverySpecification(
+                point_in_time_recovery_enabled=True,
+            ),
             removal_policy=RemovalPolicy.DESTROY,
         )
 
         # --- S3 Buckets ---
 
+        # Access logs bucket for S3 server access logging
+        self.access_logs_bucket = s3.Bucket(
+            self, "AccessLogsBucket",
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            enforce_ssl=True,
+            removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True,
+            object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
+        )
+
         self.images_bucket = s3.Bucket(
             self, "FoodImagesBucket",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            enforce_ssl=True,
+            server_access_logs_bucket=self.access_logs_bucket,
+            server_access_logs_prefix="food-images-logs/",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
         )
@@ -56,6 +76,9 @@ class BackendStack(Stack):
         self.hosting_bucket = s3.Bucket(
             self, "FrontendHostingBucket",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            enforce_ssl=True,
+            server_access_logs_bucket=self.access_logs_bucket,
+            server_access_logs_prefix="hosting-logs/",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
         )
@@ -111,6 +134,16 @@ class BackendStack(Stack):
 
         # --- CloudFront Distribution ---
 
+        # S3 bucket for CloudFront access logs
+        self.cf_logs_bucket = s3.Bucket(
+            self, "CloudFrontLogsBucket",
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            enforce_ssl=True,
+            removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True,
+            object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
+        )
+
         self.oai = cloudfront.OriginAccessIdentity(
             self, "HostingOAI",
             comment="OAI for Drive-Thru frontend hosting bucket",
@@ -126,6 +159,10 @@ class BackendStack(Stack):
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             ),
             default_root_object="index.html",
+            minimum_protocol_version=cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+            enable_logging=True,
+            log_bucket=self.cf_logs_bucket,
+            log_file_prefix="cf-access-logs/",
             error_responses=[
                 cloudfront.ErrorResponse(http_status=403, response_http_status=200, response_page_path="/index.html"),
                 cloudfront.ErrorResponse(http_status=404, response_http_status=200, response_page_path="/index.html"),
@@ -145,7 +182,7 @@ class BackendStack(Stack):
             ),
             password_policy=cognito.PasswordPolicy(
                 min_length=8, require_lowercase=True, require_uppercase=True,
-                require_digits=True, require_symbols=False,
+                require_digits=True, require_symbols=True,
             ),
             removal_policy=RemovalPolicy.DESTROY,
         )
@@ -203,3 +240,101 @@ class BackendStack(Stack):
         cdk.CfnOutput(self, "UserPoolClientId", value=self.user_pool_client.user_pool_client_id)
         cdk.CfnOutput(self, "AgentRuntimeId", value=self.agent_runtime.agent_runtime_id)
         cdk.CfnOutput(self, "AgentRuntimeArn", value=self.agent_runtime.agent_runtime_arn)
+
+        # --- CDK Nag Suppressions ---
+
+        # Access logs bucket does not need its own access logs (would be recursive)
+        NagSuppressions.add_resource_suppressions(
+            self.access_logs_bucket,
+            [{"id": "AwsSolutions-S1", "reason": "This is the access logs bucket itself; enabling logging would create a recursive loop."}],
+        )
+
+        # CloudFront logs bucket does not need its own access logs
+        NagSuppressions.add_resource_suppressions(
+            self.cf_logs_bucket,
+            [{"id": "AwsSolutions-S1", "reason": "This is the CloudFront logs bucket itself; enabling logging would create a recursive loop."}],
+        )
+
+        # CloudFront OAI vs OAC — OAI is used intentionally with S3BucketOrigin.with_origin_access_identity
+        NagSuppressions.add_resource_suppressions(
+            self.distribution,
+            [
+                {"id": "AwsSolutions-CFR1", "reason": "Geo restrictions not required for this demo application."},
+                {"id": "AwsSolutions-CFR2", "reason": "WAF integration not required for this demo application."},
+                {"id": "AwsSolutions-CFR7", "reason": "Using OAI with S3BucketOrigin; OAC migration is planned but OAI still provides secure S3 access."},
+                {"id": "AwsSolutions-CFR4", "reason": "Distribution uses the default CloudFront viewer certificate which enforces TLSv1 minimum. A custom domain with ACM certificate is required to enforce TLSv1.2; not applicable for this demo."},
+            ],
+        )
+
+        # Cognito — MFA and Plus tier are not required for this demo
+        NagSuppressions.add_resource_suppressions(
+            self.user_pool,
+            [
+                {"id": "AwsSolutions-COG2", "reason": "MFA not required for this demo application. Enable for production."},
+                {"id": "AwsSolutions-COG8", "reason": "Cognito Plus tier not required for this demo. Enable for production."},
+            ],
+        )
+
+        # Lambda runtime version — CDK BucketDeployment and custom resource provider use their own runtimes
+        NagSuppressions.add_stack_suppressions(
+            self,
+            [
+                {
+                    "id": "AwsSolutions-L1",
+                    "reason": "Lambda runtime versions for CDK-managed BucketDeployment and custom resource provider are controlled by the CDK framework.",
+                },
+            ],
+        )
+
+        # IAM managed policies — AWSLambdaBasicExecutionRole is standard for Lambda logging
+        NagSuppressions.add_stack_suppressions(
+            self,
+            [
+                {
+                    "id": "AwsSolutions-IAM4",
+                    "reason": "AWSLambdaBasicExecutionRole is the standard managed policy for Lambda CloudWatch Logs access.",
+                    "applies_to": [
+                        "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+                    ],
+                },
+            ],
+        )
+
+        # IAM wildcard permissions — CDK-managed constructs (BucketDeployment, custom resources, AgentCore)
+        NagSuppressions.add_stack_suppressions(
+            self,
+            [
+                {
+                    "id": "AwsSolutions-IAM5",
+                    "reason": "Wildcard permissions are required by CDK BucketDeployment for S3 operations on deployment assets and destination bucket.",
+                    "applies_to": [
+                        "Action::s3:GetObject*",
+                        "Action::s3:GetBucket*",
+                        "Action::s3:List*",
+                        "Action::s3:DeleteObject*",
+                        "Action::s3:Abort*",
+                        "Resource::arn:<AWS::Partition>:s3:::cdk-hnb659fds-assets-<AWS::AccountId>-<AWS::Region>/*",
+                        "Resource::<FrontendHostingBucket12B6CA59.Arn>/*",
+                        "Resource::<FoodImagesBucket01218028.Arn>/*",
+                    ],
+                },
+                {
+                    "id": "AwsSolutions-IAM5",
+                    "reason": "Wildcard on Lambda function ARN version is required by the CDK custom resource provider framework to invoke the seed function.",
+                    "applies_to": [
+                        "Resource::<SeedMenuFunction60786485.Arn>:*",
+                    ],
+                },
+                {
+                    "id": "AwsSolutions-IAM5",
+                    "reason": "AgentCore Runtime requires wildcard log group and workload identity permissions for its managed infrastructure.",
+                    "applies_to": [
+                        "Resource::arn:<AWS::Partition>:logs:<AWS::Region>:<AWS::AccountId>:log-group:/aws/bedrock-agentcore/runtimes/*",
+                        "Resource::arn:<AWS::Partition>:logs:<AWS::Region>:<AWS::AccountId>:log-group:*",
+                        "Resource::arn:<AWS::Partition>:logs:<AWS::Region>:<AWS::AccountId>:log-group:/aws/bedrock-agentcore/runtimes/*:log-stream:*",
+                        "Resource::arn:<AWS::Partition>:bedrock-agentcore:<AWS::Region>:<AWS::AccountId>:workload-identity-directory/default/workload-identity/*",
+                        "Resource::*",
+                    ],
+                },
+            ],
+        )
