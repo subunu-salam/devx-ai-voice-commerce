@@ -80,6 +80,13 @@ def place_order(user_id: str) -> dict:
         return {"error": "Cannot place an empty order."}
     order_record = _order_state.place_order(user_id)
     _orders_table.put_item(Item=order_record)
+    logger.info(
+        "ORDER_PLACED: orderId=%s userId=%s total=%s itemCount=%s",
+        order_record["orderId"],
+        order_record["userId"],
+        order_record["total"],
+        len(order_record["items"]),
+    )
     _order_state.cancel()
     return order_record
 
@@ -87,6 +94,7 @@ def place_order(user_id: str) -> dict:
 @tool
 def cancel_order(tool_context=None) -> dict:
     """Clears all items from the current order."""
+    logger.info("ORDER_CANCELLED: itemCount=%s", len(_order_state.items))
     _order_state.cancel()
     summary = {"message": "Order cancelled.", **_order_state.get_summary()}
     return summary

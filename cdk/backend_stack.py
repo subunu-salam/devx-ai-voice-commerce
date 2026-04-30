@@ -14,6 +14,7 @@ from aws_cdk import (
     aws_cloudfront_origins as origins,
     aws_cognito as cognito,
     aws_iam as iam,
+    aws_wafv2 as wafv2,
     custom_resources as cr,
 )
 import aws_cdk.aws_bedrock_agentcore_alpha as agentcore
@@ -132,6 +133,72 @@ class BackendStack(Stack):
                 memory_limit=512,
             )
 
+        # --- WAF WebACL for CloudFront ---
+
+        self.web_acl = wafv2.CfnWebACL(
+            self, "CloudFrontWebACL",
+            default_action=wafv2.CfnWebACL.DefaultActionProperty(allow={}),
+            scope="CLOUDFRONT",
+            visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                cloud_watch_metrics_enabled=True,
+                metric_name="DriveThruWAFMetrics",
+                sampled_requests_enabled=True,
+            ),
+            rules=[
+                # AWS Managed Rules — Common Rule Set (OWASP Top 10)
+                wafv2.CfnWebACL.RuleProperty(
+                    name="AWSManagedRulesCommonRuleSet",
+                    priority=1,
+                    override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+                    statement=wafv2.CfnWebACL.StatementProperty(
+                        managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                            vendor_name="AWS",
+                            name="AWSManagedRulesCommonRuleSet",
+                        ),
+                    ),
+                    visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                        cloud_watch_metrics_enabled=True,
+                        metric_name="AWSCommonRules",
+                        sampled_requests_enabled=True,
+                    ),
+                ),
+                # AWS Managed Rules — Known Bad Inputs
+                wafv2.CfnWebACL.RuleProperty(
+                    name="AWSManagedRulesKnownBadInputsRuleSet",
+                    priority=2,
+                    override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+                    statement=wafv2.CfnWebACL.StatementProperty(
+                        managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                            vendor_name="AWS",
+                            name="AWSManagedRulesKnownBadInputsRuleSet",
+                        ),
+                    ),
+                    visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                        cloud_watch_metrics_enabled=True,
+                        metric_name="AWSKnownBadInputs",
+                        sampled_requests_enabled=True,
+                    ),
+                ),
+                # Rate-based rule — limit to 2000 requests per 5 minutes per IP
+                wafv2.CfnWebACL.RuleProperty(
+                    name="RateLimitRule",
+                    priority=3,
+                    action=wafv2.CfnWebACL.RuleActionProperty(block={}),
+                    statement=wafv2.CfnWebACL.StatementProperty(
+                        rate_based_statement=wafv2.CfnWebACL.RateBasedStatementProperty(
+                            limit=2000,
+                            aggregate_key_type="IP",
+                        ),
+                    ),
+                    visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
+                        cloud_watch_metrics_enabled=True,
+                        metric_name="RateLimitRule",
+                        sampled_requests_enabled=True,
+                    ),
+                ),
+            ],
+        )
+
         # --- CloudFront Distribution ---
 
         # S3 bucket for CloudFront access logs
@@ -150,6 +217,51 @@ class BackendStack(Stack):
         )
         self.hosting_bucket.grant_read(self.oai)
 
+        # --- Security Response Headers ---
+        self.security_headers = cloudfront.ResponseHeadersPolicy(
+            self, "SecurityHeadersPolicy",
+            response_headers_policy_name="DriveThruSecurityHeaders",
+            security_headers_behavior=cloudfront.ResponseSecurityHeadersBehavior(
+                content_security_policy=cloudfront.ResponseHeadersContentSecurityPolicy(
+                    # Allow scripts/styles from self and inline (needed for Vite builds).
+                    # connect-src allows Cognito and AgentCore WebSocket endpoints.
+                    content_security_policy=(
+                        "default-src 'self'; "
+                        "script-src 'self'; "
+                        "style-src 'self' 'unsafe-inline'; "
+                        "img-src 'self' data:; "
+                        "font-src 'self'; "
+                        "connect-src 'self' https://cognito-idp.*.amazonaws.com https://*.auth.*.amazoncognito.com wss://bedrock-agentcore.*.amazonaws.com; "
+                        "media-src 'self' blob:; "
+                        "frame-ancestors 'none'; "
+                        "base-uri 'self'; "
+                        "form-action 'self';"
+                    ),
+                    override=True,
+                ),
+                content_type_options=cloudfront.ResponseHeadersContentTypeOptions(override=True),
+                frame_options=cloudfront.ResponseHeadersFrameOptions(
+                    frame_option=cloudfront.HeadersFrameOption.DENY,
+                    override=True,
+                ),
+                referrer_policy=cloudfront.ResponseHeadersReferrerPolicy(
+                    referrer_policy=cloudfront.HeadersReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
+                    override=True,
+                ),
+                strict_transport_security=cloudfront.ResponseHeadersStrictTransportSecurity(
+                    access_control_max_age=cdk.Duration.days(365),
+                    include_subdomains=True,
+                    preload=True,
+                    override=True,
+                ),
+                xss_protection=cloudfront.ResponseHeadersXSSProtection(
+                    protection=True,
+                    mode_block=True,
+                    override=True,
+                ),
+            ),
+        )
+
         self.distribution = cloudfront.Distribution(
             self, "FrontendDistribution",
             default_behavior=cloudfront.BehaviorOptions(
@@ -157,9 +269,11 @@ class BackendStack(Stack):
                     self.hosting_bucket, origin_access_identity=self.oai,
                 ),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                response_headers_policy=self.security_headers,
             ),
             default_root_object="index.html",
             minimum_protocol_version=cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+            web_acl_id=self.web_acl.attr_arn,
             enable_logging=True,
             log_bucket=self.cf_logs_bucket,
             log_file_prefix="cf-access-logs/",
@@ -184,6 +298,7 @@ class BackendStack(Stack):
                 min_length=8, require_lowercase=True, require_uppercase=True,
                 require_digits=True, require_symbols=True,
             ),
+            advanced_security_mode=cognito.AdvancedSecurityMode.ENFORCED,
             removal_policy=RemovalPolicy.DESTROY,
         )
 
@@ -192,6 +307,8 @@ class BackendStack(Stack):
             user_pool_client_name="DriveThruWebClient",
             auth_flows=cognito.AuthFlow(user_password=True, user_srp=True),
             generate_secret=False,
+            id_token_validity=cdk.Duration.minutes(15),
+            access_token_validity=cdk.Duration.minutes(15),
         )
 
         # --- AgentCore Runtime ---
@@ -260,18 +377,16 @@ class BackendStack(Stack):
             self.distribution,
             [
                 {"id": "AwsSolutions-CFR1", "reason": "Geo restrictions not required for this demo application."},
-                {"id": "AwsSolutions-CFR2", "reason": "WAF integration not required for this demo application."},
                 {"id": "AwsSolutions-CFR7", "reason": "Using OAI with S3BucketOrigin; OAC migration is planned but OAI still provides secure S3 access."},
                 {"id": "AwsSolutions-CFR4", "reason": "Distribution uses the default CloudFront viewer certificate which enforces TLSv1 minimum. A custom domain with ACM certificate is required to enforce TLSv1.2; not applicable for this demo."},
             ],
         )
 
-        # Cognito — MFA and Plus tier are not required for this demo
+        # Cognito — MFA is not required for this demo (advanced security is enabled)
         NagSuppressions.add_resource_suppressions(
             self.user_pool,
             [
                 {"id": "AwsSolutions-COG2", "reason": "MFA not required for this demo application. Enable for production."},
-                {"id": "AwsSolutions-COG8", "reason": "Cognito Plus tier not required for this demo. Enable for production."},
             ],
         )
 

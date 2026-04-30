@@ -1,8 +1,35 @@
 """In-memory order state management for drive-thru voice ordering agent."""
 
+import html
+import re
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+
+# --- Input validation constants ---
+MAX_SPECIAL_INSTRUCTIONS_LENGTH = 500
+MAX_QUANTITY_PER_ITEM = 99
+# Allow letters, numbers, spaces, and common punctuation for food instructions
+SPECIAL_INSTRUCTIONS_PATTERN = re.compile(r"^[a-zA-Z0-9\s.,!?'\-/()]+$")
+
+
+def sanitize_special_instructions(instructions: str) -> str:
+    """Sanitize special instructions to prevent injection attacks.
+
+    - Truncates to MAX_SPECIAL_INSTRUCTIONS_LENGTH
+    - HTML-encodes to prevent stored XSS
+    - Strips characters that don't match the allowed pattern
+    """
+    if not instructions:
+        return ""
+    # Truncate
+    instructions = instructions[:MAX_SPECIAL_INSTRUCTIONS_LENGTH]
+    # Strip disallowed characters
+    if not SPECIAL_INSTRUCTIONS_PATTERN.match(instructions):
+        instructions = re.sub(r"[^a-zA-Z0-9\s.,!?'\-/()]", "", instructions)
+    # HTML-encode as defense-in-depth against XSS if rendered in a web context
+    instructions = html.escape(instructions, quote=True)
+    return instructions.strip()
 
 
 @dataclass
@@ -29,8 +56,15 @@ class OrderState:
         """Add an item or increment its quantity if already present."""
         if quantity < 1:
             raise ValueError("Quantity must be >= 1")
+        if quantity > MAX_QUANTITY_PER_ITEM:
+            raise ValueError(f"Quantity must be <= {MAX_QUANTITY_PER_ITEM}")
+        # Sanitize special instructions to prevent injection
+        special_instructions = sanitize_special_instructions(special_instructions)
         if item_id in self.items:
-            self.items[item_id].quantity += quantity
+            new_qty = self.items[item_id].quantity + quantity
+            if new_qty > MAX_QUANTITY_PER_ITEM:
+                raise ValueError(f"Total quantity for item cannot exceed {MAX_QUANTITY_PER_ITEM}")
+            self.items[item_id].quantity = new_qty
             if special_instructions:
                 self.items[item_id].special_instructions = special_instructions
         else:

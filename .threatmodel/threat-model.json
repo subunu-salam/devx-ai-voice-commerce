@@ -1,0 +1,449 @@
+{
+  "schema": 1,
+  "applicationInfo": {
+    "name": "Threat Model Export",
+    "description": "Drive-thru voice ordering application built with Amazon Nova Sonic, Strands Agents SDK, and React. Customers interact with an AI voice attendant via WebSocket to browse a menu, customize orders, and place them. The agent controls the entire frontend UI through a single update_ui tool. Architecture includes a React SPA frontend served via CloudFront, a Python/FastAPI backend agent running on AWS Bedrock AgentCore Runtime, DynamoDB for menu and order storage, S3 for image hosting, and Cognito for authentication. All communication flows through bidirectional WebSocket with JSON protocol (audio is base64-encoded)."
+  },
+  "architecture": {
+    "description": ""
+  },
+  "dataflow": {
+    "description": ""
+  },
+  "assumptions": [
+    {
+      "id": "A001",
+      "numericId": 1,
+      "content": "Authentication is handled by AWS Cognito with username/password (no MFA enabled). JWT tokens are passed via Sec-WebSocket-Protocol header for WebSocket auth.",
+      "displayOrder": 1,
+      "metadata": []
+    },
+    {
+      "id": "A002",
+      "numericId": 2,
+      "content": "All communication uses TLS/HTTPS. WebSocket uses WSS. S3 buckets enforce SSL. CloudFront enforces HTTPS with TLS 1.2+.",
+      "displayOrder": 2,
+      "metadata": []
+    },
+    {
+      "id": "A003",
+      "numericId": 3,
+      "content": "The application runs entirely on AWS managed services (AgentCore, DynamoDB, S3, CloudFront, Cognito). No self-managed servers.",
+      "displayOrder": 3,
+      "metadata": []
+    },
+    {
+      "id": "A004",
+      "numericId": 4,
+      "content": "Order data is stored in DynamoDB with user_id, items, prices, and special instructions. No payment card data is collected or stored.",
+      "displayOrder": 4,
+      "metadata": []
+    },
+    {
+      "id": "A005",
+      "numericId": 5,
+      "content": "No WAF is deployed on CloudFront distributions. This is suppressed via cdk-nag.",
+      "displayOrder": 5,
+      "metadata": []
+    }
+  ],
+  "mitigations": [
+    {
+      "id": "1ee88b56-689a-4044-afd1-fa48e575636b",
+      "numericId": 1,
+      "status": "mitigationResolved",
+      "content": "Deploy AWS WAF on CloudFront distributions with OWASP managed rules, rate limiting, and bot control.",
+      "displayOrder": 1,
+      "metadata": []
+    },
+    {
+      "id": "ff8050a3-8efd-45da-8d9a-2c9b4b67496e",
+      "numericId": 2,
+      "status": "mitigationIdentified",
+      "content": "Enable MFA on Cognito User Pool for all users to prevent credential-based account takeover.",
+      "displayOrder": 2,
+      "metadata": []
+    },
+    {
+      "id": "57c54a77-36b8-47c7-bec4-3461818cc1dc",
+      "numericId": 3,
+      "status": "mitigationResolved",
+      "content": "Implement rate limiting per user/session on WebSocket connections and agent tool invocations.",
+      "displayOrder": 3,
+      "metadata": []
+    },
+    {
+      "id": "8a5a9a5e-34ab-4364-b00a-edbcd747d865",
+      "numericId": 4,
+      "status": "mitigationResolved",
+      "content": "Add input validation and sanitization for special_instructions field before storing in DynamoDB.",
+      "displayOrder": 4,
+      "metadata": []
+    },
+    {
+      "id": "8996833d-efd5-448b-92ad-72a7a35aeb8c",
+      "numericId": 5,
+      "status": "mitigationResolved",
+      "content": "Implement comprehensive audit logging for order placement, authentication events, and agent actions.",
+      "displayOrder": 5,
+      "metadata": []
+    },
+    {
+      "id": "0481d7ae-16a1-4773-9789-bf9ddec70577",
+      "numericId": 6,
+      "status": "mitigationResolved",
+      "content": "Replace silent exception handling (try/except/pass) with proper error logging in WebSocket cleanup code.",
+      "displayOrder": 6,
+      "metadata": []
+    },
+    {
+      "id": "c56ece2c-7770-4e80-bd5b-c232ae2ef097",
+      "numericId": 8,
+      "status": "mitigationResolved",
+      "content": "Implement WebSocket payload size limits to prevent oversized audio frames from exhausting resources.",
+      "displayOrder": 8,
+      "metadata": []
+    },
+    {
+      "id": "b8ea2e55-c5fe-4a78-b064-1834b593c5df",
+      "numericId": 9,
+      "status": "mitigationResolved",
+      "content": "Add prompt injection guardrails to the agent system prompt and implement tool call validation.",
+      "displayOrder": 9,
+      "metadata": []
+    },
+    {
+      "id": "37cc9081-13f5-4ced-9940-a27f8fc2190d",
+      "numericId": 10,
+      "status": "mitigationResolved",
+      "content": "Implement Cognito advanced security features including adaptive authentication and compromised credential detection.",
+      "displayOrder": 10,
+      "metadata": []
+    },
+    {
+      "id": "bbef9da1-ed64-4ff0-85ff-1f59eb2b066e",
+      "numericId": 11,
+      "status": "mitigationResolved",
+      "content": "Enforce TLS 1.2+ on all connections. WSS for WebSocket. HTTPS for all API calls. Already implemented.",
+      "displayOrder": 11,
+      "metadata": []
+    },
+    {
+      "id": "9921fe9a-6766-4d36-a547-d0b775b3b3a1",
+      "numericId": 12,
+      "status": "mitigationResolved",
+      "content": "Server-side price validation: agent uses unit_price from DynamoDB, not from user input. Prices are integers (cents).",
+      "displayOrder": 12,
+      "metadata": []
+    },
+    {
+      "id": "033545cc-c0c2-4a2e-8837-8f97e521a5a2",
+      "numericId": 13,
+      "status": "mitigationResolved",
+      "content": "Add Content Security Policy and security response headers via CloudFront to prevent XSS-based token theft.",
+      "displayOrder": 13,
+      "metadata": []
+    },
+    {
+      "id": "462cabcf-26cd-40b5-bd20-df24a854d615",
+      "numericId": 14,
+      "status": "mitigationResolved",
+      "content": "Reduce JWT token lifetime to 15 minutes and refresh every 10 minutes to limit exploitation window of stolen tokens.",
+      "displayOrder": 14,
+      "metadata": []
+    }
+  ],
+  "assumptionLinks": [],
+  "mitigationLinks": [
+    {
+      "linkedId": "13aaf2a9-54c0-4b3f-819e-fc70713a9b96",
+      "mitigationId": "bbef9da1-ed64-4ff0-85ff-1f59eb2b066e"
+    },
+    {
+      "linkedId": "2413f5bd-0fb4-475c-b340-88d550cc55ae",
+      "mitigationId": "9b687ec7-0fc0-49df-a91f-942f0e291da6"
+    },
+    {
+      "linkedId": "b7bfcd74-adf4-4182-a0f6-88863bb0424c",
+      "mitigationId": "b8ea2e55-c5fe-4a78-b064-1834b593c5df"
+    },
+    {
+      "linkedId": "bf838d68-d03a-43b5-9f69-c90e32633d2b",
+      "mitigationId": "1ee88b56-689a-4044-afd1-fa48e575636b"
+    },
+    {
+      "linkedId": "bf838d68-d03a-43b5-9f69-c90e32633d2b",
+      "mitigationId": "57c54a77-36b8-47c7-bec4-3461818cc1dc"
+    },
+    {
+      "linkedId": "c5cae1ac-3625-4134-8c37-e83a51de47f3",
+      "mitigationId": "9921fe9a-6766-4d36-a547-d0b775b3b3a1"
+    },
+    {
+      "linkedId": "4282e18d-7309-4046-b26e-20428294da23",
+      "mitigationId": "8a5a9a5e-34ab-4364-b00a-edbcd747d865"
+    },
+    {
+      "linkedId": "1282b3e1-555f-4e39-a323-00ead8aaeb93",
+      "mitigationId": "0481d7ae-16a1-4773-9789-bf9ddec70577"
+    },
+    {
+      "linkedId": "98a2ca8e-7b6f-4817-a47c-dca87b87187f",
+      "mitigationId": "8996833d-efd5-448b-92ad-72a7a35aeb8c"
+    },
+    {
+      "linkedId": "20f54850-56e3-4c51-a769-0938c7a95a6f",
+      "mitigationId": "ff8050a3-8efd-45da-8d9a-2c9b4b67496e"
+    },
+    {
+      "linkedId": "20f54850-56e3-4c51-a769-0938c7a95a6f",
+      "mitigationId": "37cc9081-13f5-4ced-9940-a27f8fc2190d"
+    },
+    {
+      "linkedId": "044586ad-34f6-4b6d-93dc-92cb58d1e192",
+      "mitigationId": "c56ece2c-7770-4e80-bd5b-c232ae2ef097"
+    },
+    {
+      "linkedId": "044586ad-34f6-4b6d-93dc-92cb58d1e192",
+      "mitigationId": "57c54a77-36b8-47c7-bec4-3461818cc1dc"
+    },
+    {
+      "linkedId": "bcffd5bb-fa0b-4bf5-9c12-814d881fc773",
+      "mitigationId": "bbef9da1-ed64-4ff0-85ff-1f59eb2b066e"
+    },
+    {
+      "linkedId": "054636da-d305-4ecb-be3d-fcccda930a13",
+      "mitigationId": "ff8050a3-8efd-45da-8d9a-2c9b4b67496e"
+    },
+    {
+      "linkedId": "054636da-d305-4ecb-be3d-fcccda930a13",
+      "mitigationId": "37cc9081-13f5-4ced-9940-a27f8fc2190d"
+    },
+    {
+      "linkedId": "bcffd5bb-fa0b-4bf5-9c12-814d881fc773",
+      "mitigationId": "462cabcf-26cd-40b5-bd20-df24a854d615"
+    },
+    {
+      "linkedId": "bcffd5bb-fa0b-4bf5-9c12-814d881fc773",
+      "mitigationId": "033545cc-c0c2-4a2e-8837-8f97e521a5a2"
+    }
+  ],
+  "threats": [
+    {
+      "id": "20f54850-56e3-4c51-a769-0938c7a95a6f",
+      "numericId": 1,
+      "threatSource": "External attacker",
+      "prerequisites": "with stolen or guessed credentials",
+      "threatAction": "authenticate as a legitimate user and place fraudulent orders",
+      "threatImpact": "unauthorized orders placed under victim's account, potential financial loss",
+      "impactedGoal": [],
+      "impactedAssets": [
+        "A008"
+      ],
+      "statement": "A External attacker with stolen or guessed credentials can authenticate as a legitimate user and place fraudulent orders, which leads to unauthorized orders placed under victim's account, potential financial loss",
+      "displayOrder": 1,
+      "status": "threatResolved",
+      "tags": [
+        "STRIDE-S",
+        "Authentication"
+      ],
+      "metadata": []
+    },
+    {
+      "id": "c5cae1ac-3625-4134-8c37-e83a51de47f3",
+      "numericId": 2,
+      "threatSource": "Authenticated user",
+      "prerequisites": "with access to the agent session",
+      "threatAction": "manipulate order data by injecting crafted voice or text input to alter prices or items",
+      "threatImpact": "incorrect orders placed, potential price manipulation",
+      "impactedGoal": [],
+      "impactedAssets": [
+        "A009"
+      ],
+      "statement": "A Authenticated user with access to the agent session can manipulate order data by injecting crafted voice or text input to alter prices or items, which leads to incorrect orders placed, potential price manipulation",
+      "displayOrder": 2,
+      "status": "threatResolved",
+      "tags": [
+        "STRIDE-T",
+        "Data Integrity"
+      ],
+      "metadata": []
+    },
+    {
+      "id": "98a2ca8e-7b6f-4817-a47c-dca87b87187f",
+      "numericId": 3,
+      "threatSource": "Authenticated user",
+      "prerequisites": "after placing an order via voice",
+      "threatAction": "deny having placed an order since no audit trail or voice recording is retained",
+      "threatImpact": "disputed orders with no evidence, financial loss for business",
+      "impactedGoal": [],
+      "impactedAssets": [
+        "A009",
+        "A011"
+      ],
+      "statement": "A Authenticated user after placing an order via voice can deny having placed an order since no audit trail or voice recording is retained, which leads to disputed orders with no evidence, financial loss for business",
+      "displayOrder": 3,
+      "status": "threatResolved",
+      "tags": [
+        "STRIDE-R",
+        "Audit"
+      ],
+      "metadata": []
+    },
+    {
+      "id": "13aaf2a9-54c0-4b3f-819e-fc70713a9b96",
+      "numericId": 4,
+      "threatSource": "Network attacker",
+      "prerequisites": "with ability to intercept WebSocket traffic",
+      "threatAction": "eavesdrop on voice audio and order data transmitted via WebSocket",
+      "threatImpact": "exposure of customer voice data, order details, and preferences",
+      "impactedGoal": [],
+      "impactedAssets": [
+        "A009",
+        "A011"
+      ],
+      "statement": "A Network attacker with ability to intercept WebSocket traffic can eavesdrop on voice audio and order data transmitted via WebSocket, which leads to exposure of customer voice data, order details, and preferences",
+      "displayOrder": 4,
+      "status": "threatResolved",
+      "tags": [
+        "STRIDE-I",
+        "Privacy"
+      ],
+      "metadata": []
+    },
+    {
+      "id": "bf838d68-d03a-43b5-9f69-c90e32633d2b",
+      "numericId": 5,
+      "threatSource": "External attacker or script kiddie",
+      "prerequisites": "with internet access to the application",
+      "threatAction": "flood the WebSocket endpoint or CloudFront with requests to exhaust resources",
+      "threatImpact": "service unavailable for legitimate customers, revenue loss",
+      "impactedGoal": [],
+      "impactedAssets": [],
+      "statement": "A External attacker or script kiddie with internet access to the application can flood the WebSocket endpoint or CloudFront with requests to exhaust resources, which leads to service unavailable for legitimate customers, revenue loss",
+      "displayOrder": 5,
+      "status": "threatResolved",
+      "tags": [
+        "STRIDE-D",
+        "Availability"
+      ],
+      "metadata": []
+    },
+    {
+      "id": "b7bfcd74-adf4-4182-a0f6-88863bb0424c",
+      "numericId": 6,
+      "threatSource": "Malicious user",
+      "prerequisites": "with access to the agent's tool interface",
+      "threatAction": "exploit prompt injection via voice to make agent execute unintended tool calls or access unauthorized data",
+      "threatImpact": "unauthorized data access, menu manipulation, or agent misuse",
+      "impactedGoal": [],
+      "impactedAssets": [
+        "A010"
+      ],
+      "statement": "A Malicious user with access to the agent's tool interface can exploit prompt injection via voice to make agent execute unintended tool calls or access unauthorized data, which leads to unauthorized data access, menu manipulation, or agent misuse",
+      "displayOrder": 6,
+      "status": "threatResolved",
+      "tags": [
+        "STRIDE-E",
+        "Authorization"
+      ],
+      "metadata": []
+    },
+    {
+      "id": "054636da-d305-4ecb-be3d-fcccda930a13",
+      "numericId": 7,
+      "threatSource": "External attacker",
+      "prerequisites": "with automated tooling",
+      "threatAction": "perform credential stuffing or brute force attacks against Cognito login",
+      "threatImpact": "account compromise, unauthorized access to ordering system",
+      "impactedGoal": [],
+      "impactedAssets": [
+        "A008"
+      ],
+      "statement": "A External attacker with automated tooling can perform credential stuffing or brute force attacks against Cognito login, which leads to account compromise, unauthorized access to ordering system",
+      "displayOrder": 7,
+      "status": "threatResolved",
+      "tags": [
+        "STRIDE-S",
+        "Authentication"
+      ],
+      "metadata": []
+    },
+    {
+      "id": "4282e18d-7309-4046-b26e-20428294da23",
+      "numericId": 8,
+      "threatSource": "Authenticated user",
+      "prerequisites": "with authenticated session",
+      "threatAction": "inject malicious content in special_instructions field stored in DynamoDB",
+      "threatImpact": "stored XSS if instructions rendered unsafely, or NoSQL injection",
+      "impactedGoal": [],
+      "impactedAssets": [
+        "A009"
+      ],
+      "statement": "A Authenticated user with authenticated session can inject malicious content in special_instructions field stored in DynamoDB, which leads to stored XSS if instructions rendered unsafely, or NoSQL injection",
+      "displayOrder": 8,
+      "status": "threatResolved",
+      "tags": [
+        "STRIDE-T",
+        "Input Validation"
+      ],
+      "metadata": []
+    },
+    {
+      "id": "044586ad-34f6-4b6d-93dc-92cb58d1e192",
+      "numericId": 9,
+      "threatSource": "Malicious authenticated user",
+      "prerequisites": "with authenticated WebSocket session",
+      "threatAction": "send oversized audio frames or excessive requests to exhaust Bedrock/agent resources",
+      "threatImpact": "increased AWS costs, degraded service for other users",
+      "impactedGoal": [],
+      "impactedAssets": [],
+      "statement": "A Malicious authenticated user with authenticated WebSocket session can send oversized audio frames or excessive requests to exhaust Bedrock/agent resources, which leads to increased AWS costs, degraded service for other users",
+      "displayOrder": 9,
+      "status": "threatResolved",
+      "tags": [
+        "STRIDE-D",
+        "Resource Exhaustion"
+      ],
+      "metadata": []
+    },
+    {
+      "id": "bcffd5bb-fa0b-4bf5-9c12-814d881fc773",
+      "numericId": 10,
+      "threatSource": "External attacker",
+      "prerequisites": "with access to browser memory or XSS vulnerability",
+      "threatAction": "steal JWT token from browser memory to hijack authenticated session",
+      "threatImpact": "full session hijack, unauthorized order placement",
+      "impactedGoal": [],
+      "impactedAssets": [
+        "A012"
+      ],
+      "statement": "A External attacker with access to browser memory or XSS vulnerability can steal JWT token from browser memory to hijack authenticated session, which leads to full session hijack, unauthorized order placement",
+      "displayOrder": 10,
+      "status": "threatResolved",
+      "tags": [
+        "STRIDE-I",
+        "Token Security"
+      ],
+      "metadata": []
+    },
+    {
+      "id": "1282b3e1-555f-4e39-a323-00ead8aaeb93",
+      "numericId": 11,
+      "threatSource": "External attacker",
+      "prerequisites": "when agent encounters errors",
+      "threatAction": "trigger error conditions that expose internal system details via silent exception handling",
+      "threatImpact": "information leakage about system internals aiding further attacks",
+      "impactedGoal": [],
+      "impactedAssets": [],
+      "statement": "A External attacker when agent encounters errors can trigger error conditions that expose internal system details via silent exception handling, which leads to information leakage about system internals aiding further attacks",
+      "displayOrder": 11,
+      "status": "threatResolved",
+      "tags": [
+        "STRIDE-I",
+        "Error Handling"
+      ],
+      "metadata": []
+    }
+  ]
+}

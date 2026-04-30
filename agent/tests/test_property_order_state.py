@@ -10,13 +10,13 @@ Property 6: remove_from_order correctly reduces order state
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from agent.order_state import OrderState
+from agent.order_state import OrderState, MAX_QUANTITY_PER_ITEM
 
 
 # Strategy for generating a valid item entry
 item_ids = st.text(min_size=1, max_size=20)
 item_names = st.text(min_size=1, max_size=50)
-quantities = st.integers(min_value=1, max_value=1000)
+quantities = st.integers(min_value=1, max_value=MAX_QUANTITY_PER_ITEM)
 unit_prices = st.integers(min_value=1, max_value=100_000)
 
 
@@ -47,8 +47,8 @@ def test_add_new_item_updates_quantity_and_total(
 @given(
     item_id=item_ids,
     name=item_names,
-    initial_qty=quantities,
-    add_qty=quantities,
+    initial_qty=st.integers(min_value=1, max_value=MAX_QUANTITY_PER_ITEM // 2),
+    add_qty=st.integers(min_value=1, max_value=MAX_QUANTITY_PER_ITEM // 2),
     unit_price=unit_prices,
 )
 def test_add_existing_item_increments_quantity_and_total(
@@ -79,7 +79,7 @@ order_line = st.fixed_dictionaries(
     {
         "item_id": item_ids,
         "name": item_names,
-        "quantity": st.integers(min_value=1, max_value=100),
+        "quantity": st.integers(min_value=1, max_value=MAX_QUANTITY_PER_ITEM),
         "unit_price": unit_prices,
     }
 )

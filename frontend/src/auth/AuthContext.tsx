@@ -35,7 +35,7 @@ export interface AuthContextValue extends AuthState {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const TOKEN_REFRESH_INTERVAL_MS = 45 * 60 * 1000; // 45 minutes
+const TOKEN_REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes (tokens expire in 15 min)
 
 function friendlyAuthError(err: unknown): string {
   if (err instanceof Error) {
