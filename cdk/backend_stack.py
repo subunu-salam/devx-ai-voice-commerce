@@ -298,7 +298,8 @@ class BackendStack(Stack):
                 min_length=8, require_lowercase=True, require_uppercase=True,
                 require_digits=True, require_symbols=True,
             ),
-            advanced_security_mode=cognito.AdvancedSecurityMode.ENFORCED,
+            feature_plan=cognito.FeaturePlan.PLUS,
+            standard_threat_protection_mode=cognito.StandardThreatProtectionMode.FULL_FUNCTION,
             removal_policy=RemovalPolicy.DESTROY,
         )
 

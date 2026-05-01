@@ -8,7 +8,13 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CDK_DIR="$SCRIPT_DIR/cdk"
 FRONTEND_DIR="$SCRIPT_DIR/frontend"
 
-echo "=== Step 1: Deploy backend stack ==="
+echo "=== Step 1: Build frontend ==="
+cd "$FRONTEND_DIR"
+npm ci
+npm run build
+
+echo ""
+echo "=== Step 2: Deploy backend stack ==="
 cd "$CDK_DIR"
 # Activate the CDK venv so aws_cdk modules are available
 if [ -d ".venv" ]; then
@@ -18,14 +24,8 @@ pip install -q -r requirements.txt
 cdk deploy BackendStack --outputs-file "$CDK_DIR/backend-outputs.json" --require-approval never
 
 echo ""
-echo "=== Step 2: Generate runtime-config.json from backend outputs ==="
+echo "=== Step 3: Generate runtime-config.json from backend outputs ==="
 python3 "$SCRIPT_DIR/generate_config.py"
-
-echo ""
-echo "=== Step 3: Build frontend ==="
-cd "$FRONTEND_DIR"
-npm ci
-npm run build
 
 echo ""
 echo "=== Step 4: Deploy frontend stack ==="
