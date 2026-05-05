@@ -118,9 +118,11 @@ export default function App() {
       )}
       {voiceError && <p style={{ color: 'red' }}>{voiceError}</p>}
 
-      <div style={{ display: 'flex', gap: 24 }}>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
         <div style={{ flex: 2 }}><MenuDisplay onItemClick={handleItemClick} /></div>
-        <div style={{ flex: 1 }}><OrderSummaryPanel /></div>
+        <div style={{ flex: 1, position: 'sticky', top: 16, maxHeight: 'calc(100vh - 32px)', overflowY: 'auto' }}>
+          <OrderSummaryPanel />
+        </div>
       </div>
 
       <ItemDetailModal />
