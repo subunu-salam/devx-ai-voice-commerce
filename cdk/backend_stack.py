@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 """Backend stack: DynamoDB, S3, CloudFront, Cognito, AgentCore Runtime, seed data."""
 
 import json

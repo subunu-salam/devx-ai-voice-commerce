@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 """Drive-thru voice ordering agent for AgentCore Runtime.
 
 The agent has full control of the frontend UI state via a single update_ui tool.

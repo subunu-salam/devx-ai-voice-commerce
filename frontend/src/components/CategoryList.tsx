@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 import { useRef, useEffect } from 'react';
 import type { Category, MenuItem } from '../types';
 import { MenuItemCard } from './MenuItemCard';

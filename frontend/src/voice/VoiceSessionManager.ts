@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 /**
  * Voice session manager using Strands BidiAgent JSON protocol.
  * Audio is base64-encoded inside JSON events — no raw binary frames.

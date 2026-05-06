@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 """Centralized UI state manager for the agent.
 
 Maintains the current UI state and sends it to the frontend via WebSocket.

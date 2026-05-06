@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 import { Amplify, type ResourcesConfig } from 'aws-amplify';
 import { getRuntimeConfig } from '../config';
 

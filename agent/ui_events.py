@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 """Helper module for constructing UI_Event dicts.
 
 UI_Events are structured JSON messages sent by the agent over the WebSocket

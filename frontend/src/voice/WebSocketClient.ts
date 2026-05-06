@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 /**
  * WebSocket client for AgentCore using OAuth via Sec-WebSocket-Protocol.
  * All communication is JSON — audio is base64-encoded inside typed events.

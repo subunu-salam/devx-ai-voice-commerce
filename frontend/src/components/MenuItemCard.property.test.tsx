@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 import { describe, it, expect, afterEach } from 'vitest';
 import fc from 'fast-check';
 import { cleanup, render, screen } from '@testing-library/react';

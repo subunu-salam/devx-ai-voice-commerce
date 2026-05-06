@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 """Property-based tests for UI_Event emission from order tools.
 
 Property 17: Order tools emit order_update UI_Events

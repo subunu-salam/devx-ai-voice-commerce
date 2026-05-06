@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 import type { AgentCoreWebSocketClient } from './WebSocketClient';
 import type { UIState } from '../types';
 import { useAppStore } from '../store/appStore';

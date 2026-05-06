@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 """CDK snapshot and resource verification tests for DriveThruVoiceOrderingStack.
 
 Validates Requirements 7.1–7.11:

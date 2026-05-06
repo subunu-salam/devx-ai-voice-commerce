@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 """Send UI_Events over WebSocket from tools (runs in worker threads)."""
 
 import asyncio

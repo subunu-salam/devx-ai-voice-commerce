@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 export { MenuItemCard } from './MenuItemCard';
 export { CategoryList } from './CategoryList';
 export { MenuDisplay } from './MenuDisplay';
