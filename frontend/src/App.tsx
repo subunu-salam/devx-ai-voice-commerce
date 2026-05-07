@@ -4,7 +4,7 @@
 import { useRef, useCallback, useState } from 'react';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import { MenuDisplay, OrderSummaryPanel, OrderConfirmation, ItemDetailModal } from './components';
+import { MenuDisplay, OrderSummaryPanel, OrderConfirmation, ItemDetailModal, DebugPanel } from './components';
 import { useAppStore } from './store';
 import { createWebSocketClient, VoiceSessionManager } from './voice';
 import { getRuntimeConfig } from './config';
@@ -18,6 +18,8 @@ export default function App() {
   const micPermission = useAppStore((s) => s.voice.micPermission);
   const orderConfirmed = useAppStore((s) => s.agentUI.orderConfirmed);
   const hasMenu = useAppStore((s) => s.agentUI.categories.length > 0);
+
+  const debugMode = new URLSearchParams(window.location.search).has('debug');
 
   const voiceManagerRef = useRef<VoiceSessionManager | null>(null);
   const [voiceError, setVoiceError] = useState<string | null>(null);
@@ -61,6 +63,7 @@ export default function App() {
   if (orderConfirmed) {
     return (
       <div style={{ maxWidth: 600, margin: '0 auto', padding: 16 }}>
+        {debugMode && <DebugPanel />}
         <OrderConfirmation />
       </div>
     );
@@ -70,6 +73,7 @@ export default function App() {
   if (!sessionActive && !hasMenu) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        {debugMode && <DebugPanel />}
         <h1 style={{ fontSize: '2.5em', marginBottom: 8 }}>🍔 Drive-Thru</h1>
         <p style={{ color: '#666', fontSize: '1.1em', marginBottom: 32 }}>Voice-powered ordering</p>
 
@@ -104,6 +108,7 @@ export default function App() {
   // Active session — menu + order
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: 16 }}>
+      {debugMode && <DebugPanel />}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ margin: 0 }}>🍔 Drive-Thru</h1>
         <div style={{ display: 'flex', gap: 8 }}>

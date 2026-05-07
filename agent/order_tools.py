@@ -11,8 +11,10 @@ from strands import tool
 
 try:
     from agent.order_state import OrderState
+    from agent.ui_state_manager import set_ui_state, get_ui_state
 except ModuleNotFoundError:
     from order_state import OrderState
+    from ui_state_manager import set_ui_state, get_ui_state
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +42,7 @@ def get_order_state() -> OrderState:
 
 @tool
 def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_instructions: str = "") -> dict:
-    """Adds a menu item to the current order.
+    """Adds a menu item to the current order and updates the customer's screen.
 
     Args:
         item_id: The menu item identifier.
@@ -57,6 +59,17 @@ def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_inst
         return {"error": f"Item '{item_id}' not found in category '{category_id}'."}
     _order_state.add_item(item_id, menu_item.get("name", ""), quantity, int(menu_item.get("price", 0)), special_instructions)
     summary = _order_state.get_summary()
+
+    # Auto-update the UI: highlight the added item and refresh the order display
+    try:
+        current = get_ui_state()
+        current["highlightedItem"] = item_id
+        current["orderItems"] = summary["items"]
+        current["orderTotal"] = summary["total"]
+        set_ui_state(current)
+    except Exception as e:
+        logger.warning("add_to_order: failed to auto-update UI: %s", e)
+
     return summary
 
 

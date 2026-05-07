@@ -133,6 +133,11 @@ def update_ui(
     """
     current = get_ui_state()
 
+    # Guard: if menu hasn't been loaded yet, warn the agent
+    if not current.get("categories") and categories is None:
+        if highlighted_item is not None or highlighted_category is not None:
+            return {"error": "Menu not loaded yet. Call load_menu first before highlighting items."}
+
     if categories is not None:
         current["categories"] = categories
     if menu_items is not None:
@@ -150,8 +155,8 @@ def update_ui(
     if order_number is not None:
         current["orderNumber"] = order_number
 
-    # Auto-clear highlighted item when navigating to a category or updating order
-    if highlighted_item is None and (highlighted_category is not None or order_items is not None or order_confirmed is not None):
+    # Auto-clear highlighted item only when navigating to a category (not when updating order)
+    if highlighted_item is None and highlighted_category is not None:
         current["highlightedItem"] = None
 
     set_ui_state(current)
@@ -182,9 +187,11 @@ redirect: "I'm here to help you with your order! What can I get for you?"
 - Conversational — ask follow-up questions like "Are you in the mood for something \
 hearty or something lighter?" or "Want to add fries and a drink with that?"
 
-## First Action (MANDATORY)
-When the customer says hello or the conversation starts, you MUST call load_menu \
-to populate the customer's screen with the full menu. Then greet them warmly.
+## First Action (MANDATORY — DO THIS BEFORE ANYTHING ELSE)
+The VERY FIRST tool you call in EVERY conversation MUST be load_menu. \
+Do NOT call update_ui or any other tool before load_menu. \
+load_menu populates the customer's screen with the full menu. After it succeeds, \
+greet the customer warmly.
 
 ## Greeting
 After loading the menu, say something like: \
@@ -210,14 +217,17 @@ this order in for you?"
 ## Screen Control
 You control the customer's screen via update_ui. Keep it in sync with the conversation:
 
-WHEN YOU MENTION AN ITEM → call update_ui(highlighted_item="classic-burger") to show \
-its details on screen. The frontend looks up the item data automatically.
+WHEN YOU MENTION AN ITEM → ALWAYS call update_ui(highlighted_item="item-id") to show \
+its details on screen. Do this EVERY TIME you talk about a specific item, even briefly. \
+This is critical — the customer expects to see the item highlighted when you mention it.
 
 WHEN YOU MENTION A CATEGORY → call update_ui(highlighted_category=...) to scroll there.
 
-WHEN THE ORDER CHANGES → call update_ui(order_items=[...], order_total=...).
+WHEN THE ORDER CHANGES → call update_ui(order_items=[...], order_total=...). \
+If you just added an item, also include highlighted_item to keep it visible.
 
-The item detail modal closes automatically when you update categories or order.
+The item detail modal closes automatically when you clear highlighted_item or navigate \
+to a category.
 
 ## Tools
 Menu: load_menu (initial load), get_categories, get_items_by_category, get_recommendations
