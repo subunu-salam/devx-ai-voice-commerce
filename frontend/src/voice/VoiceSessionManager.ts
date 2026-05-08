@@ -19,6 +19,7 @@ export class VoiceSessionManager {
   private isPlaying = false;
   private active = false;
   private currentSource: AudioBufferSourceNode | null = null;
+  private isSpeaking = false; // true while agent audio is playing
 
   constructor(client: AgentCoreWebSocketClient) {
     this.client = client;
@@ -61,7 +62,22 @@ export class VoiceSessionManager {
 
     processor.onaudioprocess = (e: AudioProcessingEvent) => {
       if (!this.active) return;
+
       const float32 = e.inputBuffer.getChannelData(0);
+
+      // Simple energy gate: only send audio if it's loud enough to be real speech.
+      // This prevents quiet speaker bleed-through from triggering interruptions
+      // while still allowing the user to interrupt by actually speaking.
+      if (this.isSpeaking) {
+        let energy = 0;
+        for (let i = 0; i < float32.length; i++) {
+          energy += float32[i] * float32[i];
+        }
+        const rms = Math.sqrt(energy / float32.length);
+        // Threshold: RMS below 0.02 is likely echo/background, above is real speech
+        if (rms < 0.02) return;
+      }
+
       const int16 = new Int16Array(float32.length);
       for (let i = 0; i < float32.length; i++) {
         const s = Math.max(-1, Math.min(1, float32[i]));
@@ -113,11 +129,13 @@ export class VoiceSessionManager {
   private handleEvent(event: BidiEvent): void {
     switch (event.type) {
       case 'bidi_audio_stream':
+        this.isSpeaking = true;
         this.queueAudio(event.audio as string, (event.sample_rate as number) || 16000);
         break;
 
       case 'bidi_interruption':
         // Stop the currently playing audio immediately
+        this.isSpeaking = false;
         if (this.currentSource) {
           this.currentSource.onended = null;
           this.currentSource.stop();
@@ -152,6 +170,11 @@ export class VoiceSessionManager {
       this.playbackContext = new AudioContext({ sampleRate });
     }
 
+    // Resume if browser suspended the AudioContext (e.g. tab backgrounded)
+    if (this.playbackContext.state === 'suspended') {
+      this.playbackContext.resume();
+    }
+
     const binary = atob(base64Audio);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -172,6 +195,7 @@ export class VoiceSessionManager {
   private playNext(): void {
     if (this.audioQueue.length === 0 || !this.playbackContext || this.playbackContext.state === 'closed') {
       this.isPlaying = false;
+      this.isSpeaking = false;
       this.currentSource = null;
       return;
     }
