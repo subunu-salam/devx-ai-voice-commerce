@@ -217,11 +217,11 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
     _order_state.add_item(item_id, name, quantity, total_price, description)
     summary = _order_state.get_summary()
 
-    # Auto-update the UI: close burger builder, highlight item, update order
+    # Auto-update the UI: close burger builder, update order
     try:
         current = get_ui_state()
         current["burgerBuilder"] = None
-        current["highlightedItem"] = "custom-burger"
+        current["highlightedItem"] = None
         current["orderItems"] = summary["items"]
         current["orderTotal"] = summary["total"]
         set_ui_state(current)
