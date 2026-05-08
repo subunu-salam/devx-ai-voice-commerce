@@ -18,6 +18,7 @@ export class VoiceSessionManager {
   private audioQueue: AudioBuffer[] = [];
   private isPlaying = false;
   private active = false;
+  private currentSource: AudioBufferSourceNode | null = null;
 
   constructor(client: AgentCoreWebSocketClient) {
     this.client = client;
@@ -116,6 +117,12 @@ export class VoiceSessionManager {
         break;
 
       case 'bidi_interruption':
+        // Stop the currently playing audio immediately
+        if (this.currentSource) {
+          this.currentSource.onended = null;
+          this.currentSource.stop();
+          this.currentSource = null;
+        }
         this.audioQueue = [];
         this.isPlaying = false;
         if (this.playbackContext) {
@@ -165,6 +172,7 @@ export class VoiceSessionManager {
   private playNext(): void {
     if (this.audioQueue.length === 0 || !this.playbackContext || this.playbackContext.state === 'closed') {
       this.isPlaying = false;
+      this.currentSource = null;
       return;
     }
 
@@ -174,6 +182,7 @@ export class VoiceSessionManager {
     source.buffer = buffer;
     source.connect(this.playbackContext.destination);
     source.onended = () => this.playNext();
+    this.currentSource = source;
     source.start();
   }
 }
