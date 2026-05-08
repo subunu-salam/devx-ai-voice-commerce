@@ -38,21 +38,8 @@ const TOPPING_PRICES: Record<string, number> = {
 
 export function BurgerBuilder() {
   const builder = useAppStore((s) => s.agentUI.burgerBuilder);
-  const highlightedItem = useAppStore((s) => s.agentUI.highlightedItem);
 
-  // Show when burger builder state is active OR when custom-burger is highlighted
-  const isOpen = (builder && builder.active) || highlightedItem === 'custom-burger';
-
-  if (!isOpen) return null;
-
-  // Use builder state if available, otherwise show empty starter state
-  const state = builder && builder.active ? builder : {
-    active: true,
-    patty: null,
-    toppings: [],
-    sauces: [],
-    price: 899,
-  };
+  if (!builder || !builder.active) return null;
 
   return (
     <div
@@ -64,7 +51,6 @@ export function BurgerBuilder() {
       onClick={() => useAppStore.getState().applyAgentUIState({
         ...useAppStore.getState().agentUI,
         burgerBuilder: null,
-        highlightedItem: null,
       })}
     >
       <div
@@ -81,20 +67,20 @@ export function BurgerBuilder() {
         </p>
 
         {/* Burger Stack Visualization */}
-        <BurgerStack builder={state} />
+        <BurgerStack builder={builder} />
 
         {/* Selected ingredients list */}
         <div style={{ marginTop: 16 }}>
-          {state.patty && (
-            <IngredientSection title="Patty" items={[state.patty]} />
+          {builder.patty && (
+            <IngredientSection title="Patty" items={[builder.patty]} />
           )}
-          {state.toppings.length > 0 && (
-            <IngredientSection title="Toppings" items={state.toppings} />
+          {builder.toppings.length > 0 && (
+            <IngredientSection title="Toppings" items={builder.toppings} />
           )}
-          {state.sauces.length > 0 && (
-            <IngredientSection title="Sauces" items={state.sauces} />
+          {builder.sauces.length > 0 && (
+            <IngredientSection title="Sauces" items={builder.sauces} />
           )}
-          {!state.patty && state.toppings.length === 0 && state.sauces.length === 0 && (
+          {!builder.patty && builder.toppings.length === 0 && builder.sauces.length === 0 && (
             <p style={{ textAlign: 'center', color: '#aaa', fontStyle: 'italic', padding: '12px 0' }}>
               Start by telling me what patty you'd like...
             </p>
@@ -109,7 +95,7 @@ export function BurgerBuilder() {
         }}>
           <span style={{ fontWeight: 'bold' }}>Running Total</span>
           <span style={{ fontSize: '1.3em', fontWeight: 'bold', color: '#27ae60' }}>
-            {formatPrice(state.price)}
+            {formatPrice(builder.price)}
           </span>
         </div>
       </div>

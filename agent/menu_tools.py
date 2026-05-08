@@ -35,13 +35,11 @@ def get_categories(tool_context=None) -> dict:
         category_id = pk.replace("CATEGORY#", "") if pk.startswith("CATEGORY#") else pk
         categories.append({
             "categoryId": category_id,
-            "name": item.get("name", ""),
-            "sortOrder": item.get("sortOrder", 0),
+            "name": str(item.get("name", "")),
+            "sortOrder": int(item.get("sortOrder", 0)),
         })
     categories.sort(key=lambda c: c["sortOrder"])
     result = {"categories": categories}
-    if categories:
-        first = categories[0]
     return result
 
 
@@ -58,13 +56,13 @@ def get_items_by_category(category_id: str) -> dict:
         item_id = sk.replace("ITEM#", "") if sk.startswith("ITEM#") else sk
         items.append({
             "itemId": item_id,
-            "name": item.get("name", ""),
-            "description": item.get("description", ""),
-            "price": item.get("price", 0),
-            "imageUrl": item.get("imageUrl", ""),
-            "category": item.get("category", ""),
-            "featured": item.get("featured", False),
-            "sortOrder": item.get("sortOrder", 0),
+            "name": str(item.get("name", "")),
+            "description": str(item.get("description", "")),
+            "price": int(item.get("price", 0)),
+            "imageUrl": str(item.get("imageUrl", "")),
+            "category": str(item.get("category", "")),
+            "featured": bool(item.get("featured", False)),
+            "sortOrder": int(item.get("sortOrder", 0)),
         })
     items.sort(key=lambda i: i["sortOrder"])
     result = {"items": items}
@@ -107,10 +105,10 @@ def get_recommendations(tool_context=None) -> dict:
         item_id = sk.replace("ITEM#", "") if sk.startswith("ITEM#") else sk
         items.append({
             "itemId": item_id, "categoryId": category_id,
-            "name": item.get("name", ""), "description": item.get("description", ""),
-            "price": item.get("price", 0), "imageUrl": item.get("imageUrl", ""),
-            "category": item.get("category", ""), "featured": True,
-            "sortOrder": item.get("sortOrder", 0),
+            "name": str(item.get("name", "")), "description": str(item.get("description", "")),
+            "price": int(item.get("price", 0)), "imageUrl": str(item.get("imageUrl", "")),
+            "category": str(item.get("category", "")), "featured": True,
+            "sortOrder": int(item.get("sortOrder", 0)),
         })
     items.sort(key=lambda i: i["sortOrder"])
     return {"items": items}

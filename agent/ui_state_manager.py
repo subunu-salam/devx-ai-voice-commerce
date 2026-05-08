@@ -66,7 +66,14 @@ def _send_to_frontend():
         try:
             # Use send_text with manual JSON to avoid conflicts with Starlette's send_json
             import json as _json
-            await ws.send_text(_json.dumps(message, default=str))
+            from decimal import Decimal
+
+            def _serialize(obj):
+                if isinstance(obj, Decimal):
+                    return int(obj) if obj == int(obj) else float(obj)
+                return str(obj)
+
+            await ws.send_text(_json.dumps(message, default=_serialize))
         except Exception as e:
             print(f"[ui_state] send failed: {e}")
 

@@ -13,7 +13,8 @@ export function ItemDetailModal() {
   // Look up the highlighted item from local menu data
   const item: MenuItem | null = useMemo(() => {
     if (!highlightedItem) return null;
-    if (highlightedItem === 'custom-burger') return null; // handled by BurgerBuilder
+    // Don't show detail modal when burger builder is active
+    if (highlightedItem === 'custom-burger') return null;
     for (const items of Object.values(menuItems)) {
       const found = items.find((i) => i.itemId === highlightedItem);
       if (found) return found;
