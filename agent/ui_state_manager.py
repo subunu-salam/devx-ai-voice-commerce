@@ -20,6 +20,7 @@ _ui_state = {
     "orderTotal": 0,
     "orderConfirmed": False,
     "orderNumber": None,
+    "burgerBuilder": None,
 }
 
 _event_loop = None
@@ -87,4 +88,5 @@ def reset_ui_state():
         "orderTotal": 0,
         "orderConfirmed": False,
         "orderNumber": None,
+        "burgerBuilder": None,
     }

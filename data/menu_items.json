@@ -50,6 +50,17 @@
     "sortOrder": 5
   },
   {
+    "PK": "CATEGORY#burgers",
+    "SK": "ITEM#custom-burger",
+    "name": "Build Your Own Burger",
+    "description": "Start with a beef or chicken patty and pick your toppings — cheese, bacon, veggies, sauces, and more!",
+    "price": 899,
+    "imageUrl": "images/classic-burger.png",
+    "category": "Burgers",
+    "featured": true,
+    "sortOrder": 3
+  },
+  {
     "PK": "CATEGORY#chicken",
     "SK": "METADATA",
     "name": "Chicken",

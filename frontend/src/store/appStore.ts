@@ -21,6 +21,7 @@ const initialAgentUI: AgentUIState = {
   orderTotal: 0,
   orderConfirmed: false,
   orderNumber: null,
+  burgerBuilder: null,
 };
 
 const initialState: AppState = {

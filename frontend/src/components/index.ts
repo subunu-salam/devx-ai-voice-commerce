@@ -7,4 +7,5 @@ export { MenuDisplay } from './MenuDisplay';
 export { OrderSummaryPanel } from './OrderSummaryPanel';
 export { OrderConfirmation } from './OrderConfirmation';
 export { ItemDetailModal } from './ItemDetailModal';
+export { BurgerBuilder } from './BurgerBuilder';
 export { DebugPanel } from './DebugPanel';

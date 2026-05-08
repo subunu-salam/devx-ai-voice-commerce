@@ -4,7 +4,7 @@
 import { useRef, useCallback, useState } from 'react';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import { MenuDisplay, OrderSummaryPanel, OrderConfirmation, ItemDetailModal, DebugPanel } from './components';
+import { MenuDisplay, OrderSummaryPanel, OrderConfirmation, ItemDetailModal, BurgerBuilder, DebugPanel } from './components';
 import { useAppStore } from './store';
 import { createWebSocketClient, VoiceSessionManager } from './voice';
 import { getRuntimeConfig } from './config';
@@ -134,6 +134,7 @@ export default function App() {
       </div>
 
       <ItemDetailModal />
+      <BurgerBuilder />
     </div>
   );
 }

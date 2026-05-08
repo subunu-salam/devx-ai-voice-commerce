@@ -30,6 +30,14 @@ export interface OrderItem {
 }
 
 // Agent-controlled UI state — sent as a complete snapshot via update_ui tool
+export interface BurgerBuilderState {
+  active: boolean;
+  patty: string | null;
+  toppings: string[];
+  sauces: string[];
+  price: number; // cents — running total
+}
+
 export interface AgentUIState {
   categories: Category[];
   menuItems: Record<string, MenuItem[]>; // categoryId -> items
@@ -39,6 +47,7 @@ export interface AgentUIState {
   orderTotal: number;
   orderConfirmed: boolean;
   orderNumber: string | null;
+  burgerBuilder: BurgerBuilderState | null;
 }
 
 // The event the agent sends over WebSocket

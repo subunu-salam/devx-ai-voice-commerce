@@ -38,7 +38,7 @@ try:
         get_categories, get_items_by_category, get_recommendations,
     )
     from agent.order_tools import (
-        add_to_order, cancel_order, get_order_summary, place_order, remove_from_order,
+        add_to_order, build_custom_burger, cancel_order, get_order_summary, place_order, remove_from_order,
     )
     from agent.ui_state_manager import set_websocket, clear_websocket, set_ui_state, get_ui_state, reset_ui_state
 except ModuleNotFoundError:
@@ -46,7 +46,7 @@ except ModuleNotFoundError:
         get_categories, get_items_by_category, get_recommendations,
     )
     from order_tools import (
-        add_to_order, cancel_order, get_order_summary, place_order, remove_from_order,
+        add_to_order, build_custom_burger, cancel_order, get_order_summary, place_order, remove_from_order,
     )
     from ui_state_manager import set_websocket, clear_websocket, set_ui_state, get_ui_state, reset_ui_state
 
@@ -111,6 +111,7 @@ def update_ui(
     order_total: int = None,
     order_confirmed: bool = None,
     order_number: str = None,
+    burger_builder: dict = None,
 ) -> dict:
     """Update the customer's screen. Call this after any action that should change the display.
 
@@ -127,6 +128,7 @@ def update_ui(
         order_total: Total price in cents.
         order_confirmed: Set to true when order is placed.
         order_number: The order number (set when order is confirmed).
+        burger_builder: Show/update the burger builder UI. Set to {"active": true, "patty": "beef patty", "toppings": [...], "sauces": [...], "price": 899} to show progress. Set to {"active": false} to close it.
 
     Returns:
         Confirmation that the update was sent.
@@ -154,6 +156,11 @@ def update_ui(
         current["orderConfirmed"] = order_confirmed
     if order_number is not None:
         current["orderNumber"] = order_number
+    if burger_builder is not None:
+        if isinstance(burger_builder, dict) and burger_builder.get("active"):
+            current["burgerBuilder"] = burger_builder
+        else:
+            current["burgerBuilder"] = None
 
     # Auto-clear highlighted item only when navigating to a category (not when updating order)
     if highlighted_item is None and highlighted_category is not None:
@@ -235,9 +242,30 @@ to a category.
 
 ## Tools
 Menu: load_menu (initial load), get_categories, get_items_by_category, get_recommendations
-Order: add_to_order, remove_from_order, get_order_summary, place_order, cancel_order
+Order: add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order
 Screen: update_ui
 Context: get_ui_context (use when customer says "this one", "that", etc.)
+
+## Build Your Own Burger
+When a customer wants to create their own burger, use build_custom_burger. Walk them \
+through the options conversationally:
+1. Ask about patty: beef or chicken
+2. Ask about toppings — cheese (american, cheddar, pepper jack, swiss +$1.00 each), \
+premium (bacon, avocado, fried egg +$1.50 each), free (lettuce, tomato, onion, \
+pickles, jalapeños, mushrooms)
+3. Ask about sauces: ketchup, mustard, mayo, bbq sauce, chipotle mayo, special sauce (all free)
+Base price is $8.99. Mention upcharges naturally — "Bacon's an extra buck fifty but \
+it's totally worth it!"
+
+IMPORTANT: As the customer picks ingredients, update the burger builder UI to show \
+progress. Call update_ui(burger_builder={"active": true, "patty": "beef patty", \
+"toppings": ["bacon", "cheddar cheese"], "sauces": ["bbq sauce"], "price": 1149}) \
+after each choice so they can see their burger being built on screen. \
+When they say they're done, call build_custom_burger with all the selections — \
+it will close the builder automatically and add it to the order.
+
+To open the builder initially: update_ui(burger_builder={"active": true, "patty": null, \
+"toppings": [], "sauces": [], "price": 899})
 
 ## Special Instructions
 When the customer says "no pickles", "extra sauce", "well done", etc., pass these as \
@@ -302,7 +330,7 @@ def _fetch_menu_reference() -> str:
 def _build_system_prompt() -> str:
     """Build the system prompt with the current menu from DynamoDB."""
     menu_ref = _fetch_menu_reference()
-    return SYSTEM_PROMPT_TEMPLATE.format(menu_reference=menu_ref)
+    return SYSTEM_PROMPT_TEMPLATE.replace("{menu_reference}", menu_ref)
 
 sonic_model = BidiNovaSonicModel(
     model_id="amazon.nova-sonic-v1:0",
@@ -329,7 +357,7 @@ async def voice_chat(websocket: WebSocket) -> None:
         tools=[
             load_menu,
             get_categories, get_items_by_category, get_recommendations,
-            add_to_order, remove_from_order, get_order_summary, place_order, cancel_order,
+            add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order,
             update_ui, get_ui_context, stop_conversation,
         ],
         system_prompt=system_prompt,

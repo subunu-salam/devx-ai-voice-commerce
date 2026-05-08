@@ -114,3 +114,128 @@ def cancel_order(tool_context=None) -> dict:
     _order_state.cancel()
     summary = {"message": "Order cancelled.", **_order_state.get_summary()}
     return summary
+
+
+# --- Custom Burger Builder ---
+
+# Base price in cents, plus per-topping prices
+_CUSTOM_BURGER_BASE_PRICE = 899  # $8.99 for patty + bun
+_TOPPING_PRICES = {
+    # Patty options (included in base)
+    "beef patty": 0,
+    "chicken patty": 0,
+    # Cheese (+$1.00)
+    "american cheese": 100,
+    "cheddar cheese": 100,
+    "pepper jack cheese": 100,
+    "swiss cheese": 100,
+    # Premium toppings (+$1.50)
+    "bacon": 150,
+    "avocado": 150,
+    "fried egg": 150,
+    # Free toppings
+    "lettuce": 0,
+    "tomato": 0,
+    "onion": 0,
+    "pickles": 0,
+    "jalapeños": 0,
+    "mushrooms": 0,
+    # Sauces (free)
+    "ketchup": 0,
+    "mustard": 0,
+    "mayo": 0,
+    "bbq sauce": 0,
+    "chipotle mayo": 0,
+    "special sauce": 0,
+}
+
+
+@tool
+def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantity: int = 1) -> dict:
+    """Build a custom burger with chosen patty, toppings, and sauces. Adds it to the order.
+
+    Args:
+        patty: The patty type — "beef patty" or "chicken patty".
+        toppings: List of toppings. Options: "american cheese", "cheddar cheese",
+            "pepper jack cheese", "swiss cheese", "bacon", "avocado", "fried egg",
+            "lettuce", "tomato", "onion", "pickles", "jalapeños", "mushrooms".
+        sauces: List of sauces. Options: "ketchup", "mustard", "mayo", "bbq sauce",
+            "chipotle mayo", "special sauce". Defaults to none.
+        quantity: Number of custom burgers (default 1).
+
+    Returns:
+        Summary with the custom burger details, price breakdown, and updated order.
+    """
+    if sauces is None:
+        sauces = []
+    if quantity < 1:
+        return {"error": "Quantity must be at least 1."}
+
+    # Validate patty
+    patty = patty.lower().strip()
+    if patty not in ("beef patty", "chicken patty"):
+        return {"error": f"Invalid patty '{patty}'. Choose 'beef patty' or 'chicken patty'."}
+
+    # Calculate price
+    total_price = _CUSTOM_BURGER_BASE_PRICE
+    selected_toppings = []
+    price_breakdown = [{"item": f"Custom burger ({patty})", "price": _CUSTOM_BURGER_BASE_PRICE}]
+
+    for topping in toppings:
+        topping = topping.lower().strip()
+        if topping not in _TOPPING_PRICES:
+            return {"error": f"Unknown topping '{topping}'. Available: {', '.join(sorted(_TOPPING_PRICES.keys()))}"}
+        price = _TOPPING_PRICES[topping]
+        total_price += price
+        selected_toppings.append(topping)
+        if price > 0:
+            price_breakdown.append({"item": f"+ {topping}", "price": price})
+
+    selected_sauces = []
+    for sauce in sauces:
+        sauce = sauce.lower().strip()
+        if sauce not in _TOPPING_PRICES:
+            return {"error": f"Unknown sauce '{sauce}'. Available: ketchup, mustard, mayo, bbq sauce, chipotle mayo, special sauce."}
+        selected_sauces.append(sauce)
+
+    # Build description for the order
+    parts = [patty]
+    if selected_toppings:
+        parts.extend(selected_toppings)
+    if selected_sauces:
+        parts.extend(selected_sauces)
+    description = ", ".join(parts)
+
+    # Use a unique item ID for each custom burger configuration
+    import hashlib
+    config_hash = hashlib.md5(description.encode()).hexdigest()[:6]
+    item_id = f"custom-burger-{config_hash}"
+    name = "Custom Burger"
+
+    logger.info("build_custom_burger: %s toppings=%s sauces=%s price=%s", patty, selected_toppings, selected_sauces, total_price)
+
+    _order_state.add_item(item_id, name, quantity, total_price, description)
+    summary = _order_state.get_summary()
+
+    # Auto-update the UI: close burger builder, highlight item, update order
+    try:
+        current = get_ui_state()
+        current["burgerBuilder"] = None
+        current["highlightedItem"] = "custom-burger"
+        current["orderItems"] = summary["items"]
+        current["orderTotal"] = summary["total"]
+        set_ui_state(current)
+    except Exception as e:
+        logger.warning("build_custom_burger: failed to auto-update UI: %s", e)
+
+    return {
+        **summary,
+        "custom_burger": {
+            "patty": patty,
+            "toppings": selected_toppings,
+            "sauces": selected_sauces,
+            "price": total_price,
+            "price_formatted": f"${total_price / 100:.2f}",
+            "breakdown": price_breakdown,
+        },
+    }
