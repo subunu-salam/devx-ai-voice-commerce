@@ -146,6 +146,15 @@ def update_ui(
         current["highlightedCategory"] = highlighted_category or None
     if highlighted_item is not None:
         current["highlightedItem"] = highlighted_item or None
+        # Validate the item ID exists in menu data; attempt fuzzy match if not found
+        if highlighted_item and current.get("menuItems"):
+            all_items = {item["itemId"]: item for items in current["menuItems"].values() for item in items}
+            if highlighted_item not in all_items:
+                # Try to find a match by checking if the parts match in different order
+                for real_id in all_items:
+                    if set(highlighted_item.split("-")) == set(real_id.split("-")):
+                        current["highlightedItem"] = real_id
+                        break
     if order_items is not None:
         current["orderItems"] = order_items
     if order_total is not None:
@@ -219,7 +228,9 @@ You control the customer's screen via update_ui. Keep it in sync with the conver
 
 WHEN YOU MENTION AN ITEM → ALWAYS call update_ui(highlighted_item="item-id") to show \
 its details on screen. Do this EVERY TIME you talk about a specific item, even briefly. \
-This is critical — the customer expects to see the item highlighted when you mention it.
+This is critical — the customer expects to see the item highlighted when you mention it. \
+IMPORTANT: Use the EXACT itemId from the menu data returned by load_menu (e.g. \
+"milkshake-chocolate", NOT "chocolate-milkshake"). Never guess or reformat item IDs.
 
 WHEN YOU MENTION A CATEGORY → call update_ui(highlighted_category=...) to scroll there.
 
