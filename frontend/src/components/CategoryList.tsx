@@ -47,11 +47,12 @@ export function CategoryList({
               marginBottom: '24px',
               padding: '12px',
               borderRadius: '8px',
-              backgroundColor: isHighlighted ? '#eaf2f8' : 'transparent',
-              transition: 'background-color 0.2s',
+              backgroundColor: 'transparent',
+              border: isHighlighted ? '3px solid #fff' : '3px solid transparent',
+              transition: 'border-color 0.2s',
             }}
           >
-            <h2 style={{ borderBottom: '2px solid #ccc', paddingBottom: '6px' }}>
+            <h2 style={{ borderBottom: '2px solid #ccc', paddingBottom: '6px', color: '#fff' }}>
               {cat.name}
             </h2>
             <div
