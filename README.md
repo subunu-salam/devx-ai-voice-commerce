@@ -6,7 +6,7 @@ A voice-powered drive-thru ordering app built with Amazon Nova Sonic, Strands Ag
 
 ## Demo
 
-[▶️ Watch the demo video](demo.mp4)
+<video src="demo.mp4" controls width="100%"></video>
 
 ## Architecture
 
