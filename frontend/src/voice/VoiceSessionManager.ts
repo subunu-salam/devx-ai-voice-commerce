@@ -74,8 +74,8 @@ export class VoiceSessionManager {
           energy += float32[i] * float32[i];
         }
         const rms = Math.sqrt(energy / float32.length);
-        // Threshold: RMS below 0.02 is likely echo/background, above is real speech
-        if (rms < 0.02) return;
+        // Threshold: RMS below 0.015 is likely echo/background, above is real speech
+        if (rms < 0.015) return;
       }
 
       const int16 = new Int16Array(float32.length);
