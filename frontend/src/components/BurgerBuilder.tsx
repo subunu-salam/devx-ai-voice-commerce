@@ -41,7 +41,7 @@ export function BurgerBuilder() {
 
   if (!builder || !builder.active) return null;
 
-  const hasIngredients = builder.patty || builder.toppings.length > 0 || builder.sauces.length > 0;
+  const hasIngredients = (builder.patty && builder.patty !== 'null') || builder.toppings.length > 0 || builder.sauces.length > 0;
 
   return (
     <div
@@ -89,7 +89,7 @@ export function BurgerBuilder() {
           {/* Ingredients */}
           {hasIngredients ? (
             <div style={{ marginTop: 20 }}>
-              {builder.patty && (
+              {builder.patty && builder.patty !== 'null' && (
                 <IngredientRow icon={TOPPING_ICONS[builder.patty]} label={builder.patty} tag="base" />
               )}
               {builder.toppings.map((t, i) => (
@@ -153,7 +153,7 @@ function BurgerStack({ builder }: { builder: BurgerBuilderState }) {
   }
 
   // Patty
-  if (builder.patty) {
+  if (builder.patty && builder.patty !== 'null') {
     layers.push({ emoji: TOPPING_ICONS[builder.patty] || '🥩', color: '#6b3a1f', width: 82 });
   }
 
