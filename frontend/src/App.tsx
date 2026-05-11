@@ -127,7 +127,8 @@ export default function App() {
       {voiceError && <p style={{ color: 'red' }}>{voiceError}</p>}
 
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-        {/* Build Your Own — left sidebar */}
+        {/* Build Your Own — left sidebar (only show when menu is loaded) */}
+        {hasMenu && (
         <div style={{ width: 180, flexShrink: 0, position: 'sticky', top: 16 }}>
           <div
             onClick={() => {
@@ -155,6 +156,7 @@ export default function App() {
             <div style={{ marginTop: 6, fontSize: '0.75em', color: '#27ae60', fontWeight: 600 }}>From $8.99</div>
           </div>
         </div>
+        )}
 
         {/* Menu */}
         <div style={{ flex: 2 }}><MenuDisplay onItemClick={handleItemClick} /></div>
