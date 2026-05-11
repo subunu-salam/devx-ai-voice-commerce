@@ -93,7 +93,8 @@ aws cognito-idp admin-set-user-password \
 3. **Agent loads menu** → calls `load_menu` tool, sends full menu to frontend via `update_ui`
 4. **Voice conversation** → bidirectional audio streaming with Nova Sonic
 5. **Agent controls the screen** → highlights categories, shows item details, updates order panel
-6. **Place order** → agent persists to DynamoDB, shows confirmation
+6. **Build Your Own Burger** → interactive burger builder modal with real-time visual assembly
+7. **Place order** → agent persists to DynamoDB, shows confirmation
 
 ## Sample Menu
 
@@ -101,6 +102,7 @@ Seeded automatically on deploy from `data/menu_items.json`:
 
 | Category | Items |
 |----------|-------|
+| Build Your Own | Build Your Own Burger (custom patty + toppings) |
 | Burgers  | Classic Burger, Cheeseburger, Double Burger, Veggie Burger |
 | Chicken  | Crispy Chicken Sandwich, Spicy Chicken, Nuggets 6pc/10pc |
 | Sides    | French Fries, Onion Rings, Mozzarella Sticks, Side Salad |
@@ -128,11 +130,12 @@ Create `frontend/public/runtime-config.json` with your deployed resource IDs for
 | `get_items_by_category` | Returns items in a category |
 | `get_recommendations` | Returns featured items |
 | `add_to_order` | Adds item with optional special instructions |
+| `build_custom_burger` | Builds a custom burger with chosen patty, toppings, and sauces |
 | `remove_from_order` | Removes item from order |
 | `get_order_summary` | Returns current order |
 | `place_order` | Persists order to DynamoDB |
 | `cancel_order` | Clears the order |
-| `update_ui` | Sets the frontend display state |
+| `update_ui` | Sets the frontend display state (highlights, order, burger builder) |
 | `get_ui_context` | Returns what the customer is looking at |
 
 ## Redeploying
