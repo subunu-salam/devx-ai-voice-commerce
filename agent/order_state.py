@@ -134,8 +134,10 @@ class OrderState:
         Returns:
             Dict with orderId (UUID), userId, items, total, status, and createdAt.
         """
+        import random
+        order_number = f"{random.randint(100, 999)}"
         return {
-            "orderId": str(uuid.uuid4()),
+            "orderId": order_number,
             "userId": user_id,
             "items": [
                 {
