@@ -60,10 +60,9 @@ def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_inst
     _order_state.add_item(item_id, menu_item.get("name", ""), quantity, int(menu_item.get("price", 0)), special_instructions)
     summary = _order_state.get_summary()
 
-    # Auto-update the UI: highlight the added item and refresh the order display
+    # Auto-update the UI: refresh the order display (don't highlight — that opens the modal)
     try:
         current = get_ui_state()
-        current["highlightedItem"] = item_id
         current["orderItems"] = summary["items"]
         current["orderTotal"] = summary["total"]
         set_ui_state(current)
