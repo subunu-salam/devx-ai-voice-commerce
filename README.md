@@ -2,6 +2,12 @@
 
 A voice-powered drive-thru ordering app built with Amazon Nova Sonic, Strands Agents SDK, and React. Customers talk to an AI attendant who takes their order, browses the menu, and manages the entire UI — all through natural conversation.
 
+![Screenshot](screenshot.png)
+
+## Demo
+
+[▶️ Watch the demo video](demo.mp4)
+
 ## Architecture
 
 ![Architecture Diagram](architecture.png)
