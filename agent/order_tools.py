@@ -3,8 +3,10 @@
 
 """Order management tools for the drive-thru voice ordering agent."""
 
+import json
 import logging
 import os
+from decimal import Decimal
 
 import boto3
 from strands import tool
@@ -17,6 +19,28 @@ except ModuleNotFoundError:
     from ui_state_manager import set_ui_state, get_ui_state
 
 logger = logging.getLogger(__name__)
+
+
+def _sanitize_result(result: dict) -> dict:
+    """Ensure tool result is JSON-serializable with only basic Python types."""
+    def _convert(obj):
+        if isinstance(obj, Decimal):
+            return int(obj) if obj == int(obj) else float(obj)
+        if isinstance(obj, dict):
+            return {str(k): _convert(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [_convert(i) for i in obj]
+        if isinstance(obj, (str, int, float, bool)) or obj is None:
+            return obj
+        return str(obj)
+
+    sanitized = _convert(result)
+    try:
+        json.dumps(sanitized)
+    except (TypeError, ValueError) as e:
+        logger.error("Tool result not JSON-serializable: %s | result: %s", e, sanitized)
+        return {"status": "ok"}
+    return sanitized
 
 _REGION = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "us-east-1"))
 _dynamodb = boto3.resource("dynamodb", region_name=_REGION)
@@ -69,7 +93,13 @@ def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_inst
     except Exception as e:
         logger.warning("add_to_order: failed to auto-update UI: %s", e)
 
-    return summary
+    # Return minimal confirmation to keep tool result small for Nova Sonic
+    return _sanitize_result({
+        "status": "added",
+        "item": str(menu_item.get("name", "")),
+        "quantity": quantity,
+        "total": summary["total"],
+    })
 
 
 @tool
@@ -78,19 +108,24 @@ def remove_from_order(item_id: str, quantity: int = 1) -> dict:
     if not _order_state.remove_item(item_id, quantity):
         return {"error": f"Item '{item_id}' is not in the current order."}
     summary = _order_state.get_summary()
-    return summary
+    return _sanitize_result({"status": "removed", "item": item_id, "total": summary["total"], "itemCount": len(summary["items"])})
 
 
 @tool
 def get_order_summary(tool_context=None) -> dict:
     """Returns the current order summary."""
     summary = _order_state.get_summary()
-    return summary
+    items_brief = [f"{i['name']} x{i['quantity']}" for i in summary["items"]]
+    return _sanitize_result({"items": items_brief, "total": summary["total"]})
 
 
 @tool
-def place_order(user_id: str) -> dict:
-    """Finalizes the order, persists to DynamoDB, returns order number."""
+def place_order(user_id: str = "guest") -> dict:
+    """Finalizes the order, persists to DynamoDB, returns order number.
+    
+    Args:
+        user_id: The customer identifier. Defaults to "guest".
+    """
     if _order_state.is_empty():
         return {"error": "Cannot place an empty order."}
     order_record = _order_state.place_order(user_id)
@@ -103,7 +138,20 @@ def place_order(user_id: str) -> dict:
         len(order_record["items"]),
     )
     _order_state.cancel()
-    return order_record
+
+    # Update UI to show order confirmation page
+    try:
+        current = get_ui_state()
+        current["orderConfirmed"] = True
+        current["orderNumber"] = order_record["orderId"]
+        current["burgerBuilder"] = None
+        current["highlightedItem"] = None
+        current["highlightedCategory"] = None
+        set_ui_state(current)
+    except Exception as e:
+        logger.warning("place_order: failed to update UI: %s", e)
+
+    return _sanitize_result({"status": "confirmed", "orderId": order_record["orderId"], "total": order_record["total"]})
 
 
 @tool
@@ -111,8 +159,7 @@ def cancel_order(tool_context=None) -> dict:
     """Clears all items from the current order."""
     logger.info("ORDER_CANCELLED: itemCount=%s", len(_order_state.items))
     _order_state.cancel()
-    summary = {"message": "Order cancelled.", **_order_state.get_summary()}
-    return summary
+    return _sanitize_result({"status": "cancelled"})
 
 
 # --- Custom Burger Builder ---
@@ -227,14 +274,12 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
     except Exception as e:
         logger.warning("build_custom_burger: failed to auto-update UI: %s", e)
 
-    return {
-        **summary,
-        "custom_burger": {
-            "patty": patty,
-            "toppings": selected_toppings,
-            "sauces": selected_sauces,
-            "price": total_price,
-            "price_formatted": f"${total_price / 100:.2f}",
-            "breakdown": price_breakdown,
-        },
-    }
+    return _sanitize_result({
+        "status": "added",
+        "item": "Custom Burger",
+        "patty": patty,
+        "toppings": selected_toppings,
+        "sauces": selected_sauces,
+        "price": f"${total_price / 100:.2f}",
+        "total": summary["total"],
+    })

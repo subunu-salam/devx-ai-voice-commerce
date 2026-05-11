@@ -86,14 +86,8 @@ def load_menu() -> dict:
         "menuItems": menu_items,
     })
 
-    # Return a brief summary so the agent knows what's available
-    summary = []
-    for cat in categories:
-        cat_id = cat["categoryId"]
-        items = menu_items.get(cat_id, [])
-        names = [i["name"] for i in items]
-        summary.append(f"{cat['name']}: {', '.join(names)}")
-    return {"status": "menu_loaded", "summary": summary}
+    # Return minimal confirmation — menu details are already in the system prompt
+    return {"status": "menu_loaded", "categories": [cat["name"] for cat in categories]}
 
 
 @tool

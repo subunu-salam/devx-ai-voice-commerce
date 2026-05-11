@@ -3,10 +3,28 @@
 
 """Menu browsing tools for the drive-thru voice ordering agent."""
 
+import json
 import os
+from decimal import Decimal
 
 import boto3
 from strands import tool
+
+
+def _sanitize_result(result: dict) -> dict:
+    """Ensure tool result is JSON-serializable with only basic Python types."""
+    def _convert(obj):
+        if isinstance(obj, Decimal):
+            return int(obj) if obj == int(obj) else float(obj)
+        if isinstance(obj, dict):
+            return {str(k): _convert(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [_convert(i) for i in obj]
+        if isinstance(obj, (str, int, float, bool)) or obj is None:
+            return obj
+        return str(obj)
+
+    return _convert(result)
 
 _REGION = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "us-east-1"))
 _dynamodb = boto3.resource("dynamodb", region_name=_REGION)
@@ -40,7 +58,7 @@ def get_categories(tool_context=None) -> dict:
         })
     categories.sort(key=lambda c: c["sortOrder"])
     result = {"categories": categories}
-    return result
+    return _sanitize_result(result)
 
 
 @tool
@@ -66,7 +84,7 @@ def get_items_by_category(category_id: str) -> dict:
         })
     items.sort(key=lambda i: i["sortOrder"])
     result = {"items": items}
-    return result
+    return _sanitize_result(result)
 
 
 @tool
@@ -87,7 +105,7 @@ def get_item_details(item_id: str, category_id: str) -> dict:
         "featured": bool(item.get("featured", False)),
         "sortOrder": int(item.get("sortOrder", 0)),
     }
-    return result
+    return _sanitize_result(result)
 
 
 @tool
@@ -111,4 +129,4 @@ def get_recommendations(tool_context=None) -> dict:
             "sortOrder": int(item.get("sortOrder", 0)),
         })
     items.sort(key=lambda i: i["sortOrder"])
-    return {"items": items}
+    return _sanitize_result({"items": items})
