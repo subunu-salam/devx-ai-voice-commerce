@@ -1,5 +1,22 @@
 [
   {
+    "PK": "CATEGORY#custom",
+    "SK": "METADATA",
+    "name": "Build Your Own",
+    "sortOrder": 0
+  },
+  {
+    "PK": "CATEGORY#custom",
+    "SK": "ITEM#custom-burger",
+    "name": "Build Your Own Burger",
+    "description": "Start with a beef or chicken patty and pick your toppings — cheese, bacon, veggies, sauces, and more!",
+    "price": 899,
+    "imageUrl": "images/classic-burger.png",
+    "category": "Build Your Own",
+    "featured": true,
+    "sortOrder": 1
+  },
+  {
     "PK": "CATEGORY#burgers",
     "SK": "METADATA",
     "name": "Burgers",
@@ -48,17 +65,6 @@
     "category": "Burgers",
     "featured": false,
     "sortOrder": 5
-  },
-  {
-    "PK": "CATEGORY#burgers",
-    "SK": "ITEM#custom-burger",
-    "name": "Build Your Own Burger",
-    "description": "Start with a beef or chicken patty and pick your toppings — cheese, bacon, veggies, sauces, and more!",
-    "price": 899,
-    "imageUrl": "images/classic-burger.png",
-    "category": "Burgers",
-    "featured": true,
-    "sortOrder": 3
   },
   {
     "PK": "CATEGORY#chicken",

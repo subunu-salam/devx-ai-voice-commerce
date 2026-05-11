@@ -120,14 +120,46 @@ export default function App() {
       </div>
 
       {listening && (
-        <div style={{ marginBottom: 12, color: 'green', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ marginBottom: 12, color: 'green', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <span role="status" aria-label="Listening">🎙️ Listening…</span>
         </div>
       )}
       {voiceError && <p style={{ color: 'red' }}>{voiceError}</p>}
 
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+        {/* Build Your Own — left sidebar */}
+        <div style={{ width: 180, flexShrink: 0, position: 'sticky', top: 16 }}>
+          <div
+            onClick={() => {
+              useAppStore.getState().applyAgentUIState({
+                ...useAppStore.getState().agentUI,
+                burgerBuilder: { active: true, patty: null, toppings: [], sauces: [], price: 899 },
+              });
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
+            style={{
+              cursor: 'pointer',
+              background: '#fff',
+              border: '1px solid #eee',
+              borderRadius: 12,
+              padding: '14px 16px',
+              textAlign: 'center',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
+          >
+            <div style={{ fontWeight: 600, fontSize: '0.9em', color: '#333' }}>or Build Your Own Burger</div>
+            <div style={{ marginTop: 6, fontSize: '0.75em', color: '#27ae60', fontWeight: 600 }}>From $8.99</div>
+          </div>
+        </div>
+
+        {/* Menu */}
         <div style={{ flex: 2 }}><MenuDisplay onItemClick={handleItemClick} /></div>
+
+        {/* Order summary */}
         <div style={{ flex: 1, position: 'sticky', top: 16, maxHeight: 'calc(100vh - 32px)', overflowY: 'auto' }}>
           <OrderSummaryPanel />
         </div>

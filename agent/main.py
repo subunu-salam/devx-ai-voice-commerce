@@ -117,7 +117,7 @@ def update_ui(
         order_total: Total price in cents.
         order_confirmed: Set to true when order is placed.
         order_number: The order number (set when order is confirmed).
-        burger_builder: Show/update the burger builder UI. Set to {"active": true, "patty": "beef patty", "toppings": [...], "sauces": [...], "price": 899} to show progress. Set to {"active": false} to close it.
+        burger_builder: Show/update the burger builder UI. Set to {"active": true, "patty": null, "toppings": [], "sauces": [], "price": 899} to show progress. Set to {"active": false} to close it.
 
     Returns:
         Confirmation that the update was sent.
@@ -186,7 +186,7 @@ RULES:
 TOOLS: load_menu, get_categories, get_items_by_category, get_recommendations, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, update_ui, get_ui_context
 
 BUILD YOUR OWN BURGER (itemId: custom-burger):
-Walk customer through: patty (beef/chicken), toppings, sauces. Use update_ui(burger_builder={"active":true,"patty":"beef patty","toppings":[],"sauces":[],"price":899}) to show progress. When done, recap the burger and ask "Sound good, or want to change anything?" — only call build_custom_burger AFTER they confirm.
+Walk customer through: patty (beef/chicken), toppings, sauces. Use update_ui(burger_builder={"active":true,"patty":null,"toppings":[],"sauces":[],"price":899}) to open the builder. Update it as they choose (e.g. burger_builder={"active":true,"patty":"beef patty","toppings":["bacon"],"sauces":[],"price":1049}). When done, recap the burger and ask "Sound good, or want to change anything?" — only call build_custom_burger AFTER they confirm.
 Cheese +$1: american, cheddar, pepper jack, swiss. Premium +$1.50: bacon, avocado, fried egg. Free: lettuce, tomato, onion, pickles, jalapeños, mushrooms. Sauces free: ketchup, mustard, mayo, bbq sauce, chipotle mayo, special sauce.
 """
 

@@ -41,12 +41,15 @@ export function BurgerBuilder() {
 
   if (!builder || !builder.active) return null;
 
+  const hasIngredients = builder.patty || builder.toppings.length > 0 || builder.sauces.length > 0;
+
   return (
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 1000,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(4px)',
       }}
       onClick={() => useAppStore.getState().applyAgentUIState({
         ...useAppStore.getState().agentUI,
@@ -55,46 +58,76 @@ export function BurgerBuilder() {
     >
       <div
         style={{
-          background: '#fff', color: '#333', borderRadius: 16, padding: 24,
-          maxWidth: 480, width: '90%', maxHeight: '85vh', overflow: 'auto',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          background: 'linear-gradient(180deg, #fffbf0 0%, #fff 40%)',
+          color: '#333', borderRadius: 24, padding: 0,
+          maxWidth: 440, width: '92%', maxHeight: '88vh', overflow: 'hidden',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          display: 'flex', flexDirection: 'column',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 style={{ margin: '0 0 4px', textAlign: 'center', color: '#222' }}>🍔 Build Your Burger</h2>
-        <p style={{ color: '#666', textAlign: 'center', margin: '0 0 16px', fontSize: '0.9em' }}>
-          Tell the agent what you want!
-        </p>
+        {/* Header */}
+        <div style={{
+          padding: '24px 24px 16px',
+          textAlign: 'center',
+          borderBottom: '1px solid #f0e8d8',
+        }}>
+          <div style={{ fontSize: '2.5em', marginBottom: 4 }}>🍔</div>
+          <h2 style={{ margin: '0 0 4px', color: '#222', fontSize: '1.4em', fontWeight: 700 }}>
+            Build Your Burger
+          </h2>
+          <p style={{ color: '#999', margin: 0, fontSize: '0.85em' }}>
+            Tell me what you'd like on it
+          </p>
+        </div>
 
-        {/* Burger Stack Visualization */}
-        <BurgerStack builder={builder} />
+        {/* Content */}
+        <div style={{ flex: 1, overflow: 'auto', padding: '16px 24px 24px' }}>
+          {/* Burger visualization */}
+          <BurgerStack builder={builder} />
 
-        {/* Selected ingredients list */}
-        <div style={{ marginTop: 16 }}>
-          {builder.patty && (
-            <IngredientSection title="Patty" items={[builder.patty]} />
-          )}
-          {builder.toppings.length > 0 && (
-            <IngredientSection title="Toppings" items={builder.toppings} />
-          )}
-          {builder.sauces.length > 0 && (
-            <IngredientSection title="Sauces" items={builder.sauces} />
-          )}
-          {!builder.patty && builder.toppings.length === 0 && builder.sauces.length === 0 && (
-            <p style={{ textAlign: 'center', color: '#aaa', fontStyle: 'italic', padding: '12px 0' }}>
-              Start by telling me what patty you'd like...
-            </p>
+          {/* Ingredients */}
+          {hasIngredients ? (
+            <div style={{ marginTop: 20 }}>
+              {builder.patty && (
+                <IngredientRow icon={TOPPING_ICONS[builder.patty]} label={builder.patty} tag="base" />
+              )}
+              {builder.toppings.map((t, i) => (
+                <IngredientRow
+                  key={i}
+                  icon={TOPPING_ICONS[t] || '•'}
+                  label={t}
+                  price={TOPPING_PRICES[t]}
+                />
+              ))}
+              {builder.sauces.map((s, i) => (
+                <IngredientRow key={i} icon={TOPPING_ICONS[s] || '💧'} label={s} tag="free" />
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              textAlign: 'center', padding: '24px 16px',
+              background: '#fafafa', borderRadius: 12, marginTop: 16,
+            }}>
+              <p style={{ color: '#bbb', margin: 0, fontSize: '0.9em' }}>
+                🎙️ Start by choosing a patty...
+              </p>
+            </div>
           )}
         </div>
 
-        {/* Running total */}
+        {/* Footer — price */}
         <div style={{
-          marginTop: 16, padding: '12px 16px',
-          background: '#f8f9fa', borderRadius: 8,
+          padding: '16px 24px',
+          borderTop: '1px solid #f0e8d8',
+          background: '#fafaf7',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          borderRadius: '0 0 24px 24px',
         }}>
-          <span style={{ fontWeight: 'bold' }}>Running Total</span>
-          <span style={{ fontSize: '1.3em', fontWeight: 'bold', color: '#27ae60' }}>
+          <span style={{ fontSize: '0.85em', color: '#888', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Total
+          </span>
+          <span style={{ fontSize: '1.5em', fontWeight: 800, color: '#27ae60' }}>
             {formatPrice(builder.price)}
           </span>
         </div>
@@ -104,94 +137,102 @@ export function BurgerBuilder() {
 }
 
 function BurgerStack({ builder }: { builder: BurgerBuilderState }) {
-  const layers: { label: string; color: string; height: number }[] = [];
+  const layers: { emoji: string; color: string; width: number }[] = [];
 
   // Top bun
-  layers.push({ label: '🍞', color: '#f4a460', height: 28 });
+  layers.push({ emoji: '🍞', color: '#e8a838', width: 80 });
 
-  // Sauces on top
+  // Sauces
   for (const sauce of builder.sauces) {
-    layers.push({ label: TOPPING_ICONS[sauce] || '💧', color: '#ffe4b5', height: 12 });
+    layers.push({ emoji: TOPPING_ICONS[sauce] || '💧', color: '#f5deb3', width: 70 });
   }
 
-  // Toppings
+  // Toppings (reversed so first added is closest to patty)
   for (const topping of [...builder.toppings].reverse()) {
-    const color = getLayerColor(topping);
-    layers.push({ label: `${TOPPING_ICONS[topping] || '•'} ${topping}`, color, height: 20 });
+    layers.push({ emoji: TOPPING_ICONS[topping] || '•', color: getLayerColor(topping), width: 75 });
   }
 
   // Patty
   if (builder.patty) {
-    layers.push({ label: `${TOPPING_ICONS[builder.patty] || '🥩'} ${builder.patty}`, color: '#8B4513', height: 24 });
+    layers.push({ emoji: TOPPING_ICONS[builder.patty] || '🥩', color: '#6b3a1f', width: 82 });
   }
 
   // Bottom bun
-  layers.push({ label: '🍞', color: '#f4a460', height: 28 });
+  layers.push({ emoji: '🍞', color: '#e8a838', width: 85 });
 
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      gap: 2, padding: '16px 0',
+      gap: 3, padding: '20px 0 8px',
     }}>
       {layers.map((layer, i) => (
         <div
           key={i}
-          className="burger-layer-enter"
           style={{
-            width: `${Math.min(85, 60 + layers.length * 2)}%`,
-            height: layer.height,
-            background: layer.color,
-            borderRadius: layer.height / 2,
+            width: `${layer.width}%`,
+            height: 28,
+            background: `linear-gradient(135deg, ${layer.color}, ${adjustColor(layer.color, -20)})`,
+            borderRadius: 14,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.75em', color: '#333', fontWeight: 'bold',
-            transition: 'all 0.3s ease',
+            fontSize: '1.1em',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
           }}
         >
-          {layer.label}
+          {layer.emoji}
         </div>
       ))}
     </div>
   );
 }
 
-function IngredientSection({ title, items }: { title: string; items: string[] }) {
+function IngredientRow({ icon, label, price, tag }: { icon: string; label: string; price?: number; tag?: string }) {
   return (
-    <div style={{ marginBottom: 8 }}>
-      <div style={{ fontSize: '0.8em', color: '#888', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 4 }}>
-        {title}
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {items.map((item, i) => {
-          const price = TOPPING_PRICES[item];
-          return (
-            <span
-              key={i}
-              style={{
-                padding: '4px 10px', borderRadius: 12,
-                background: '#f0f0f0', fontSize: '0.85em',
-                display: 'flex', alignItems: 'center', gap: 4,
-              }}
-            >
-              {TOPPING_ICONS[item] || '•'} {item}
-              {price ? <span style={{ color: '#e67e22', fontSize: '0.8em' }}>+{formatPrice(price)}</span> : null}
-            </span>
-          );
-        })}
-      </div>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10,
+      padding: '8px 12px', marginBottom: 6,
+      background: '#fafafa', borderRadius: 10,
+      border: '1px solid #f0f0f0',
+    }}>
+      <span style={{ fontSize: '1.2em', width: 28, textAlign: 'center' }}>{icon}</span>
+      <span style={{ flex: 1, fontSize: '0.9em', color: '#444', textTransform: 'capitalize' }}>{label}</span>
+      {price ? (
+        <span style={{
+          fontSize: '0.75em', fontWeight: 700, color: '#e67e22',
+          background: '#fef3e2', padding: '2px 8px', borderRadius: 8,
+        }}>
+          +{formatPrice(price)}
+        </span>
+      ) : tag ? (
+        <span style={{
+          fontSize: '0.7em', fontWeight: 600, color: '#27ae60',
+          background: '#e8f8f0', padding: '2px 8px', borderRadius: 8, textTransform: 'uppercase',
+        }}>
+          {tag}
+        </span>
+      ) : null}
     </div>
   );
 }
 
 function getLayerColor(topping: string): string {
-  if (topping.includes('cheese')) return '#ffd700';
-  if (topping === 'bacon') return '#8B0000';
-  if (topping === 'avocado') return '#2e8b57';
-  if (topping === 'fried egg') return '#fff8dc';
-  if (topping === 'lettuce') return '#228b22';
-  if (topping === 'tomato') return '#dc143c';
-  if (topping === 'onion') return '#dda0dd';
-  if (topping === 'pickles') return '#6b8e23';
-  if (topping === 'jalapeños') return '#228b22';
-  if (topping === 'mushrooms') return '#d2b48c';
-  return '#ddd';
+  if (topping.includes('cheese')) return '#f5c518';
+  if (topping === 'bacon') return '#a0522d';
+  if (topping === 'avocado') return '#4caf50';
+  if (topping === 'fried egg') return '#fff3cd';
+  if (topping === 'lettuce') return '#66bb6a';
+  if (topping === 'tomato') return '#ef5350';
+  if (topping === 'onion') return '#ce93d8';
+  if (topping === 'pickles') return '#8bc34a';
+  if (topping === 'jalapeños') return '#43a047';
+  if (topping === 'mushrooms') return '#bcaaa4';
+  return '#e0e0e0';
+}
+
+function adjustColor(hex: string, amount: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, Math.max(0, ((num >> 16) & 0xff) + amount));
+  const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
+  const b = Math.min(255, Math.max(0, (num & 0xff) + amount));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }

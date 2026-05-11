@@ -16,10 +16,13 @@ export function MenuDisplay({ onItemClick }: MenuDisplayProps) {
     return null; // No menu data yet — agent hasn't sent it
   }
 
+  // Separate "Build Your Own" from regular categories
+  const regularCategories = categories.filter((c) => c.categoryId !== 'custom');
+
   return (
     <div className="menu-display">
       <CategoryList
-        categories={categories}
+        categories={regularCategories}
         items={menuItems}
         highlightedCategory={highlightedCategory}
         highlightedItem={highlightedItem}
