@@ -38,7 +38,7 @@ export function ItemDetailModal() {
     >
       <div
         style={{
-          background: '#fff', borderRadius: 16, padding: 24,
+          background: '#fff', color: '#333', borderRadius: 16, padding: 24,
           maxWidth: 420, width: '90%', maxHeight: '80vh', overflow: 'auto',
           boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
         }}
@@ -54,7 +54,7 @@ export function ItemDetailModal() {
             img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="%23eee"/></svg>';
           }}
         />
-        <h2 style={{ margin: '16px 0 4px' }}>{item.name}</h2>
+        <h2 style={{ margin: '16px 0 4px', color: '#222' }}>{item.name}</h2>
         <p style={{ color: '#666', margin: '0 0 8px' }}>{item.description}</p>
         <p style={{ fontSize: '1.3em', fontWeight: 'bold', color: '#27ae60', margin: '0 0 16px' }}>
           {formatPrice(item.price)}

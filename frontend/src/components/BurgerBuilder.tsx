@@ -55,13 +55,13 @@ export function BurgerBuilder() {
     >
       <div
         style={{
-          background: '#fff', borderRadius: 16, padding: 24,
+          background: '#fff', color: '#333', borderRadius: 16, padding: 24,
           maxWidth: 480, width: '90%', maxHeight: '85vh', overflow: 'auto',
           boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 style={{ margin: '0 0 4px', textAlign: 'center' }}>🍔 Build Your Burger</h2>
+        <h2 style={{ margin: '0 0 4px', textAlign: 'center', color: '#222' }}>🍔 Build Your Burger</h2>
         <p style={{ color: '#666', textAlign: 'center', margin: '0 0 16px', fontSize: '0.9em' }}>
           Tell the agent what you want!
         </p>
@@ -143,8 +143,7 @@ function BurgerStack({ builder }: { builder: BurgerBuilderState }) {
             background: layer.color,
             borderRadius: layer.height / 2,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.75em', color: '#fff', fontWeight: 'bold',
-            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+            fontSize: '0.75em', color: '#333', fontWeight: 'bold',
             transition: 'all 0.3s ease',
           }}
         >

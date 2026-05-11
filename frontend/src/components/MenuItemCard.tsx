@@ -48,9 +48,6 @@ export function MenuItemCard({ item, highlighted = false, onClick }: MenuItemCar
         }}
       />
       <h3 style={{ margin: '8px 0 4px' }}>{item.name}</h3>
-      <p style={{ margin: '0 0 4px', color: '#666', textAlign: 'center', fontSize: '0.9em' }}>
-        {item.description}
-      </p>
       <span style={{ fontWeight: 'bold', color: '#27ae60' }}>{formatPrice(item.price)}</span>
     </article>
   );
