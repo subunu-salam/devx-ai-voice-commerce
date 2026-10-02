@@ -248,7 +248,7 @@ def _build_system_prompt() -> str:
     return SYSTEM_PROMPT_TEMPLATE.replace("{menu_reference}", menu_ref)
 
 sonic_model = BidiNovaSonicModel(
-    model_id="amazon.nova-sonic-v1:0",
+          model_id="amazon.nova-2-sonic-v1:0",
     provider_config={
         "audio": {"voice": "tiffany", "input_rate": 16000, "output_rate": 16000, "channels": 1, "format": "pcm"},
         "inference": {},
