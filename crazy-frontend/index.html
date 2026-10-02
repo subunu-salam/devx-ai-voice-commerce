@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drive-thru voice ordering</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#1D1140; --dusk:#2C1A66; --ketchup:#FF4B33; --mustard:#FFC93C;
+  --board:#FFF4D6; --mint:#2FE0C2; --ink:#1D1140; --paper:#FFFFFF;
+  --display:"Bungee","Impact","Arial Black",sans-serif;
+  --body:"Figtree","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:var(--body); color:var(--board); line-height:1.45;
+  background:
+    radial-gradient(900px 500px at 12% -10%, #5B2FB8 0%, transparent 60%),
+    radial-gradient(700px 500px at 100% 110%, #B3264F 0%, transparent 55%),
+    var(--night);
+  background-attachment:fixed;
+}
+button,input{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--mint); outline-offset:3px}
+
+.lane{max-width:1400px; margin:0 auto; padding:20px; display:grid; gap:20px;
+  grid-template-columns:330px minmax(0,1fr) 300px; align-items:start}
+@media (max-width:1100px){ .lane{grid-template-columns:300px minmax(0,1fr)} .ticket-col{grid-column:1 / -1} }
+@media (max-width:720px){ .lane{grid-template-columns:minmax(0,1fr); padding:12px} }
+
+/* ---------- speaker box ---------- */
+.speaker{background:var(--dusk); border:4px solid var(--mustard); border-radius:28px 28px 14px 14px;
+  padding:18px; position:sticky; top:20px; box-shadow:0 14px 0 #120A2B}
+@media (max-width:720px){ .speaker{position:static} }
+.sign{font-family:var(--display); font-size:1.75rem; line-height:1.02; margin:0 0 4px; color:var(--mustard);
+  text-shadow:3px 3px 0 var(--ketchup)}
+.sub{margin:0 0 12px; font-size:.95rem; opacity:.85}
+#grille{display:block; width:100%; aspect-ratio:1; border-radius:50%; background:#120A2B;
+  border:6px solid #120A2B; box-shadow:inset 0 0 0 3px #47308F}
+.status{min-height:2.9em; margin:12px 0; font-weight:600}
+.status.bad{color:#FFD0C7}
+.go{width:100%; border:0; border-radius:14px; padding:16px 14px; font-family:var(--display); font-size:1.15rem;
+  background:var(--ketchup); color:#fff; box-shadow:0 6px 0 #9E2413; transition:transform .08s, box-shadow .08s}
+.go:active{transform:translateY(4px); box-shadow:0 2px 0 #9E2413}
+.go.live{background:var(--board); color:var(--ink); box-shadow:0 6px 0 #BFA865}
+.ghost{width:100%; margin-top:14px; background:transparent; color:var(--board); border:2px dashed #7C63CF;
+  border-radius:12px; padding:10px; font-weight:600}
+.said{margin:14px 0 0; padding:0; list-style:none; display:grid; gap:8px; max-height:230px; overflow:auto}
+.said li{padding:8px 12px; border-radius:14px; font-size:.95rem; max-width:92%}
+.said .assistant{background:#47308F; border-bottom-left-radius:4px}
+.said .user{background:var(--mustard); color:var(--ink); justify-self:end; border-bottom-right-radius:4px}
+details{margin-top:14px; font-size:.85rem}
+summary{cursor:pointer; opacity:.8}
+details input{width:100%; margin-top:8px; padding:8px; border-radius:8px; border:2px solid #7C63CF;
+  background:#120A2B; color:var(--board)}
+
+/* ---------- menu board ---------- */
+.board{background:var(--board); color:var(--ink); border-radius:18px; padding:18px; position:relative;
+  box-shadow:0 0 0 6px #120A2B, 0 0 70px rgba(255,201,60,.35); min-height:420px}
+.tabs{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px}
+.tab{border:0; background:var(--ink); color:var(--board); font-family:var(--display); font-size:.9rem;
+  padding:9px 14px; border-radius:10px}
+.tab[aria-pressed="true"]{background:var(--ketchup); color:#fff; transform:rotate(-2deg)}
+.items{display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.item{background:#fff; border:3px solid var(--ink); border-radius:14px; padding:10px; display:grid; gap:6px;
+  transition:transform .25s, background .25s, box-shadow .25s}
+.item.lit{background:var(--mustard); transform:scale(1.04) rotate(-1deg); box-shadow:7px 7px 0 var(--ketchup)}
+.pic{height:104px; border-radius:9px; background:#FFE9A8; display:grid; place-items:center; font-size:3rem; overflow:hidden}
+.pic img{width:100%; height:100%; object-fit:cover}
+.item h3{margin:0; font-size:1.02rem; font-weight:800; line-height:1.2}
+.item p{margin:0; font-size:.86rem; opacity:.8}
+.price{font-family:var(--display); color:var(--ketchup); font-size:1.05rem}
+.item.lit .price{color:var(--ink)}
+.empty{padding:70px 16px; text-align:center; font-size:1.1rem; max-width:34ch; margin:0 auto}
+.empty b{display:block; font-family:var(--display); font-size:1.5rem; margin-bottom:8px}
+
+/* burger builder */
+.builder{margin-bottom:16px; background:var(--ink); color:var(--board); border-radius:14px; padding:16px;
+  display:grid; grid-template-columns:minmax(150px,220px) 1fr; gap:18px; align-items:center}
+@media (max-width:520px){ .builder{grid-template-columns:1fr} }
+.stack{display:flex; flex-direction:column; gap:4px; align-items:center}
+.layer{width:100%; text-align:center; font-size:.78rem; font-weight:800; color:var(--ink); padding:5px 6px; border-radius:8px;
+  animation:drop .35s cubic-bezier(.2,1.6,.4,1)}
+.bun-top{background:#E9A23B; border-radius:60px 60px 10px 10px; padding:14px 6px 8px}
+.bun-bot{background:#E9A23B; border-radius:8px 8px 22px 22px}
+.sauce{background:var(--ketchup); color:#fff; width:86%}
+.topping{background:var(--mint); width:94%}
+.patty{background:#6B3A1E; color:#fff}
+.patty.wait{background:transparent; border:2px dashed #7C63CF; color:var(--board)}
+.builder h3{font-family:var(--display); margin:0 0 6px; font-size:1.15rem; color:var(--mustard)}
+.builder p{margin:0}
+@keyframes drop{from{transform:translateY(-22px); opacity:0}}
+
+/* ---------- order ticket ---------- */
+.ticket{background:var(--paper); color:var(--ink); padding:18px 16px 30px; position:sticky; top:20px;
+  -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/20px 100%;
+          mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/20px 100%}
+@media (max-width:1100px){ .ticket{position:static} }
+.ticket h2{font-family:var(--display); font-size:1.15rem; margin:0 0 10px}
+.lines{list-style:none; margin:0; padding:0; font-variant-numeric:tabular-nums}
+.lines li{display:grid; grid-template-columns:auto 1fr auto; gap:8px; padding:8px 0; border-bottom:2px dashed #C9C2DC}
+.lines small{grid-column:2 / -1; opacity:.7}
+.total{display:flex; justify-content:space-between; font-family:var(--display); font-size:1.25rem; margin-top:12px}
+.stamp{margin-top:14px; border:4px solid var(--ketchup); color:var(--ketchup); font-family:var(--display);
+  text-align:center; padding:8px; border-radius:10px; transform:rotate(-4deg); animation:drop .4s cubic-bezier(.2,1.6,.4,1)}
+.hint{opacity:.7; margin:0}
+
+@media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
+</style>
+</head>
+<body>
+<main class="lane">
+
+  <section class="speaker" aria-label="Order speaker">
+    <h1 class="sign">Talk to order</h1>
+    <p class="sub">Say what you want. The attendant builds your order on the board.</p>
+    <canvas id="grille" width="560" height="560" aria-hidden="true"></canvas>
+    <p class="status" id="status" role="status">Press Start order and allow the microphone.</p>
+    <button class="go" id="go">Start order</button>
+    <ul class="said" id="said" aria-label="Conversation"></ul>
+    <button class="ghost" id="demo">Preview with a sample menu</button>
+    <details>
+      <summary>Order line address</summary>
+      <input id="wsurl" aria-label="WebSocket address of the agent" spellcheck="false">
+    </details>
+  </section>
+
+  <section class="board" aria-label="Menu board">
+    <div id="builder"></div>
+    <div class="tabs" id="tabs"></div>
+    <div id="items"></div>
+  </section>
+
+  <aside class="ticket-col">
+    <div class="ticket" aria-label="Your order">
+      <h2>Your order</h2>
+      <ul class="lines" id="lines"></ul>
+      <div id="totals"></div>
+    </div>
+  </aside>
+
+</main>
+
+<script>
+/* ================= settings ================= */
+const DEFAULT_WS = "wss://devx-ai-voice-commerce.onrender.com/ws";
+const RATE = 16000;          // the agent expects 16 kHz mono PCM
+const CHUNK = 4096;          // ~256 ms per message, stays under the agent's 50 messages / 10 s limit
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = c => "$" + (Number(c || 0) / 100).toFixed(2);
+
+let wsUrl = new URLSearchParams(location.search).get("ws");
+try { wsUrl = wsUrl || localStorage.getItem("wsUrl"); } catch (e) {}
+wsUrl = wsUrl || DEFAULT_WS;
+$("wsurl").value = wsUrl;
+$("wsurl").addEventListener("change", e => {
+  wsUrl = e.target.value.trim() || DEFAULT_WS;
+  try { localStorage.setItem("wsUrl", wsUrl); } catch (err) {}
+});
+
+// Free Render services sleep. Knock on the door early so it is awake by the time the customer presses Start.
+try { fetch(wsUrl.replace(/^ws/, "http").replace(/\/ws$/, "/ping"), { mode: "no-cors" }).catch(() => {}); } catch (e) {}
+
+/* ================= screen state (set by the agent) ================= */
+const STATE_KEYS = ["categories","menuItems","highlightedCategory","highlightedItem","orderItems","orderTotal","orderConfirmed","orderNumber","burgerBuilder"];
+const blank = () => ({ categories: [], menuItems: {}, highlightedCategory: null, highlightedItem: null,
+                       orderItems: [], orderTotal: 0, orderConfirmed: false, orderNumber: null, burgerBuilder: null });
+let ui = blank();
+let pickedCat = null;   // category the customer tapped
+
+const ICON = { burgers:"🍔", chicken:"🍗", sides:"🍟", drinks:"🥤", desserts:"🍨" };
+const iconFor = cat => ICON[cat] || (String(cat).includes("build") || String(cat).includes("custom") ? "🍔" : "🍽️");
+
+function catOfItem(itemId) {
+  for (const [cat, list] of Object.entries(ui.menuItems || {}))
+    if ((list || []).some(i => i.itemId === itemId)) return cat;
+  return null;
+}
+
+function render() {
+  const cats = [...(ui.categories || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  const litCat = ui.highlightedItem ? catOfItem(ui.highlightedItem) : null;
+  const active = litCat || ui.highlightedCategory || pickedCat || (cats[0] && cats[0].categoryId);
+
+  $("tabs").innerHTML = cats.map(c =>
+    `<button class="tab" data-cat="${esc(c.categoryId)}" aria-pressed="${c.categoryId === active}">${esc(c.name)}</button>`).join("");
+
+  const list = [...((ui.menuItems || {})[active] || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  $("items").innerHTML = cats.length
+    ? `<div class="items">` + list.map(i => `
+        <article class="item ${i.itemId === ui.highlightedItem ? "lit" : ""}" data-item="${esc(i.itemId)}">
+          <div class="pic">${i.imageUrl ? `<img src="${esc(i.imageUrl)}" alt="" onerror="this.replaceWith('${iconFor(active)}')">` : iconFor(active)}</div>
+          <h3>${esc(i.name)}</h3>
+          <p>${esc(i.description)}</p>
+          <span class="price">${money(i.price)}</span>
+        </article>`).join("") + `</div>`
+    : `<p class="empty"><b>Menu board</b>The menu lights up here as soon as the attendant picks up.</p>`;
+
+  const lit = document.querySelector(".item.lit");
+  if (lit) lit.scrollIntoView({ block: "nearest", behavior: "smooth" });
+
+  const b = ui.burgerBuilder;
+  $("builder").innerHTML = b && b.active ? `
+    <div class="builder">
+      <div class="stack">
+        <div class="layer bun-top">bun</div>
+        ${(b.sauces || []).map(s => `<div class="layer sauce">${esc(s)}</div>`).join("")}
+        ${(b.toppings || []).map(t => `<div class="layer topping">${esc(t)}</div>`).join("")}
+        <div class="layer patty ${b.patty ? "" : "wait"}">${esc(b.patty || "pick a patty")}</div>
+        <div class="layer bun-bot">bun</div>
+      </div>
+      <div><h3>Your burger so far</h3>
+        <p>${b.patty ? "Add toppings and sauces, or say you're done." : "Beef or chicken?"}</p>
+        <p class="price" style="color:var(--mustard)">${money(b.price)}</p></div>
+    </div>` : "";
+
+  const items = ui.orderItems || [];
+  $("lines").innerHTML = items.map(i => `
+    <li><span>${esc(i.quantity || 1)}×</span><span>${esc(i.name)}</span>
+        <span>${money((i.unitPrice ?? i.price ?? 0) * (i.quantity || 1))}</span>
+        ${i.specialInstructions ? `<small>${esc(i.specialInstructions)}</small>` : ""}</li>`).join("");
+  $("totals").innerHTML = items.length
+    ? `<div class="total"><span>Total</span><span>${money(ui.orderTotal)}</span></div>` +
+      (ui.orderConfirmed ? `<div class="stamp">Order ${esc(ui.orderNumber || "")} placed</div>` : "")
+    : `<p class="hint">Nothing yet. Ask for a cheeseburger and watch it land here.</p>`;
+}
+$("tabs").addEventListener("click", e => {
+  const t = e.target.closest(".tab"); if (!t) return;
+  pickedCat = t.dataset.cat; ui.highlightedCategory = null; ui.highlightedItem = null; render();
+});
+
+function applyState(obj) {
+  if (!obj || typeof obj !== "object") return false;
+  if (!STATE_KEYS.some(k => k in obj)) return false;
+  for (const k of STATE_KEYS) if (k in obj) ui[k] = obj[k];
+  render(); return true;
+}
+
+/* ================= conversation text ================= */
+let lastLine = null;
+function say(role, text, final) {
+  if (!text) return;
+  role = role === "user" ? "user" : "assistant";
+  if (lastLine && lastLine.role === role && !lastLine.final) lastLine.el.textContent = text;
+  else {
+    if (lastLine && lastLine.role === role && lastLine.el.textContent === text) return;
+    const li = document.createElement("li"); li.className = role; li.textContent = text;
+    $("said").appendChild(li); lastLine = { role, el: li };
+    while ($("said").children.length > 12) $("said").firstChild.remove();
+  }
+  lastLine.final = final !== false;
+  $("said").scrollTop = $("said").scrollHeight;
+}
+
+/* ================= messages from the agent ================= */
+let gotAnything = false;
+function onMessage(m) {
+  gotAnything = true;
+  const p = m.payload || {};
+  switch (m.type) {
+    case "bidi_audio_stream": playChunk(m.audio, m.sample_rate || RATE); return;
+    case "bidi_transcript_stream": say(m.role, m.text || m.current_transcript || m.delta, m.is_final); return;
+    case "bidi_interruption": stopPlayback(); return;
+    case "bidi_error": setStatus("The attendant hit a problem: " + (m.message || m.error || "unknown error") + ".", true); return;
+    case "order_update": ui.orderItems = p.items || []; ui.orderTotal = p.total || 0; render(); return;
+    case "order_confirmed": ui.orderItems = p.items || ui.orderItems; ui.orderTotal = p.total ?? ui.orderTotal;
+                            ui.orderConfirmed = true; ui.orderNumber = p.orderNumber; render(); return;
+    case "highlight_category": case "browse_category": ui.highlightedCategory = p.categoryId; ui.highlightedItem = null; render(); return;
+    case "highlight_item": case "show_item_detail": ui.highlightedItem = p.itemId; render(); return;
+  }
+  // Full screen state from update_ui / load_menu. Accept it wherever the agent tucked it.
+  for (const c of [m.state, m.ui_state, m.uiState, m.payload, m.data, m]) if (applyState(c)) return;
+}
+
+/* ================= audio ================= */
+let ctx, micStream, proc, micAn, outAn, outGain, ws, live = false, openedAt = 0;
+let playHead = 0; const playing = new Set();
+
+function b64FromI16(i16) {
+  const u8 = new Uint8Array(i16.buffer); let s = "";
+  for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function f32FromB64(b64) {
+  const bin = atob(b64), n = bin.length >> 1, out = new Float32Array(n);
+  for (let i = 0; i < n; i++) { let v = bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8); if (v >= 32768) v -= 65536; out[i] = v / 32768; }
+  return out;
+}
+function to16k(f32, rate) {
+  if (rate === RATE) return f32;
+  const ratio = rate / RATE, n = Math.floor(f32.length / ratio), out = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const p = i * ratio, a = Math.floor(p), b = Math.min(a + 1, f32.length - 1), t = p - a; out[i] = f32[a] * (1 - t) + f32[b] * t; }
+  return out;
+}
+function playChunk(b64, rate) {
+  if (!ctx || !b64) return;
+  const f = f32FromB64(b64); if (!f.length) return;
+  const buf = ctx.createBuffer(1, f.length, rate); buf.copyToChannel(f, 0);
+  const src = ctx.createBufferSource(); src.buffer = buf; src.connect(outGain);
+  playHead = Math.max(playHead, ctx.currentTime + 0.06);
+  src.start(playHead); playHead += buf.duration;
+  playing.add(src); src.onended = () => playing.delete(src);
+}
+function stopPlayback() { playing.forEach(s => { try { s.stop(); } catch (e) {} }); playing.clear(); playHead = 0; }
+
+function setStatus(text, bad) { $("status").textContent = text; $("status").classList.toggle("bad", !!bad); }
+
+async function start() {
+  if (live) return stop("Order ended. Press Start order to go again.");
+  demoOff(); ui = blank(); pickedCat = null; render(); $("said").innerHTML = ""; lastLine = null; gotAnything = false;
+  setStatus("Asking for the microphone…");
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
+  } catch (e) {
+    return setStatus("Microphone is blocked. Allow it from the icon in the address bar, then press Start order.", true);
+  }
+  try { ctx = new AudioContext({ sampleRate: RATE }); } catch (e) { ctx = new AudioContext(); }
+  await ctx.resume();
+  outGain = ctx.createGain(); outAn = ctx.createAnalyser(); outAn.fftSize = 512;
+  outGain.connect(outAn); outAn.connect(ctx.destination);
+  const mic = ctx.createMediaStreamSource(micStream);
+  micAn = ctx.createAnalyser(); micAn.fftSize = 512; mic.connect(micAn);
+  proc = ctx.createScriptProcessor(4096, 1, 1);
+  const silent = ctx.createGain(); silent.gain.value = 0;
+  mic.connect(proc); proc.connect(silent); silent.connect(ctx.destination);
+
+  const acc = new Int16Array(CHUNK); let fill = 0;
+  proc.onaudioprocess = ev => {
+    if (!ws || ws.readyState !== 1) return;
+    const f = to16k(ev.inputBuffer.getChannelData(0), ctx.sampleRate);
+    for (let i = 0; i < f.length; i++) {
+      const v = Math.max(-1, Math.min(1, f[i])); acc[fill++] = v < 0 ? v * 32768 : v * 32767;
+      if (fill === CHUNK) {
+        ws.send(JSON.stringify({ type: "bidi_audio_input", audio: b64FromI16(acc), format: "pcm", sample_rate: RATE, channels: 1 }));
+        fill = 0;
+      }
+    }
+  };
+
+  setStatus("Calling the attendant… a sleeping server can take up to a minute to wake.");
+  live = true; $("go").textContent = "End order"; $("go").classList.add("live");
+  try { ws = new WebSocket(wsUrl); } catch (e) { return stop("That order line address isn't valid: " + wsUrl, true); }
+  ws.onopen = () => {
+    openedAt = Date.now();
+    setStatus("Connected. Go ahead, the attendant is listening.");
+    ws.send(JSON.stringify({ type: "bidi_text_input", text: "Hello", role: "user" }));
+  };
+  ws.onmessage = ev => { try { onMessage(JSON.parse(ev.data)); } catch (e) { console.warn("Unreadable message", ev.data); } };
+  ws.onerror = () => {};
+  ws.onclose = () => {
+    if (!live) return;
+    if (!openedAt) stop("Couldn't reach the order line at " + wsUrl + ". If the server was asleep, wait 30 seconds and press Start order.", true);
+    else if (!gotAnything) stop("The attendant hung up without answering. Check the agent's logs on Render; its AWS keys, region or menu table are probably missing.", true);
+    else stop("The call ended. Press Start order to go again.");
+  };
+}
+function stop(message, bad) {
+  live = false; openedAt = 0;
+  try { ws && ws.close(); } catch (e) {} ws = null;
+  stopPlayback();
+  try { proc && proc.disconnect(); } catch (e) {} proc = null;
+  micStream && micStream.getTracks().forEach(t => t.stop()); micStream = null;
+  try { ctx && ctx.close(); } catch (e) {} ctx = null; micAn = outAn = null;
+  $("go").textContent = "Start order"; $("go").classList.remove("live");
+  setStatus(message || "Press Start order and allow the microphone.", bad);
+}
+$("go").addEventListener("click", start);
+
+/* ================= speaker grille (the voice meter) ================= */
+const cv = $("grille"), g = cv.getContext("2d");
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const tmp = new Uint8Array(512);
+function level(an) {
+  if (!an) return 0; an.getByteTimeDomainData(tmp);
+  let s = 0; for (let i = 0; i < tmp.length; i++) { const v = (tmp[i] - 128) / 128; s += v * v; }
+  return Math.min(1, Math.sqrt(s / tmp.length) * 4);
+}
+let mL = 0, oL = 0, demoPulse = 0;
+function draw(t) {
+  mL += (level(micAn) - mL) * 0.3; oL += ((outAn ? level(outAn) : demoPulse) - oL) * 0.3;
+  const W = cv.width, c = W / 2, them = oL > mL, L = still ? 0 : Math.max(mL, oL);
+  g.clearRect(0, 0, W, W);
+  for (let ring = 0; ring < 9; ring++) {
+    const n = ring === 0 ? 1 : ring * 7, R = ring * 29;
+    for (let k = 0; k < n; k++) {
+      const a = (k / n) * Math.PI * 2 + ring * 0.4;
+      const wave = still ? 0 : Math.sin(t / 260 - ring * 0.9 + k * 0.5) * 0.5 + 0.5;
+      const r = 4 + L * 13 * wave * (1 - ring / 12);
+      g.beginPath(); g.arc(c + Math.cos(a) * R, c + Math.sin(a) * R, r, 0, Math.PI * 2);
+      g.fillStyle = L < 0.04 ? "#47308F" : them ? (ring % 2 ? "#FF4B33" : "#FFC93C") : (ring % 2 ? "#2FE0C2" : "#FFF4D6");
+      g.fill();
+    }
+  }
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+/* ================= sample preview (no server, no sound) ================= */
+let demoTimers = [];
+function demoOff() { demoTimers.forEach(clearTimeout); demoTimers = []; demoPulse = 0; }
+$("demo").addEventListener("click", () => {
+  if (live) stop(); demoOff(); ui = blank(); pickedCat = null; $("said").innerHTML = ""; lastLine = null;
+  setStatus("Sample preview. Nothing here is connected to the attendant.");
+  const I = (id, name, d, price) => ({ itemId: id, name, description: d, price });
+  const menu = {
+    categories: [{ categoryId: "burgers", name: "Burgers", sortOrder: 1 }, { categoryId: "sides", name: "Sides", sortOrder: 2 }, { categoryId: "drinks", name: "Drinks", sortOrder: 3 }],
+    menuItems: {
+      burgers: [I("classic-burger", "Classic Burger", "Beef, lettuce, tomato, house sauce", 799), I("cheeseburger", "Cheeseburger", "Classic with melted American cheese", 899), I("veggie-burger", "Veggie Burger", "Grilled veggie patty, all the fixings", 849)],
+      sides: [I("french-fries", "French Fries", "Crisp, salted, hot", 349), I("onion-rings", "Onion Rings", "Beer-battered rings", 399)],
+      drinks: [I("cola", "Cola", "Ice cold", 199), I("vanilla-milkshake", "Vanilla Milkshake", "Thick and creamy", 499)]
+    }
+  };
+  const steps = [
+    [0,    () => { applyState(menu); say("assistant", "Welcome to our drive-thru! How can I help you?"); }],
+    [2200, () => { say("user", "What's on the cheeseburger?"); applyState({ highlightedItem: "cheeseburger" }); }],
+    [4600, () => { say("user", "I'll take one, plus fries."); applyState({ highlightedItem: null, highlightedCategory: "sides",
+                   orderItems: [{ name: "Cheeseburger", quantity: 1, unitPrice: 899 }, { name: "French Fries", quantity: 1, unitPrice: 349 }], orderTotal: 1248 }); }],
+    [7000, () => { say("user", "And build me a burger."); applyState({ highlightedCategory: "burgers", burgerBuilder: { active: true, patty: null, toppings: [], sauces: [], price: 899 } }); }],
+    [8800, () => applyState({ burgerBuilder: { active: true, patty: "beef patty", toppings: ["bacon"], sauces: [], price: 1049 } })],
+    [10400,() => applyState({ burgerBuilder: { active: true, patty: "beef patty", toppings: ["bacon", "pickles"], sauces: ["bbq sauce"], price: 1049 } })],
+    [12600,() => applyState({ burgerBuilder: null, orderItems: [{ name: "Cheeseburger", quantity: 1, unitPrice: 899 }, { name: "French Fries", quantity: 1, unitPrice: 349 },
+                   { name: "Custom Burger", quantity: 1, unitPrice: 1049, specialInstructions: "beef, bacon, pickles, bbq sauce" }], orderTotal: 2297 })],
+    [14600,() => { say("assistant", "You're all set. Pull forward!"); applyState({ orderConfirmed: true, orderNumber: "#4821" }); demoPulse = 0; }]
+  ];
+  steps.forEach(([ms, fn]) => demoTimers.push(setTimeout(() => { demoPulse = 0.5; fn(); }, ms)));
+});
+
+render();
+</script>
+</body>
+</html>
