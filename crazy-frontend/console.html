@@ -103,6 +103,61 @@ tr.click{cursor:pointer} tr.click:hover td{background:#FAFCF7}
 .meter{height:8px; border-radius:4px; background:var(--bg); overflow:hidden}
 .meter i{display:block; height:100%; background:var(--palm); border-radius:4px}
 
+/* dashboard */
+.dash{display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:16px}
+.dash > *{margin:0; min-width:0}
+.s3{grid-column:span 3} .s4{grid-column:span 4} .s5{grid-column:span 5} .s6{grid-column:span 6} .s7{grid-column:span 7} .s8{grid-column:span 8} .s12{grid-column:span 12}
+@media (max-width:1180px){ .s3{grid-column:span 6} .s4,.s5,.s7,.s8{grid-column:span 12} }
+@media (max-width:640px){ .s3,.s6{grid-column:span 12} }
+.kpi{background:var(--sheet); border-radius:22px; padding:18px 18px 0; overflow:hidden; display:flex; flex-direction:column; transition:transform .3s var(--ease), box-shadow .3s var(--ease)}
+.kpi:hover{transform:translateY(-3px); box-shadow:0 14px 30px rgba(14,59,46,.10)}
+.kpi.lead{background:var(--palm); color:#fff}
+.kpi span{color:var(--soft); font-size:.86rem} .kpi.lead span{color:#B9CFC4}
+.kpi b{display:block; font-size:2rem; font-weight:500; letter-spacing:-.035em; line-height:1.15; margin-top:4px; font-variant-numeric:tabular-nums}
+.delta{display:inline-flex; align-items:center; gap:4px; font-size:.78rem; font-weight:500; border-radius:999px; padding:2px 9px; margin-top:6px; width:fit-content; background:var(--bg); color:var(--soft)}
+.delta.up{background:#DDF3E5; color:#0F5E32} .delta.down{background:#FFD9D1; color:#8E1D0B}
+.kpi.lead .delta{background:rgba(255,255,255,.12); color:#fff} .kpi.lead .delta.up{background:var(--citron); color:var(--text)}
+.spark{display:block; width:calc(100% + 36px); margin:10px -18px 0; height:46px}
+.panel{background:var(--sheet); border-radius:22px; padding:18px}
+.panel h2{font-size:1rem; font-weight:600; display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:12px}
+.panel h2 small{font-weight:400; color:var(--soft); font-size:.82rem}
+.chart{display:block; width:100%; height:auto; overflow:visible}
+.chart text{font-family:var(--font); font-size:11px; fill:var(--soft)}
+.chart .grid{stroke:var(--line); stroke-width:1}
+.chart .line{fill:none; stroke:var(--palm); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1; stroke-dashoffset:1; animation:draw 1.1s var(--ease) .1s forwards}
+.chart .area{animation:fade .9s ease .35s both}
+.chart .pt .guide,.chart .pt circle{opacity:0; transition:opacity .15s}
+.chart .pt:hover .guide,.chart .pt:hover circle{opacity:1}
+.chart .hit{fill:transparent}
+.chart .col{fill:var(--palm); transform-box:fill-box; transform-origin:bottom; animation:grow .7s var(--ease) both; transition:fill .2s}
+.chart .col:hover{fill:var(--tomato)}
+.chart .col.peak{fill:var(--tomato)}
+.chart .seg{fill:none; stroke-width:20; transition:stroke-width .2s; animation:fade .8s ease both}
+.chart .seg:hover{stroke-width:25}
+@keyframes draw{to{stroke-dashoffset:0}} @keyframes fade{from{opacity:0}} @keyframes grow{from{transform:scaleY(0)}}
+.donut{display:grid; grid-template-columns:150px 1fr; gap:18px; align-items:center}
+.legend li{display:flex; align-items:center; gap:8px; padding:5px 0; font-size:.9rem}
+.legend i{width:10px; height:10px; border-radius:3px; flex:none}
+.legend b{margin-inline-start:auto; font-weight:500; font-variant-numeric:tabular-nums}
+.hbar{margin-top:12px} .hbar:first-of-type{margin-top:0}
+.hbar .row{justify-content:space-between; flex-wrap:nowrap; font-size:.92rem}
+.hbar .row span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.hbar .meter{margin-top:5px} .hbar .meter i{animation:growx .8s var(--ease) both; transform-origin:left}
+@keyframes growx{from{transform:scaleX(0)}}
+.funnel{display:grid; gap:8px}
+.funnel div{background:var(--palm); color:#fff; border-radius:12px; padding:10px 14px; display:flex; justify-content:space-between; min-width:fit-content; animation:growx .8s var(--ease) both; transform-origin:left}
+.funnel div:nth-child(2){background:var(--palm-2)} .funnel div:nth-child(3){background:var(--citron); color:var(--text)}
+.feed li{display:flex; gap:12px; align-items:center; padding:10px 0; border-top:1px solid var(--line)}
+.feed li:first-child{border-top:0}
+.feed li > div{flex:1; min-width:0}
+.feed .small{display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.dotc{width:10px; height:10px; border-radius:50%; flex:none}
+#tip{position:fixed; z-index:80; pointer-events:none; background:var(--text); color:#fff; border-radius:10px; padding:7px 11px; font-size:.82rem; white-space:nowrap; transform:translate(-50%,-135%); opacity:0; transition:opacity .12s}
+#tip.on{opacity:1}
+.skel{border-radius:22px; background:linear-gradient(90deg,#E9EEE4 25%,#F4F7F0 37%,#E9EEE4 63%); background-size:400% 100%; animation:shimmer 1.3s linear infinite}
+@keyframes shimmer{from{background-position:100% 0} to{background-position:0 0}}
+#view.still *{animation:none !important}
+
 /* kitchen display */
 #view:fullscreen{background:var(--bg); padding:24px}
 .kds{display:grid; gap:14px; grid-template-columns:repeat(3,minmax(240px,1fr)); align-items:start}
@@ -178,6 +233,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:#FAFCF7}
   </div>
 </div>
 
+<div id="tip" role="tooltip"></div>
 <div class="scrim" id="scrim" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 
 <script>
@@ -191,7 +247,7 @@ const num = x => Number(x || 0);
 const UNITS = ["kg", "g", "litre", "ml", "piece", "pack", "tray", "crate"];
 const ROLE_NAMES = { platform_admin: "Platform admin", merchant_admin: "Merchant admin", store_manager: "Store manager", cashier: "Cashier or window", kitchen: "Kitchen", inventory: "Inventory and purchasing", analyst: "Read-only analyst" };
 const NAV = [
-  ["Operations", [["today", "Today", "orders.view"], ["kitchen", "Kitchen display", "orders.view"], ["orders", "Orders", "orders.view"]]],
+  ["Operations", [["today", "Dashboard", "orders.view"], ["kitchen", "Kitchen display", "orders.view"], ["orders", "Orders", "orders.view"]]],
   ["Catalogue", [["menu", "Menu", "orders.view"]]],
   ["Stock", [["inventory", "Inventory", "inventory.view"], ["recipes", "Recipes", "inventory.view"], ["waste", "Waste", "inventory.view"], ["purchasing", "Purchasing", "inventory.view"], ["assets", "Assets", "inventory.view"]]],
   ["Customers", [["customers", "Customers", "crm.view"], ["offers", "Offers and campaigns", "crm.view"]]],
@@ -299,8 +355,9 @@ async function show(name, keep) {
   page = name; timers.forEach(clearInterval); timers = []; if (!keep) say("");
   $("title").textContent = TITLES[name]; $("side").classList.remove("show");
   document.querySelectorAll(".navlink[data-page]").forEach(b => b.dataset.page === name ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
-  const top = $("view").scrollTop;
-  try { $("view").innerHTML = await RENDER[name](); if (keep) $("view").scrollTop = top; } catch (e) { $("view").innerHTML = `<div class="card"><p class="empty">${esc(e.message)}</p></div>`; }
+  const top = $("view").scrollTop; $("view").classList.toggle("still", !!keep);
+  if (!keep) $("view").innerHTML = `<div class="dash"><div class="skel s3" style="height:120px"></div><div class="skel s3" style="height:120px"></div><div class="skel s3" style="height:120px"></div><div class="skel s3" style="height:120px"></div><div class="skel s12" style="height:280px"></div></div>`;
+  try { const html = await RENDER[name](); if (page !== name) return; $("view").innerHTML = html; if (keep) $("view").scrollTop = top; } catch (e) { $("view").innerHTML = `<div class="card"><p class="empty">${esc(e.message)}</p></div>`; }
 }
 $("nav").addEventListener("click", e => { const b = e.target.closest("[data-page]"); if (b) show(b.dataset.page); });
 $("menuBtn").onclick = () => $("side").classList.toggle("show");
@@ -318,24 +375,105 @@ const PAY_LABEL = { unpaid: "Pay at window", captured: "Paid", partially_refunde
 const sla = () => num(me.business.prepSlaMinutes) || 8;
 const active = o => !["completed", "cancelled"].includes(o.status);
 
-/* ================= today ================= */
+/* ================= charts ================= */
+const COLORS = { received: "#F0462B", preparing: "#E3A400", ready: "#1B8A4B", completed: "#0E3B2E", cancelled: "#C9D2C5", cash: "#0E3B2E", card: "#3F8468", unpaid: "#E3A400" };
+let chartId = 0;
+const tip = t => `data-tip="${esc(t)}"`;
+document.addEventListener("mousemove", e => { const el = e.target.closest && e.target.closest("[data-tip]"), t = $("tip"); if (!el) return t.classList.remove("on"); t.textContent = el.dataset.tip; t.style.left = e.clientX + "px"; t.style.top = e.clientY + "px"; t.classList.add("on"); });
+function niceMax(v) { if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+function curve(pts, floor) {   // smooth line through the points that never dips below the baseline
+  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) { const a = pts[i - 1] || pts[i], b = pts[i], c = pts[i + 1], e = pts[i + 2] || c, y = v => Math.min(floor, v);
+    d += ` C${(b[0] + (c[0] - a[0]) / 6).toFixed(1)},${y(b[1] + (c[1] - a[1]) / 6).toFixed(1)} ${(c[0] - (e[0] - b[0]) / 6).toFixed(1)},${y(c[1] - (e[1] - b[1]) / 6).toFixed(1)} ${c[0].toFixed(1)},${c[1].toFixed(1)}`; }
+  return d;
+}
+function areaChart(points, fmt, axis) {   // points: [{label, value, tip}]
+  const W = 720, H = 240, L = 50, R = 14, T = 14, B = 28, max = niceMax(Math.max(...points.map(p => p.value))), id = "g" + (++chartId), floor = H - B;
+  const x = i => L + (points.length === 1 ? (W - L - R) / 2 : i * (W - L - R) / (points.length - 1)), y = v => T + (1 - v / max) * (H - T - B), pts = points.map((p, i) => [x(i), y(p.value)]);
+  const line = points.length > 1 ? curve(pts, floor) : `M${L},${pts[0][1]} L${W - R},${pts[0][1]}`, step = Math.ceil(points.length / 8), band = (W - L - R) / Math.max(1, points.length - 1);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Trend chart"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0E3B2E" stop-opacity=".28"/><stop offset="1" stop-color="#0E3B2E" stop-opacity="0"/></linearGradient></defs>
+    ${[0, .25, .5, .75, 1].map(f => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(max * f)}" y2="${y(max * f)}"/><text x="${L - 8}" y="${y(max * f) + 4}" text-anchor="end">${axis(max * f)}</text>`).join("")}
+    <path class="area" d="${line} L${pts[pts.length - 1][0]},${floor} L${pts[0][0]},${floor} Z" fill="url(#${id})"/><path class="line" d="${line}" pathLength="1"/>
+    ${points.map((p, i) => `${i % step === 0 ? `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(p.label)}</text>` : ""}<g class="pt" ${tip(p.tip || p.label + ": " + fmt(p.value))}><rect class="hit" x="${x(i) - band / 2}" y="${T}" width="${band}" height="${H - T - B}"/>
+      <line class="guide" x1="${x(i)}" x2="${x(i)}" y1="${T}" y2="${floor}" stroke="#0E3B2E" stroke-dasharray="3 4"/><circle cx="${x(i)}" cy="${pts[i][1]}" r="5" fill="#F0462B" stroke="#fff" stroke-width="2"/></g>`).join("")}</svg>`;
+}
+function barChart(points, fmt) {
+  const W = 720, H = 220, L = 34, R = 8, T = 12, B = 26, max = niceMax(Math.max(...points.map(p => p.value))), slot = (W - L - R) / points.length, bw = Math.min(34, slot * .62), peak = Math.max(...points.map(p => p.value)), step = Math.ceil(points.length / 12);
+  const y = v => T + (1 - v / max) * (H - T - B);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Bar chart">${[0, .5, 1].map(f => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(max * f)}" y2="${y(max * f)}"/><text x="${L - 8}" y="${y(max * f) + 4}" text-anchor="end">${Math.round(max * f)}</text>`).join("")}
+    ${points.map((p, i) => { const h = Math.max(p.value ? 3 : 0, (H - T - B) * p.value / max), cx = L + slot * i + slot / 2;
+      return `${p.value ? `<rect class="col ${p.value === peak ? "peak" : ""}" style="animation-delay:${i * 22}ms" x="${cx - bw / 2}" y="${H - B - h}" width="${bw}" height="${h}" rx="${Math.min(6, bw / 2)}" ${tip(p.label + ": " + fmt(p.value))}/>` : ""}${i % step === 0 ? `<text x="${cx}" y="${H - 8}" text-anchor="middle">${esc(p.label)}</text>` : ""}`; }).join("")}</svg>`;
+}
+function donut(segs, big, small) {
+  const total = segs.reduce((s, x) => s + x.value, 0), r = 56, c = 2 * Math.PI * r; let acc = 0;
+  return `<div class="donut"><svg class="chart" viewBox="0 0 150 150" role="img" aria-label="Breakdown">${total ? segs.filter(x => x.value).map((x, i) => { const len = c * x.value / total, el = `<circle class="seg" style="animation-delay:${i * 90}ms" cx="75" cy="75" r="${r}" stroke="${x.color}" stroke-dasharray="${Math.max(0, len - 2)} ${c - len + 2}" stroke-dashoffset="${-acc}" transform="rotate(-90 75 75)" ${tip(x.label + ": " + (x.fmt || x.value) + " (" + Math.round(100 * x.value / total) + "%)")}/>`; acc += len; return el; }).join("")
+      : `<circle cx="75" cy="75" r="${r}" fill="none" stroke="#E2E8DC" stroke-width="20"/>`}
+    <text x="75" y="73" text-anchor="middle" style="font-size:24px; font-weight:500; fill:#12241D">${esc(big)}</text><text x="75" y="91" text-anchor="middle">${esc(small)}</text></svg>
+    <ul class="legend">${segs.map(x => `<li><i style="background:${x.color}"></i>${esc(x.label)}<b>${esc(x.fmt || x.value)}</b></li>`).join("")}</ul></div>`;
+}
+function spark(values, color) {
+  const max = Math.max(1, ...values), n = values.length, pts = values.map((v, i) => [n === 1 ? 50 : i * 100 / (n - 1), 40 - 34 * v / max]), id = "s" + (++chartId), line = n > 1 ? curve(pts, 40) : "M0,40 L100,40";
+  return `<svg class="spark" viewBox="0 0 100 46" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".35"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+    <path d="${line} L100,46 L0,46 Z" fill="url(#${id})"/><path d="${line}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+const hbars = (items, empty) => items.length ? items.map((x, i) => `<div class="hbar" ${x.tip ? tip(x.tip) : ""}><div class="row"><span>${esc(x.label)}</span><b style="font-weight:500">${esc(x.text)}</b></div><div class="meter"><i style="width:${Math.max(2, 100 * x.value / Math.max(1, x.max))}%; animation-delay:${i * 60}ms; ${x.color ? "background:" + x.color : ""}"></i></div></div>`).join("") : `<p class="empty">${esc(empty)}</p>`;
+function delta(nowV, prevV, lowerIsBetter) { if (!prevV) return `<em class="delta" style="font-style:normal">${nowV ? "No earlier data" : "No activity"}</em>`; const pct = Math.round(100 * (nowV - prevV) / prevV), good = lowerIsBetter ? pct <= 0 : pct >= 0;
+  return `<em class="delta ${pct === 0 ? "" : good ? "up" : "down"}" style="font-style:normal">${pct > 0 ? "▲" : pct < 0 ? "▼" : ""} ${Math.abs(pct)}% vs previous</em>`; }
+
+/* ================= dashboard ================= */
 RENDER.today = async () => {
-  const [o, ing, assets] = await Promise.all([api("/orders" + bq()), can("inventory.view") ? records("ingredients") : [], can("inventory.view") ? records("assets") : []]);
-  const today = new Date().toDateString(), mine = o.orders.filter(x => new Date(ts(x.createdAt)).toDateString() === today && x.status !== "cancelled");
-  const live = o.orders.filter(active), late = live.filter(x => x.status !== "ready" && (Date.now() - ts(x.createdAt)) / 60000 > sla());
-  const low = ing.filter(i => num(i.reorderPoint) > 0 && num(i.onHand) <= num(i.reorderPoint)), overdue = assets.filter(a => a.status === "out" && a.dueAt && ts(a.dueAt) < Date.now());
-  const unpaid = live.filter(x => x.status === "ready" && x.paymentStatus === "unpaid");
+  const period = S.dash || "today", days = period === "today" ? 1 : Number(period), stock = can("inventory.view");
+  const [o, ing, waste, assets, ins] = await Promise.all([api("/orders" + bq()), stock ? records("ingredients") : [], stock ? records("waste") : [], stock ? records("assets") : [],
+    can("analytics.view") ? api("/insights" + bq("days=" + days)).catch(() => null) : null]);
+  S.orders = o.orders;
+  const day0 = new Date(); day0.setHours(0, 0, 0, 0); const start = day0.getTime() - (days - 1) * 864e5, len = days * 864e5;
+  const all = o.orders.map(x => ({ ...x, t: ts(x.createdAt) })).filter(x => !isNaN(x.t)), kept = l => l.filter(x => x.status !== "cancelled");
+  const inP = all.filter(x => x.t >= start), prev = all.filter(x => x.t >= start - len && x.t < start), sales = l => kept(l).reduce((s, x) => s + num(x.total), 0);
+  const prep = l => { const v = l.filter(x => x.readyAt).map(x => (ts(x.readyAt) - x.t) / 1000).filter(v => v > 0 && v < 14400); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0; };
+  const n = period === "today" ? 24 : days, size = period === "today" ? 36e5 : 864e5, buckets = Array.from({ length: n }, (_, i) => ({ t: start + i * size, sales: 0, orders: 0 }));
+  kept(inP).forEach(x => { const b = buckets[Math.min(n - 1, Math.floor((x.t - start) / size))]; if (b) { b.sales += num(x.total); b.orders++; } });
+  const label = b => period === "today" ? String(new Date(b.t).getHours()).padStart(2, "0") + ":00" : new Date(b.t).toLocaleDateString([], { month: "short", day: "numeric" });
+  const hours = Array.from({ length: 24 }, (_, h) => ({ label: String(h).padStart(2, "0"), value: 0 })); kept(inP).forEach(x => hours[new Date(x.t).getHours()].value++);
+  const byStatus = s => inP.filter(x => x.status === s).length, items = {}; kept(inP).forEach(x => (x.items || []).forEach(i => { const e = items[i.name] || (items[i.name] = { q: 0, r: 0 }); e.q += i.quantity || 1; e.r += (i.quantity || 1) * num(i.unitPrice ?? i.price); }));
+  const top = Object.entries(items).sort((a, b) => b[1].q - a[1].q).slice(0, 6), pay = { cash: 0, card: 0, unpaid: 0 }; kept(inP).forEach(x => pay[x.paymentStatus === "unpaid" ? "unpaid" : x.paymentMethod === "card" ? "card" : "cash"] += num(x.total));
+  const live = all.filter(active), stale = live.filter(x => Date.now() - x.t > 12 * 36e5), fresh = live.filter(x => Date.now() - x.t <= 12 * 36e5), late = fresh.filter(x => x.status !== "ready" && (Date.now() - x.t) / 60000 > sla());
+  const unpaid = fresh.filter(x => x.status === "ready" && x.paymentStatus === "unpaid"), low = ing.filter(i => num(i.reorderPoint) > 0 && num(i.onHand) <= num(i.reorderPoint)), overdue = assets.filter(a => a.status === "out" && a.dueAt && ts(a.dueAt) < Date.now());
+  const wasteP = waste.filter(x => ts(x.at) >= start), wasteBy = {}; wasteP.forEach(x => wasteBy[x.reason] = (wasteBy[x.reason] || 0) + num(x.cost));
+  S.stale = stale.map(x => x.orderId);
   const alerts = [
-    ...late.map(x => [`Order ${x.orderId} has waited ${Math.round((Date.now() - ts(x.createdAt)) / 60000)} minutes`, `Over the ${sla()}-minute preparation target`, "kitchen", "Open kitchen display"]),
-    ...unpaid.map(x => [`Order ${x.orderId} is ready and unpaid`, money(x.total) + " to collect at the window", "orders", "Open orders"]),
-    ...low.map(i => [`${i.name} is low: ${num(i.onHand)} ${i.unit} left`, `Reorder point is ${num(i.reorderPoint)} ${i.unit}`, "inventory", "Open inventory"]),
-    ...overdue.map(a => [`${a.name} is overdue`, `With ${a.holder}, due ${when(a.dueAt)}`, "assets", "Open assets"])];
-  return `<div class="tiles">${tile(mine.length, "Orders today")}${tile(money(mine.reduce((s, x) => s + num(x.total), 0)), "Sales today")}${tile(live.length, "In progress now")}${tile(late.length, "Past preparation target")}</div>
-    <div class="card"><h2>Needs attention</h2>${alerts.length ? alerts.map(a => `<div class="alert"><div><b style="font-weight:500">${esc(a[0])}</b><br><span class="soft small">${esc(a[1])}</span></div><button class="btn ghost sm" data-goto="${a[2]}">${a[3]}</button></div>`).join("")
-      : `<p class="empty">Nothing needs attention right now.</p>`}</div>
-    <div class="card"><h2>Latest orders</h2>${o.orders.slice(0, 6).map(x => `<div class="alert"><div><b style="font-weight:500">Order ${esc(x.orderId)}</b> <span class="soft small">${esc(when(x.createdAt))}</span><br>
-      <span class="soft small">${esc((x.items || []).map(i => (i.quantity || 1) + "× " + i.name).join(", "))}</span></div>${pill(x.status, STATUS_TONE[x.status])} <b style="font-weight:500">${money(x.total)}</b></div>`).join("") || `<p class="empty">No orders yet. Orders placed by voice appear here.</p>`}</div>`;
+    late.length && [`${late.length} ${late.length === 1 ? "order is" : "orders are"} past the ${sla()}-minute target`, "Oldest: order " + late.sort((a, b) => a.t - b.t)[0].orderId + ", waiting " + Math.round((Date.now() - late[0].t) / 60000) + " min", "#F0462B", `<button class="btn ghost sm" data-goto="kitchen">Kitchen display</button>`],
+    stale.length && [`${stale.length} old ${stale.length === 1 ? "order was" : "orders were"} never closed`, "Open for more than 12 hours, usually test orders", "#E3A400", can("orders.status") ? `<button class="btn ghost sm" data-act="closeStale">Cancel them</button>` : ""],
+    unpaid.length && [`${unpaid.length} ready ${unpaid.length === 1 ? "order is" : "orders are"} unpaid`, money(unpaid.reduce((s, x) => s + num(x.total), 0)) + " to collect at the window", "#E3A400", `<button class="btn ghost sm" data-goto="orders">Orders</button>`],
+    low.length && [`${low.length} stock ${low.length === 1 ? "item is" : "items are"} low`, low.slice(0, 3).map(i => i.name).join(", "), "#E3A400", `<button class="btn ghost sm" data-goto="inventory">Inventory</button>`],
+    overdue.length && [`${overdue.length} ${overdue.length === 1 ? "asset is" : "assets are"} overdue`, overdue.slice(0, 3).map(a => a.name).join(", "), "#E3A400", `<button class="btn ghost sm" data-goto="assets">Assets</button>`]].filter(Boolean);
+  const kpi = (cls, name, value, d, series, color) => `<div class="kpi s3 ${cls}"><span>${name}</span><b>${value}</b>${d}${spark(series, color)}</div>`;
+  const pName = period === "today" ? "today" : "last " + days + " days", count = kept(inP).length, pc = kept(prev).length;
+  timers.push(setInterval(() => { if (page === "today" && $("scrim").hidden) show("today", true); }, 30000));
+  return `<div class="tools"><div class="tabs">${[["today", "Today"], ["7", "7 days"], ["30", "30 days"]].map(([k, l]) => `<button data-act="dashPeriod" data-p="${k}" aria-pressed="${k === period}">${l}</button>`).join("")}</div>
+      <span class="grow"></span><span class="soft small">Updated ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}, refreshes every 30 seconds</span></div>
+    <div class="dash">
+      ${kpi("lead", "Sales " + pName, money(sales(inP)), delta(sales(inP), sales(prev)), buckets.map(b => b.sales), "#D7F25A")}
+      ${kpi("", "Orders " + pName, count, delta(count, pc), buckets.map(b => b.orders), "#0E3B2E")}
+      ${kpi("", "Average order", money(count ? sales(inP) / count : 0), delta(count ? sales(inP) / count : 0, pc ? sales(prev) / pc : 0), buckets.map(b => b.orders ? b.sales / b.orders : 0), "#0E3B2E")}
+      ${kpi("", "Average time to ready", prep(inP) ? span(prep(inP)) : "No data", prep(inP) ? delta(prep(inP), prep(prev), true) : `<em class="delta" style="font-style:normal">Mark orders ready to measure</em>`, buckets.map(b => b.orders), "#F0462B")}
+      <div class="panel s8"><h2>Sales ${period === "today" ? "by hour" : "by day"}<small>${money(sales(inP))} from ${count} ${count === 1 ? "order" : "orders"}</small></h2>${areaChart(buckets.map(b => ({ label: label(b), value: b.sales, tip: label(b) + ": " + money(b.sales) + ", " + b.orders + (b.orders === 1 ? " order" : " orders") })), money, v => (v / 100 >= 1000 ? (v / 100000).toFixed(1) + "k" : Math.round(v / 100)))}</div>
+      <div class="panel s4"><h2>Order status<small>${pName}</small></h2>${donut(me.statuses.map(s => ({ label: s[0].toUpperCase() + s.slice(1), value: byStatus(s), color: COLORS[s] })), inP.length, inP.length === 1 ? "order" : "orders")}</div>
+      <div class="panel s7"><h2>Busiest hours<small>orders by hour of day, ${pName}</small></h2>${barChart(hours, v => v + (v === 1 ? " order" : " orders"))}</div>
+      <div class="panel s5"><h2>Best sellers<small>${pName}</small></h2>${hbars(top.map(([name, e]) => ({ label: name, text: e.q + " sold", value: e.q, max: top[0][1].q, tip: name + ": " + money(e.r) })), "No items sold in this period.")}</div>
+      <div class="panel s4"><h2>Payments<small>${pName}</small></h2>${donut([{ label: "Cash", value: pay.cash, color: COLORS.cash, fmt: money(pay.cash) }, { label: "Card", value: pay.card, color: COLORS.card, fmt: money(pay.card) }, { label: "Not yet paid", value: pay.unpaid, color: COLORS.unpaid, fmt: money(pay.unpaid) }], Math.round(100 * (pay.cash + pay.card) / Math.max(1, pay.cash + pay.card + pay.unpaid)) + "%", "collected")}</div>
+      ${ins ? `<div class="panel s4"><h2>Voice ordering<small>${pName}</small></h2>${ins.calls ? `<div class="funnel"><div style="width:100%"><span>Calls</span><b>${ins.calls}</b></div><div style="width:${Math.max(38, 100 * (ins.withOrder + ins.abandoned) / ins.calls)}%"><span>Added items</span><b>${ins.withOrder + ins.abandoned}</b></div>
+        <div style="width:${Math.max(30, 100 * ins.withOrder / ins.calls)}%"><span>Ordered</span><b>${ins.withOrder}</b></div></div><p class="soft small" style="margin-top:10px">${ins.conversion}% of calls ended with an order. Average call ${span(ins.averageSeconds)}.</p>` : `<p class="empty">No voice calls recorded in this period.</p>`}</div>` : ""}
+      ${stock ? `<div class="panel s4"><h2>Stock and waste<small>${money(wasteP.reduce((s, x) => s + num(x.cost), 0))} wasted</small></h2>${low.length ? hbars(low.slice(0, 4).map(i => ({ label: i.name, text: num(i.onHand) + " " + i.unit + " left", value: Math.max(0, num(i.onHand)), max: num(i.parLevel) || num(i.reorderPoint) * 2, color: "#F0462B" })), "")
+        : Object.keys(wasteBy).length ? hbars(Object.entries(wasteBy).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([r, c], i, l) => ({ label: r, text: money(c), value: c, max: l[0][1], color: "#F0462B" })), "") : `<p class="empty">${ing.length ? "Stock levels are healthy and no waste is logged." : "Add ingredients to track stock here."}</p>`}</div>` : ""}
+      <div class="panel s6"><h2>Needs attention</h2>${alerts.length ? `<ul class="feed">${alerts.map(a => `<li><i class="dotc" style="background:${a[2]}"></i><div><b style="font-weight:500">${esc(a[0])}</b><span class="soft small">${esc(a[1])}</span></div>${a[3]}</li>`).join("")}</ul>` : `<p class="empty">Nothing needs attention right now.</p>`}</div>
+      <div class="panel s6"><h2>Latest orders<small><button class="link" data-goto="orders" style="border:0; background:none; text-decoration:underline; color:var(--palm); padding:0">See all</button></small></h2>
+        ${all.length ? `<ul class="feed">${all.slice(0, 6).map(x => `<li><i class="dotc" style="background:${COLORS[x.status]}" ${tip(x.status)}></i><div><b style="font-weight:500">Order ${esc(x.orderId)}</b> <span class="soft small" style="display:inline">${esc(when(x.createdAt))}</span>
+          <span class="soft small">${esc((x.items || []).map(i => (i.quantity || 1) + "× " + i.name).join(", "))}</span></div><b style="font-weight:500">${money(x.total)}</b></li>`).join("")}</ul>` : `<p class="empty">No orders yet. Orders placed by voice appear here.</p>`}</div>
+    </div>`;
 };
+ACT.dashPeriod = d => { S.dash = d.p; show("today"); };
+ACT.closeStale = async () => { if (!confirm(`Cancel ${S.stale.length} orders that have been open for more than 12 hours? Stock is not deducted for cancelled orders.`)) return;
+  await attempt(async () => { for (const id of S.stale) await api("/orders/" + encodeURIComponent(id), "PATCH", { status: "cancelled" }); await show("today"); }, "Old orders cancelled."); };
 
 /* ================= kitchen display ================= */
 function kdsHtml() {
@@ -574,10 +712,9 @@ RENDER.reports = async () => {
   const tab = S.repTab || "sales", days = S.repDays || 14;
   const head = `<div class="tools"><div class="tabs">${[["sales", "Sales"], ["voice", "Voice"], ["stock", "Stock and waste"]].map(([k, l]) => `<button data-act="repTab" data-t="${k}" aria-pressed="${k === tab}">${l}</button>`).join("")}</div><span class="grow"></span>
     <select data-change="repDays" style="width:auto" aria-label="Period">${[7, 14, 30].map(d => `<option value="${d}" ${d === days ? "selected" : ""}>Last ${d} days</option>`).join("")}</select></div>`;
-  if (tab === "sales") { const d = await api("/dashboard" + bq("days=" + days)), top = Math.max(1, ...d.days.map(x => x.revenue));
+  if (tab === "sales") { const d = await api("/dashboard" + bq("days=" + days));
     return head + `<div class="tiles">${tile(d.orders, "Orders")}${tile(money(d.revenue), "Sales")}${tile(money(d.averageOrder), "Average order")}${tile(money(d.refunded), "Refunded")}${tile(d.averagePrepSeconds ? span(d.averagePrepSeconds) : "No data", "Average time to ready")}</div>
-      <div class="card"><h2>Sales per day</h2><div class="bars">${d.days.map(x => `<div class="${x.revenue ? "" : "zero"}" style="height:${Math.max(1, 100 * x.revenue / top)}%" title="${x.date}: ${money(x.revenue)} from ${x.orders} orders"></div>`).join("")}</div>
-        <div class="axis">${d.days.map((x, n) => `<span>${d.days.length <= 14 || n % 3 === 0 ? x.date.slice(5) : ""}</span>`).join("")}</div><p class="soft small" style="margin-top:8px">Days are counted in UTC. Cancelled orders are left out.</p></div>
+      <div class="panel" style="margin-bottom:16px"><h2>Sales per day<small>Days are counted in UTC. Cancelled orders are left out.</small></h2>${areaChart(d.days.map(x => ({ label: x.date.slice(5), value: x.revenue, tip: x.date + ": " + money(x.revenue) + " from " + x.orders + " orders" })), money, v => (v / 100 >= 1000 ? (v / 100000).toFixed(1) + "k" : Math.round(v / 100)))}</div>
       <div class="grid2"><div>${table([{ label: "Best sellers", cell: i => esc(i.name) }, { label: "Sold", cls: "r", cell: i => i.quantity }, { label: "Sales", cls: "r", cell: i => money(i.revenue) }], d.topItems, "No orders in this period.")}</div>
         <div>${table([{ label: "Payment", cell: e => esc(e[0] === "unpaid" ? "Not yet paid" : e[0]) }, { label: "Value", cls: "r", cell: e => money(e[1]) }], Object.entries(d.byPayment), "No payments in this period.")}</div></div>`; }
   if (tab === "voice") { const d = await api("/insights" + bq("days=" + days)), u = d.usage;
