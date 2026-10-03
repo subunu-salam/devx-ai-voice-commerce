@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E3B2E">
+<link rel="icon" href="icon-192.png">
+<title>VoiceBite console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{ --palm:#0E3B2E; --palm-2:#185740; --deep:#071E17; --tomato:#F0462B; --citron:#D7F25A; --bg:#F5F8F1; --sheet:#FFFFFF;
+  --text:#12241D; --soft:#637169; --line:#E2E8DC; --ok:#1B8A4B; --warn:#B25E00; --bad:#C22E17;
+  --ease:cubic-bezier(.2,.8,.2,1); --spring:cubic-bezier(.34,1.56,.64,1); --font:"Readex Pro","Segoe UI",Tahoma,system-ui,sans-serif }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0; font-family:var(--font); color:var(--text); background:var(--bg); line-height:1.45; font-size:15px}
+button,input,select,textarea{font:inherit; color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #1F6FEB; outline-offset:2px}
+[hidden]{display:none !important}
+h1,h2,h3,p,ul{margin:0; padding:0} ul{list-style:none}
+.mark{width:22px; height:22px; border-radius:50%; background:var(--tomato); flex:none; display:inline-block;
+  -webkit-mask:radial-gradient(circle 7px at 88% 12%,#0000 97%,#000); mask:radial-gradient(circle 7px at 88% 12%,#0000 97%,#000)}
+.name{display:flex; align-items:center; gap:9px; font-weight:600; font-size:1.2rem; letter-spacing:-.02em}
+.by{display:flex; align-items:center; gap:7px; font-size:.78rem; color:var(--soft)}
+.by img{height:22px}
+
+/* sign in */
+.login{min-height:100%; display:grid; place-items:center; padding:20px; background:radial-gradient(900px 600px at 20% 10%, #12402F 0%, transparent 60%), var(--deep)}
+.loginbox{width:100%; max-width:380px; background:var(--bg); border-radius:30px; padding:30px 26px}
+.loginbox h1{font-size:1.9rem; font-weight:400; letter-spacing:-.03em; margin:22px 0 4px}
+.loginbox p{color:var(--soft); margin-bottom:8px}
+
+/* shell */
+.shell{display:grid; grid-template-columns:250px minmax(0,1fr); height:100%}
+.side{background:var(--palm); color:#fff; padding:20px 14px; overflow-y:auto; display:flex; flex-direction:column; gap:6px}
+.side .name{padding:0 8px 4px}
+.side small{display:block; color:#9DBBAC; font-size:.72rem; padding:14px 10px 4px}
+.navlink{display:flex; align-items:center; gap:10px; width:100%; border:0; background:transparent; color:#D5E6DC; text-align:start; padding:9px 10px; border-radius:12px; position:relative; transition:background .25s, color .25s}
+.navlink:hover{background:rgba(255,255,255,.07)}
+.navlink[aria-current="page"]{background:var(--citron); color:var(--text); font-weight:500}
+.navlink i{font-style:normal; min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:var(--tomato); color:#fff; font-size:.7rem; display:grid; place-items:center; margin-inline-start:auto}
+.who{margin-top:auto; padding:14px 10px 0; font-size:.85rem; color:#B9CFC4; border-top:1px solid rgba(255,255,255,.12)}
+.who b{color:#fff; font-weight:500; display:block}
+.main{display:flex; flex-direction:column; min-width:0; height:100%}
+.bar{display:flex; align-items:center; gap:12px; padding:16px 24px 10px}
+.bar h1{font-size:clamp(1.25rem,5vw,1.7rem); font-weight:500; letter-spacing:-.03em; margin-inline-end:auto; min-width:0}
+.menubtn{display:none; border:1px solid var(--line); background:var(--sheet); border-radius:12px; padding:8px 11px}
+#view{flex:1; overflow-y:auto; overflow-x:hidden; padding:6px 24px 40px}
+.msg{margin:0 24px; min-height:0; font-weight:500}
+.msg:not(:empty){background:var(--text); color:#fff; border-radius:14px; padding:10px 14px; margin-bottom:8px; animation:rise .3s var(--ease)}
+.msg.bad:not(:empty){background:var(--bad)}
+@keyframes rise{from{opacity:0; transform:translateY(8px)}}
+#view > *{animation:rise .35s var(--ease)}
+
+/* controls */
+label{display:block; font-weight:500; font-size:.85rem; margin:12px 0 4px}
+input[type=text],input[type=password],input[type=number],input[type=time],input[type=datetime-local],input[type=search],input[type=tel],select,textarea{width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--sheet)}
+textarea{min-height:80px; resize:vertical}
+.btn{border:0; background:var(--palm); color:#fff; border-radius:999px; padding:9px 16px; font-weight:500; white-space:nowrap; transition:transform .2s var(--ease)}
+.btn:active{transform:scale(.96)}
+.btn.hot{background:var(--tomato)} .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--line)} .btn.warn{background:transparent; color:var(--bad); border:1px solid var(--bad)}
+.btn.sm{padding:6px 12px; font-size:.86rem}
+.row{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.tools{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:4px 0 14px}
+.tools .grow{flex:1}
+.tabs{display:inline-flex; flex-wrap:wrap; max-width:100%; background:var(--sheet); border:1px solid var(--line); border-radius:22px; padding:3px}
+.tabs button{border:0; background:transparent; border-radius:999px; padding:7px 14px; font-weight:500}
+.tabs button[aria-pressed="true"]{background:var(--palm); color:#fff}
+.check{display:flex; gap:8px; align-items:center; font-weight:500; margin-top:12px}
+.check input{width:18px; height:18px}
+
+/* content */
+.card{background:var(--sheet); border-radius:20px; padding:16px; margin-bottom:16px}
+.card.flush{padding:4px 0}
+.card h2{font-size:1.02rem; font-weight:600; margin-bottom:10px}
+.scroll{overflow-x:auto}
+table{width:100%; border-collapse:collapse}
+th{font-size:.78rem; text-align:start; color:var(--soft); padding:10px 14px 6px; font-weight:500; white-space:nowrap}
+td{padding:10px 14px; border-top:1px solid var(--line); vertical-align:middle; font-variant-numeric:tabular-nums}
+td.r,th.r{text-align:end} td.a{white-space:nowrap; text-align:end}
+tr.click{cursor:pointer} tr.click:hover td{background:#FAFCF7}
+.soft{color:var(--soft)} .small{font-size:.84rem}
+.pill{display:inline-block; border-radius:999px; padding:2px 10px; font-size:.78rem; font-weight:500; background:var(--bg); white-space:nowrap}
+.pill.ok{background:#DDF3E5; color:#0F5E32} .pill.warn{background:#FFE9C7; color:#7A4100} .pill.bad{background:#FFD9D1; color:#8E1D0B} .pill.hi{background:var(--citron)}
+.tiles{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); margin-bottom:16px}
+.tile{background:var(--sheet); border-radius:20px; padding:16px}
+.tile b{display:block; font-size:1.7rem; font-weight:500; letter-spacing:-.03em; line-height:1.15}
+.tile span{color:var(--soft); font-size:.86rem}
+.grid2{display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.fields{display:grid; gap:0 16px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.empty{padding:34px 12px; text-align:center; color:var(--soft)}
+.alert{display:flex; gap:12px; align-items:center; padding:12px 0; border-top:1px solid var(--line)}
+.alert:first-of-type{border-top:0}
+.alert div{flex:1}
+.bars{display:flex; align-items:flex-end; gap:5px; height:160px}
+.bars div{flex:1; background:var(--palm); border-radius:6px 6px 0 0; min-height:2px}
+.bars div.zero{background:var(--line)}
+.axis{display:flex; gap:5px; font-size:.68rem; color:var(--soft); margin-top:4px}
+.axis span{flex:1; text-align:center; overflow:hidden}
+.meter{height:8px; border-radius:4px; background:var(--bg); overflow:hidden}
+.meter i{display:block; height:100%; background:var(--palm); border-radius:4px}
+
+/* kitchen display */
+#view:fullscreen{background:var(--bg); padding:24px}
+.kds{display:grid; gap:14px; grid-template-columns:repeat(3,minmax(240px,1fr)); align-items:start}
+.lane h2{font-size:1rem; font-weight:600; display:flex; justify-content:space-between; margin-bottom:10px}
+.ticket{background:var(--sheet); border-radius:20px; padding:14px; margin-bottom:12px; border-inline-start:6px solid var(--line); animation:rise .4s var(--ease)}
+.ticket.received{border-color:var(--tomato)} .ticket.preparing{border-color:#E3A400} .ticket.ready{border-color:var(--ok)}
+.ticket.late{box-shadow:0 0 0 2px var(--bad)}
+.ticket header{display:flex; justify-content:space-between; align-items:baseline}
+.ticket h3{font-size:1.5rem; font-weight:500; letter-spacing:-.03em}
+.age{font-variant-numeric:tabular-nums; font-weight:500}
+.late .age{color:var(--bad)}
+.ticket li{padding:5px 0; font-size:1.02rem}
+.ticket li small{display:block; background:var(--citron); border-radius:8px; padding:2px 8px; font-size:.86rem; margin-top:3px; width:fit-content}
+.ticket .btn{width:100%; margin-top:10px; padding:12px}
+
+/* side sheet for forms and details */
+.scrim{position:fixed; inset:0; background:rgba(7,30,23,.5); z-index:50; display:flex; justify-content:flex-end}
+.sheet{width:min(520px,100%); height:100%; background:var(--bg); padding:22px; overflow-y:auto; animation:slide .35s var(--ease)}
+@keyframes slide{from{transform:translateX(40px); opacity:0}}
+.sheet header{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px}
+.sheet h2{font-size:1.4rem; font-weight:500; letter-spacing:-.02em}
+.sheetmsg{color:var(--bad); font-weight:500; min-height:1.4em; margin-top:10px}
+.lines .row{margin-top:8px; flex-wrap:nowrap}
+.lines select{flex:2} .lines input{flex:1; min-width:0}
+.receipt{background:#fff; border-radius:16px; padding:20px; font-size:.92rem}
+.receipt h3{font-size:1.1rem; font-weight:600}
+.receipt table td{padding:5px 0; border:0} .receipt .tot td{border-top:1px solid var(--text); font-weight:600}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed; inset-block:0; inset-inline-start:0; width:260px; z-index:40; transform:translateX(-105%); transition:transform .35s var(--ease)}
+  .side.show{transform:none; box-shadow:0 0 0 100vmax rgba(7,30,23,.5)}
+  .menubtn{display:block} .bar{padding:14px 14px 8px; flex-wrap:wrap} .bar h1{flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis} #branch{order:3; width:100% !important} #view{padding:6px 14px 40px} .msg{margin:0 14px}
+  .kds{grid-template-columns:1fr}
+}
+@media print{ body *{visibility:hidden} .receipt,.receipt *{visibility:visible} .receipt{position:absolute; inset:0 auto auto 0; width:80mm; border-radius:0} }
+@media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
+</style>
+</head>
+<body>
+
+<section class="login" id="login">
+  <div class="loginbox">
+    <div class="name"><span class="mark"></span>VoiceBite</div>
+    <div class="by" style="margin-top:4px">powered by <img src="data:image/png;base64,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" alt="DevX Technologies"></div>
+    <h1>Merchant console</h1>
+    <p>Sign in to run orders, stock and your team.</p>
+    <form id="loginForm">
+      <label for="un">Username</label><input type="text" id="un" value="admin" autocomplete="username" required>
+      <label for="pw">Password or PIN</label><input type="password" id="pw" autocomplete="current-password" required>
+      <button class="btn hot" style="width:100%; margin-top:18px; padding:13px">Sign in</button>
+    </form>
+    <p class="sheetmsg" id="loginMsg" role="alert"></p>
+  </div>
+</section>
+
+<div class="shell" id="shell" hidden>
+  <aside class="side" id="side">
+    <div class="name"><span class="mark"></span>VoiceBite</div>
+    <nav id="nav"></nav>
+    <div class="who"><b id="whoName"></b><span id="whoRole"></span><br><button class="navlink" id="signOut" style="padding-inline:0; margin-top:6px">Sign out</button>
+      <div class="by" style="color:#B9CFC4; margin-top:10px">powered by <img src="data:image/png;base64,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" alt="DevX Technologies" style="background:#fff; border-radius:6px; padding:3px 6px; height:26px"></div></div>
+  </aside>
+  <div class="main">
+    <header class="bar">
+      <button class="menubtn" id="menuBtn" aria-label="Open navigation">☰</button>
+      <h1 id="title"></h1>
+      <select id="branch" aria-label="Branch" style="width:auto" hidden></select>
+      <button class="btn ghost sm" id="refresh">Refresh</button>
+    </header>
+    <p class="msg" id="msg" role="status"></p>
+    <main id="view"></main>
+  </div>
+</div>
+
+<div class="scrim" id="scrim" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+/* ================= core ================= */
+const params = new URLSearchParams(location.search);
+const API = (params.get("api") || "https://devx-ai-voice-commerce.onrender.com") + "/admin/api";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+const num = x => Number(x || 0);
+const UNITS = ["kg", "g", "litre", "ml", "piece", "pack", "tray", "crate"];
+const ROLE_NAMES = { platform_admin: "Platform admin", merchant_admin: "Merchant admin", store_manager: "Store manager", cashier: "Cashier or window", kitchen: "Kitchen", inventory: "Inventory and purchasing", analyst: "Read-only analyst" };
+const NAV = [
+  ["Operations", [["today", "Today", "orders.view"], ["kitchen", "Kitchen display", "orders.view"], ["orders", "Orders", "orders.view"]]],
+  ["Catalogue", [["menu", "Menu", "orders.view"]]],
+  ["Stock", [["inventory", "Inventory", "inventory.view"], ["recipes", "Recipes", "inventory.view"], ["waste", "Waste", "inventory.view"], ["purchasing", "Purchasing", "inventory.view"], ["assets", "Assets", "inventory.view"]]],
+  ["Customers", [["customers", "Customers", "crm.view"], ["offers", "Offers and campaigns", "crm.view"]]],
+  ["Insights", [["reports", "Reports", "analytics.view"]]],
+  ["Admin", [["team", "Team", "team.manage"], ["settings", "Settings", "settings.manage"], ["audit", "Audit log", "audit.view"], ["launch", "Launch check", "settings.manage"]]]
+];
+const TITLES = Object.fromEntries(NAV.flatMap(g => g[1].map(p => [p[0], p[1]])));
+
+let token = null, me = null, page = "today", timers = [], S = {};   // S holds whatever the current page loaded
+try { token = sessionStorage.getItem("consoleToken"); } catch (e) {}
+const RENDER = {}, ACT = {};
+
+async function api(path, method = "GET", body) {
+  let r;
+  try { r = await fetch(API + path, { method, body: body ? JSON.stringify(body) : undefined,
+    headers: Object.assign({ "Content-Type": "application/json" }, token ? { Authorization: "Bearer " + token } : {}) }); }
+  catch (e) { throw new Error("Can't reach the server. It may be waking up; try again in 30 seconds."); }
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 401 && path !== "/login") { signOut(); throw new Error("Your session ended. Sign in again."); }
+  if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Check the values you entered (" + r.status + ").");
+  return data;
+}
+const can = c => !!me && me.caps.includes(c);
+const records = async name => (await api("/data/" + name)).records;
+const cur = () => (me && me.business.currency) || "AED";
+const money = f => cur() + " " + (num(f) / 100).toFixed(2);
+const ts = v => { const s = String(v || ""); return Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(s) ? s : s + "Z"); };
+const when = v => { const d = new Date(ts(v)); return isNaN(d) ? String(v || "") : d.toLocaleString([], { dateStyle: "medium", timeStyle: "short" }); };
+const span = s => { s = Math.max(0, Math.round(num(s))); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+const bq = extra => { const b = $("branch").hidden ? "" : $("branch").value; const q = [b && b !== "all" ? "location=" + b : "", extra || ""].filter(Boolean).join("&"); return q ? "?" + q : ""; };
+const branchName = id => ((me.locations.find(l => l.locationId === id) || {}).name) || id || "";
+function say(text, bad) { $("msg").textContent = text || ""; $("msg").classList.toggle("bad", !!bad); if (text && !bad) setTimeout(() => { if ($("msg").textContent === text) $("msg").textContent = ""; }, 4000); }
+const attempt = async (fn, done) => { try { await fn(); if (done) say(done); } catch (e) { say(e.message, true); } };
+const pill = (text, tone) => `<span class="pill ${tone || ""}">${esc(text)}</span>`;
+const tile = (value, label) => `<div class="tile"><b>${value}</b><span>${esc(label)}</span></div>`;
+function table(cols, rows, empty, rowAttr) {
+  if (!rows.length) return `<div class="card"><p class="empty">${esc(empty)}</p></div>`;
+  return `<div class="card flush scroll"><table><tr>${cols.map(c => `<th class="${c.cls || ""}">${esc(c.label)}</th>`).join("")}</tr>
+    ${rows.map(r => `<tr ${rowAttr ? rowAttr(r) : ""}>${cols.map(c => `<td class="${c.cls || ""}">${c.cell(r)}</td>`).join("")}</tr>`).join("")}</table></div>`;
+}
+function download(name, rows) {
+  const csv = rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = name; a.click();
+}
+
+/* ================= side sheet and forms ================= */
+function openSheet(title, html) { $("sheet").innerHTML = `<header><h2>${esc(title)}</h2><button class="btn ghost sm" data-act="closeSheet">Close</button></header>${html}`; $("scrim").hidden = false; const f = $("sheet").querySelector("input,select,textarea"); if (f) f.focus(); }
+function closeSheet() { $("scrim").hidden = true; $("sheet").innerHTML = ""; }
+ACT.closeSheet = closeSheet;
+$("scrim").addEventListener("mousedown", e => { if (e.target === $("scrim")) closeSheet(); });
+addEventListener("keydown", e => { if (e.key === "Escape" && !$("scrim").hidden) closeSheet(); });
+function fieldHtml(f, v) {
+  const val = v[f.key] ?? f.def ?? "", id = "f-" + f.key, hint = f.hint ? `<span class="soft small">${esc(f.hint)}</span>` : "";
+  if (f.type === "checkbox") return `<label class="check"><input type="checkbox" id="${id}" ${val ? "checked" : ""}> ${esc(f.label)}</label>${hint}`;
+  let input;
+  if (f.type === "select") input = `<select id="${id}">${f.options.map(o => { const [ov, ol] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(ov)}" ${String(ov) === String(val) ? "selected" : ""}>${esc(ol)}</option>`; }).join("")}</select>`;
+  else if (f.type === "textarea") input = `<textarea id="${id}">${esc(val)}</textarea>`;
+  else if (f.type === "money") input = `<input type="number" id="${id}" min="0" step="0.01" value="${val === "" ? "" : (num(val) / 100).toFixed(2)}">`;
+  else input = `<input type="${f.type || "text"}" id="${id}" value="${esc(val)}" ${f.type === "number" ? `step="${f.step || "any"}"` : ""} ${f.readonly ? "readonly" : ""} placeholder="${esc(f.placeholder || "")}">`;
+  return `<div><label for="${id}">${esc(f.label)}${f.type === "money" ? " (" + cur() + ")" : ""}</label>${input}${hint}</div>`;
+}
+function readFields(fields) {
+  const out = {};
+  for (const f of fields) {
+    const el = $("f-" + f.key); let v = f.type === "checkbox" ? el.checked : el.value.trim();
+    if (f.type === "money") v = v === "" ? null : Math.round(parseFloat(v) * 100);
+    if (f.type === "number") v = v === "" ? null : parseFloat(v);
+    if ((f.type === "money" || f.type === "number") && v !== null && isNaN(v)) throw new Error("Enter a number for " + f.label + ".");
+    if (f.req && (v === "" || v === null)) throw new Error("Fill in " + f.label + ".");
+    if (v === null) v = f.type === "money" || f.type === "number" ? 0 : "";
+    out[f.key] = v;
+  }
+  return out;
+}
+function form(title, fields, values, onSave, o = {}) {
+  S.form = { fields, onSave };
+  openSheet(title, (o.before || "") + `<div class="fields">${fields.map(f => fieldHtml(f, values || {})).join("")}</div>${o.after || ""}
+    <p class="sheetmsg" id="sheetMsg" role="alert"></p><div class="row"><button class="btn hot" data-act="saveForm">${esc(o.save || "Save")}</button>
+    ${o.onDelete ? `<button class="btn warn" data-act="deleteForm">Delete</button>` : ""}</div>`);
+  S.form.onDelete = o.onDelete;
+}
+ACT.saveForm = async () => { try { await S.form.onSave(readFields(S.form.fields)); closeSheet(); await show(page, true); say("Saved."); } catch (e) { $("sheetMsg").textContent = e.message; } };
+ACT.deleteForm = async () => { if (!confirm("Delete this? It cannot be undone.")) return; try { await S.form.onDelete(); closeSheet(); await show(page, true); say("Deleted."); } catch (e) { $("sheetMsg").textContent = e.message; } };
+
+/* ================= sign in and navigation ================= */
+async function start() {
+  timers.forEach(clearInterval); timers = [];
+  $("login").hidden = !!token; $("shell").hidden = !token;
+  if (!token) return;
+  try { me = await api("/me"); } catch (e) { return; }
+  $("whoName").textContent = me.user; $("whoRole").textContent = ROLE_NAMES[me.role] || me.role;
+  $("nav").innerHTML = NAV.map(([group, pages]) => { const mine = pages.filter(p => can(p[2])); return mine.length ? `<small>${group}</small>` + mine.map(p => `<button class="navlink" data-page="${p[0]}">${p[1]}</button>`).join("") : ""; }).join("");
+  const many = me.location === "all" && me.locations.length > 1;
+  $("branch").hidden = !many; $("branch").innerHTML = `<option value="all">All branches</option>` + me.locations.map(l => `<option value="${esc(l.locationId)}">${esc(l.name)}</option>`).join("");
+  const first = NAV.flatMap(g => g[1]).find(p => can(p[2])); show(can((NAV.flatMap(g => g[1]).find(p => p[0] === page) || [])[2]) ? page : first[0]);
+}
+function signOut() { token = null; me = null; try { sessionStorage.removeItem("consoleToken"); } catch (e) {} start(); }
+$("signOut").onclick = signOut;
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault(); $("loginMsg").textContent = "";
+  try { token = (await api("/login", "POST", { username: $("un").value.trim(), password: $("pw").value })).token; try { sessionStorage.setItem("consoleToken", token); } catch (err) {} $("pw").value = ""; start(); }
+  catch (err) { token = null; $("loginMsg").textContent = err.message; }
+});
+async function show(name, keep) {
+  page = name; timers.forEach(clearInterval); timers = []; if (!keep) say("");
+  $("title").textContent = TITLES[name]; $("side").classList.remove("show");
+  document.querySelectorAll(".navlink[data-page]").forEach(b => b.dataset.page === name ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
+  const top = $("view").scrollTop;
+  try { $("view").innerHTML = await RENDER[name](); if (keep) $("view").scrollTop = top; } catch (e) { $("view").innerHTML = `<div class="card"><p class="empty">${esc(e.message)}</p></div>`; }
+}
+$("nav").addEventListener("click", e => { const b = e.target.closest("[data-page]"); if (b) show(b.dataset.page); });
+$("menuBtn").onclick = () => $("side").classList.toggle("show");
+$("refresh").onclick = () => show(page, true);
+$("branch").addEventListener("change", () => show(page));
+document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (b && ACT[b.dataset.act]) ACT[b.dataset.act](b.dataset, b); const g = e.target.closest("[data-goto]"); if (g) show(g.dataset.goto); });
+document.addEventListener("change", e => { const b = e.target.closest("[data-change]"); if (b && ACT[b.dataset.change]) ACT[b.dataset.change](b.dataset, b); });
+
+async function menuData() { if (!S.menuAt || Date.now() - S.menuAt > 60000) { S.menu = await api("/menu"); S.menuAt = Date.now(); } return S.menu; }
+const DEFAULT_STATION = { burgers: "grill", custom: "grill", chicken: "grill", sides: "fryer", drinks: "beverage", desserts: "dessert" };
+function stationOf(itemId) { const id = String(itemId || ""); const it = (S.menu ? S.menu.items : []).find(i => i.itemId === id) || (id.startsWith("custom-burger") ? { categoryId: "custom" } : null); return it ? (it.station || DEFAULT_STATION[it.categoryId] || "packing") : "packing"; }
+const STATUS_TONE = { received: "bad", preparing: "warn", ready: "ok", completed: "", cancelled: "" };
+const PAY_TONE = { unpaid: "warn", captured: "ok", partially_refunded: "warn", refunded: "", voided: "" };
+const PAY_LABEL = { unpaid: "Pay at window", captured: "Paid", partially_refunded: "Part refunded", refunded: "Refunded", voided: "Voided" };
+const sla = () => num(me.business.prepSlaMinutes) || 8;
+const active = o => !["completed", "cancelled"].includes(o.status);
+
+/* ================= today ================= */
+RENDER.today = async () => {
+  const [o, ing, assets] = await Promise.all([api("/orders" + bq()), can("inventory.view") ? records("ingredients") : [], can("inventory.view") ? records("assets") : []]);
+  const today = new Date().toDateString(), mine = o.orders.filter(x => new Date(ts(x.createdAt)).toDateString() === today && x.status !== "cancelled");
+  const live = o.orders.filter(active), late = live.filter(x => x.status !== "ready" && (Date.now() - ts(x.createdAt)) / 60000 > sla());
+  const low = ing.filter(i => num(i.reorderPoint) > 0 && num(i.onHand) <= num(i.reorderPoint)), overdue = assets.filter(a => a.status === "out" && a.dueAt && ts(a.dueAt) < Date.now());
+  const unpaid = live.filter(x => x.status === "ready" && x.paymentStatus === "unpaid");
+  const alerts = [
+    ...late.map(x => [`Order ${x.orderId} has waited ${Math.round((Date.now() - ts(x.createdAt)) / 60000)} minutes`, `Over the ${sla()}-minute preparation target`, "kitchen", "Open kitchen display"]),
+    ...unpaid.map(x => [`Order ${x.orderId} is ready and unpaid`, money(x.total) + " to collect at the window", "orders", "Open orders"]),
+    ...low.map(i => [`${i.name} is low: ${num(i.onHand)} ${i.unit} left`, `Reorder point is ${num(i.reorderPoint)} ${i.unit}`, "inventory", "Open inventory"]),
+    ...overdue.map(a => [`${a.name} is overdue`, `With ${a.holder}, due ${when(a.dueAt)}`, "assets", "Open assets"])];
+  return `<div class="tiles">${tile(mine.length, "Orders today")}${tile(money(mine.reduce((s, x) => s + num(x.total), 0)), "Sales today")}${tile(live.length, "In progress now")}${tile(late.length, "Past preparation target")}</div>
+    <div class="card"><h2>Needs attention</h2>${alerts.length ? alerts.map(a => `<div class="alert"><div><b style="font-weight:500">${esc(a[0])}</b><br><span class="soft small">${esc(a[1])}</span></div><button class="btn ghost sm" data-goto="${a[2]}">${a[3]}</button></div>`).join("")
+      : `<p class="empty">Nothing needs attention right now.</p>`}</div>
+    <div class="card"><h2>Latest orders</h2>${o.orders.slice(0, 6).map(x => `<div class="alert"><div><b style="font-weight:500">Order ${esc(x.orderId)}</b> <span class="soft small">${esc(when(x.createdAt))}</span><br>
+      <span class="soft small">${esc((x.items || []).map(i => (i.quantity || 1) + "× " + i.name).join(", "))}</span></div>${pill(x.status, STATUS_TONE[x.status])} <b style="font-weight:500">${money(x.total)}</b></div>`).join("") || `<p class="empty">No orders yet. Orders placed by voice appear here.</p>`}</div>`;
+};
+
+/* ================= kitchen display ================= */
+function kdsHtml() {
+  const st = S.station || "all", lanes = [["received", "New", "Start preparing", "preparing"], ["preparing", "Preparing", "Mark ready", "ready"], ["ready", "Ready for pickup", "Handed over", "completed"]];
+  const stations = ["all", ...new Set(S.orders.filter(active).flatMap(o => (o.items || []).map(i => stationOf(i.itemId))))];
+  return `<div class="tools"><div class="tabs">${stations.map(s => `<button data-act="kdsStation" data-station="${s}" aria-pressed="${s === st}">${s === "all" ? "All stations" : s[0].toUpperCase() + s.slice(1)}</button>`).join("")}</div>
+    <span class="grow"></span><span class="soft small">Target ${sla()} min. Updates every 6 seconds.</span><button class="btn ghost sm" data-act="kdsFull">Full screen</button></div>
+    <div class="kds">${lanes.map(([status, label, next, to]) => { const list = S.orders.filter(o => o.status === status).filter(o => st === "all" || (o.items || []).some(i => stationOf(i.itemId) === st)).sort((a, b) => ts(a.createdAt) - ts(b.createdAt));
+      return `<section class="lane"><h2><span>${label}</span><span class="soft">${list.length}</span></h2>${list.map(o => `<article class="ticket ${status}" data-ts="${ts(o.createdAt)}" data-status="${status}">
+        <header><h3>${esc(o.orderId)}</h3><span class="age"></span></header>
+        <ul>${(o.items || []).filter(i => st === "all" || stationOf(i.itemId) === st).map(i => `<li>${esc(i.quantity || 1)}× ${esc(i.name)}${i.specialInstructions ? `<small>${esc(i.specialInstructions)}</small>` : ""}</li>`).join("")}</ul>
+        ${can("orders.status") ? `<button class="btn ${status === "received" ? "hot" : ""}" data-act="kdsNext" data-id="${esc(o.orderId)}" data-to="${to}">${next}</button>` : ""}</article>`).join("") || `<p class="empty">None</p>`}</section>`; }).join("")}</div>`;
+}
+function kdsTick() { document.querySelectorAll(".ticket").forEach(t => { const s = (Date.now() - num(t.dataset.ts)) / 1000; t.querySelector(".age").textContent = span(s); t.classList.toggle("late", t.dataset.status !== "ready" && s / 60 > sla()); }); }
+function beep() { try { const c = S.audio || (S.audio = new AudioContext()), o = c.createOscillator(), g = c.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(.15, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .5); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + .5); } catch (e) {} }
+RENDER.kitchen = async () => {
+  await menuData(); S.orders = (await api("/orders" + bq())).orders; S.seen = new Set(S.orders.map(o => o.orderId));
+  timers.push(setInterval(kdsTick, 1000), setInterval(async () => { try { const fresh = (await api("/orders" + bq())).orders; if (fresh.some(o => !S.seen.has(o.orderId))) beep(); fresh.forEach(o => S.seen.add(o.orderId));
+    if (JSON.stringify(fresh.map(o => [o.orderId, o.status])) !== JSON.stringify(S.orders.map(o => [o.orderId, o.status]))) { S.orders = fresh; $("view").innerHTML = kdsHtml(); kdsTick(); } } catch (e) {} }, 6000));
+  setTimeout(kdsTick, 0); return kdsHtml();
+};
+ACT.kdsStation = d => { S.station = d.station; $("view").innerHTML = kdsHtml(); kdsTick(); };
+ACT.kdsFull = () => { document.fullscreenElement ? document.exitFullscreen() : $("view").requestFullscreen && $("view").requestFullscreen(); };
+ACT.kdsNext = d => attempt(async () => { const r = await api("/orders/" + encodeURIComponent(d.id), "PATCH", { status: d.to }); const o = S.orders.find(x => x.orderId === d.id); if (o) o.status = d.to; $("view").innerHTML = kdsHtml(); kdsTick();
+  if (r.stockMoves) say(`Order ${d.id} completed. ${r.stockMoves} stock deductions recorded from its recipes.`); });
+
+/* ================= orders, payment, refunds, receipts ================= */
+RENDER.orders = async () => {
+  S.orders = (await api("/orders" + bq())).orders; const f = S.orderFilter || "active", list = S.orders.filter(o => f === "all" || active(o));
+  return `<div class="tools"><div class="tabs"><button data-act="orderFilter" data-f="active" aria-pressed="${f === "active"}">Active</button><button data-act="orderFilter" data-f="all" aria-pressed="${f === "all"}">All</button></div>
+    <span class="grow"></span><button class="btn ghost sm" data-act="ordersCsv">Export CSV</button></div>` +
+  table([{ label: "Order", cell: o => `<b style="font-weight:500">${esc(o.orderId)}</b>` }, { label: "Placed", cell: o => esc(when(o.createdAt)) }, { label: "Branch", cell: o => esc(branchName(o.locationId)) },
+    { label: "Items", cell: o => `<span class="small">${esc((o.items || []).map(i => (i.quantity || 1) + "× " + i.name).join(", "))}</span>` }, { label: "Total", cls: "r", cell: o => money(o.total) },
+    { label: "Status", cell: o => pill(o.status, STATUS_TONE[o.status]) }, { label: "Payment", cell: o => pill(PAY_LABEL[o.paymentStatus] || o.paymentStatus, PAY_TONE[o.paymentStatus]) }],
+    list, f === "all" ? "No orders yet. Orders placed by voice appear here." : "No active orders.", o => `class="click" data-act="orderOpen" data-id="${esc(o.orderId)}"`);
+};
+ACT.orderFilter = d => { S.orderFilter = d.f; show("orders"); };
+ACT.ordersCsv = () => download("orders.csv", [["Order", "Placed", "Branch", "Status", "Payment", "Method", "Total", "Refunded", "Customer", "Items"], ...S.orders.map(o => [o.orderId, o.createdAt, o.locationId, o.status, o.paymentStatus, o.paymentMethod || "", (num(o.total) / 100).toFixed(2), (num(o.refundedTotal) / 100).toFixed(2), o.customerPhone || "", (o.items || []).map(i => (i.quantity || 1) + "x " + i.name).join("; ")])]);
+function vatSplit(total) { const rate = num(me.business.vatRate), inc = me.business.pricesIncludeVat !== false; const vat = inc ? Math.round(total * rate / (100 + rate)) : Math.round(total * rate / 100); return { rate, net: inc ? total - vat : total, vat, gross: inc ? total : total + vat }; }
+function receiptHtml(o) { const b = me.business, v = vatSplit(num(o.total));
+  return `<div class="receipt"><h3>${esc(b.legalName || "VoiceBite merchant")}</h3><p class="small">${esc(b.address || "")}</p>${b.trn ? `<p class="small">TRN ${esc(b.trn)}</p>` : ""}
+    <p style="margin:10px 0 6px"><b>${b.trn ? "Tax invoice" : "Receipt"}</b> for order ${esc(o.orderId)}<br><span class="small">${esc(when(o.createdAt))}, ${esc(branchName(o.locationId))}</span></p>
+    <table>${(o.items || []).map(i => `<tr><td>${esc(i.quantity || 1)}× ${esc(i.name)}</td><td class="r">${money(num(i.unitPrice ?? i.price) * (i.quantity || 1))}</td></tr>`).join("")}
+      <tr><td>Subtotal before VAT</td><td class="r">${money(v.net)}</td></tr><tr><td>VAT ${v.rate}%</td><td class="r">${money(v.vat)}</td></tr>
+      <tr class="tot"><td>Total</td><td class="r">${money(v.gross)}</td></tr>${num(o.refundedTotal) ? `<tr><td>Refunded</td><td class="r">−${money(o.refundedTotal)}</td></tr>` : ""}</table>
+    <p class="small" style="margin-top:8px">${esc(PAY_LABEL[o.paymentStatus] || "")}${o.paymentMethod ? " by " + esc(o.paymentMethod) + ", " + esc(when(o.paidAt)) : ""}</p></div>`; }
+ACT.orderOpen = d => { const o = S.orders.find(x => x.orderId === d.id); if (!o) return; S.order = o; const paid = ["captured", "partially_refunded"].includes(o.paymentStatus);
+  openSheet("Order " + o.orderId, `<div class="row" style="margin:6px 0 12px">${pill(o.status, STATUS_TONE[o.status])}${pill(PAY_LABEL[o.paymentStatus] || o.paymentStatus, PAY_TONE[o.paymentStatus])}<span class="soft small">${esc(when(o.createdAt))}</span></div>
+    ${receiptHtml(o)}<p class="sheetmsg" id="sheetMsg" role="alert"></p>
+    ${can("orders.status") ? `<label for="oStatus">Status</label><select id="oStatus" data-change="orderStatus">${me.statuses.map(s => `<option ${s === o.status ? "selected" : ""}>${s}</option>`).join("")}</select>
+      ${o.paymentStatus === "unpaid" && o.status !== "cancelled" ? `<label>Take payment at the window</label><div class="row"><button class="btn" data-act="orderPay" data-m="cash">Paid in cash</button><button class="btn" data-act="orderPay" data-m="card">Paid by card</button></div>` : ""}
+      <label>Customer</label>${o.customerPhone ? `<p>${esc(o.customerName || "")} ${esc(o.customerPhone)}</p>` : `<div class="row" style="flex-wrap:nowrap"><input type="tel" id="cPhone" placeholder="Phone, e.g. +971 50 123 4567"><input type="text" id="cName" placeholder="Name"></div>
+        <label class="check"><input type="checkbox" id="cConsent"> Customer agreed to offers by WhatsApp</label><button class="btn ghost sm" data-act="orderCustomer" style="margin-top:8px">Link customer</button>`}` : ""}
+    ${can("orders.refund") && o.status !== "cancelled" ? `<label for="rReason">${paid ? "Refund" : "Void this order"}</label>${paid ? `<input type="number" id="rAmount" min="0" step="0.01" placeholder="Amount, empty for the full remainder" style="margin-bottom:8px">` : ""}
+      <input type="text" id="rReason" placeholder="Reason"><button class="btn warn sm" data-act="orderRefund" data-kind="${paid ? "refund" : "void"}" style="margin-top:8px">${paid ? "Refund" : "Void order"}</button>` : ""}
+    <div class="row" style="margin-top:18px"><button class="btn ghost" data-act="printReceipt">Print receipt</button></div>`); };
+const orderDo = (fn, done) => async () => { try { await fn(); closeSheet(); await show(page, true); say(done); } catch (e) { $("sheetMsg").textContent = e.message; } };
+ACT.orderStatus = (d, el) => orderDo(async () => { const r = await api("/orders/" + encodeURIComponent(S.order.orderId), "PATCH", { status: el.value }); S.note = r.stockMoves ? ` ${r.stockMoves} stock deductions recorded.` : ""; }, "Order " + S.order.orderId + " is now " + el.value + ".")();
+ACT.orderPay = d => orderDo(() => api("/orders/" + encodeURIComponent(S.order.orderId) + "/payment", "POST", { method: d.m }), "Payment recorded.")();
+ACT.orderCustomer = () => orderDo(() => api("/orders/" + encodeURIComponent(S.order.orderId) + "/customer", "POST", { phone: $("cPhone").value, name: $("cName").value.trim(), marketingConsent: $("cConsent").checked }), "Customer linked to the order.")();
+ACT.orderRefund = d => { if (!confirm(d.kind === "void" ? "Void this order?" : "Refund this order?")) return; orderDo(() => api("/orders/" + encodeURIComponent(S.order.orderId) + "/refund", "POST", { kind: d.kind, reason: $("rReason").value.trim(), amount: d.kind === "refund" ? Math.round(parseFloat($("rAmount").value || "0") * 100) : 0 }), d.kind === "void" ? "Order voided." : "Refund recorded.")(); };
+ACT.printReceipt = () => print();
+
+/* ================= menu ================= */
+RENDER.menu = async () => {
+  S.menuAt = 0; const m = await menuData(), edit = can("menu.edit"); S.burger = await api("/burger");
+  return `<div class="tools"><span class="soft small grow">Changes reach the voice attendant on the next call. Switch off Available to mark an item sold out.</span>${edit ? `<button class="btn" data-act="catNew">Add category</button>` : ""}</div>` +
+    m.categories.map(c => `<div class="card flush"><div class="row" style="padding:12px 14px"><h2 style="margin:0" class="grow">${esc(c.name)}</h2>${edit ? `<button class="btn ghost sm" data-act="catEdit" data-id="${esc(c.categoryId)}">Edit category</button><button class="btn sm" data-act="itemNew" data-cat="${esc(c.categoryId)}">Add item</button>` : ""}</div>
+      <div class="scroll"><table><tr><th>Item</th><th>Station</th><th class="r">Price</th><th>Status</th><th></th></tr>${m.items.filter(i => i.categoryId === c.categoryId).map(i => `<tr><td><b style="font-weight:500">${esc(i.name)}</b>${i.featured ? " " + pill("Popular", "hi") : ""}<br><span class="soft small">${esc(i.description)}</span></td>
+        <td>${esc(i.station || DEFAULT_STATION[i.categoryId] || "packing")}</td><td class="r">${money(i.price)}</td><td>${i.available ? pill("Available", "ok") : pill("Sold out", "bad")}</td>
+        <td class="a">${edit ? `<button class="btn ghost sm" data-act="itemToggle" data-cat="${esc(i.categoryId)}" data-id="${esc(i.itemId)}">${i.available ? "Mark sold out" : "Mark available"}</button> <button class="btn ghost sm" data-act="itemEdit" data-cat="${esc(i.categoryId)}" data-id="${esc(i.itemId)}">Edit</button>` : ""}</td></tr>`).join("") || `<tr><td colspan="5" class="soft">No items in this category yet.</td></tr>`}</table></div></div>`).join("") +
+    `<div class="card"><div class="row"><h2 style="margin:0" class="grow">Build-your-own burger prices</h2>${edit ? `<button class="btn ghost sm" data-act="burgerEdit">Edit prices</button>` : ""}</div>
+      <p class="soft small" style="margin-top:6px">Base ${money(S.burger.basePrice)}. Toppings: ${esc(Object.entries(S.burger.toppings || {}).map(([n, p]) => n + (p ? " +" + (p / 100).toFixed(2) : "")).join(", "))}. Sauces: ${esc(Object.entries(S.burger.sauces || {}).map(([n, p]) => n + (p ? " +" + (p / 100).toFixed(2) : "")).join(", "))}.</p></div>`;
+};
+const ITEM_FIELDS = [{ key: "name", label: "Name", req: true }, { key: "description", label: "Description", type: "textarea" }, { key: "price", label: "Price", type: "money", req: true },
+  { key: "station", label: "Kitchen station", type: "select", options: [["", "Default for category"], "grill", "fryer", "beverage", "dessert", "packing"] }, { key: "sortOrder", label: "Position in category", type: "number", def: 1 },
+  { key: "featured", label: "Show as popular", type: "checkbox" }, { key: "available", label: "Available to order", type: "checkbox", def: true }];
+const saveItem = (cat, id, v, base = {}) => api(`/menu/items/${cat}/${id}`, "PUT", { imageUrl: base.imageUrl || "", ...v, sortOrder: Math.round(v.sortOrder) });
+ACT.itemNew = d => form("Add menu item", ITEM_FIELDS, {}, v => { const id = slug(v.name); if (S.menu.items.some(i => i.itemId === id)) throw new Error("An item with that name already exists."); return saveItem(d.cat, id, v); });
+ACT.itemEdit = d => { const i = S.menu.items.find(x => x.itemId === d.id && x.categoryId === d.cat); form("Edit " + i.name, ITEM_FIELDS, i, v => saveItem(d.cat, d.id, v, i), { onDelete: () => api(`/menu/items/${d.cat}/${d.id}`, "DELETE") }); };
+ACT.itemToggle = d => attempt(async () => { const i = S.menu.items.find(x => x.itemId === d.id && x.categoryId === d.cat); await saveItem(d.cat, d.id, { name: i.name, description: i.description, price: i.price, station: i.station, sortOrder: i.sortOrder, featured: i.featured, available: !i.available }, i); await show("menu", true); }, "Availability updated. The attendant follows it from the next call.");
+const CAT_FIELDS = [{ key: "name", label: "Category name", req: true }, { key: "sortOrder", label: "Position", type: "number", def: 1 }];
+ACT.catNew = () => form("Add category", CAT_FIELDS, {}, v => api("/menu/categories/" + slug(v.name), "PUT", { name: v.name, sortOrder: Math.round(v.sortOrder) }));
+ACT.catEdit = d => { const c = S.menu.categories.find(x => x.categoryId === d.id); form("Edit " + c.name, CAT_FIELDS, c, v => api("/menu/categories/" + d.id, "PUT", { name: v.name, sortOrder: Math.round(v.sortOrder) }), { onDelete: () => api("/menu/categories/" + d.id, "DELETE") }); };
+const priceText = o => Object.entries(o || {}).map(([n, p]) => n + " = " + (p / 100).toFixed(2)).join("\n");
+const priceParse = (text, what) => Object.fromEntries(text.split("\n").map(l => l.trim()).filter(Boolean).map(l => { const [n, p] = l.split("="); const v = Math.round(parseFloat(p || "0") * 100); if (!n.trim() || isNaN(v) || v < 0) throw new Error("Each line of " + what + " should look like: bacon = 1.50"); return [n.trim().toLowerCase(), v]; }));
+ACT.burgerEdit = () => form("Burger prices", [{ key: "basePrice", label: "Base price", type: "money", req: true }, { key: "toppings", label: "Toppings, one per line as name = extra price", type: "textarea" }, { key: "sauces", label: "Sauces, one per line as name = extra price", type: "textarea" }],
+  { basePrice: S.burger.basePrice, toppings: priceText(S.burger.toppings), sauces: priceText(S.burger.sauces) }, v => api("/burger", "PUT", { basePrice: v.basePrice, toppings: priceParse(v.toppings, "toppings"), sauces: priceParse(v.sauces, "sauces") }));
+
+/* ================= inventory ================= */
+const ING_FIELDS = [{ key: "name", label: "Ingredient or packaging", req: true }, { key: "unit", label: "Unit", type: "select", options: UNITS }, { key: "unitCost", label: "Cost per unit", type: "money" },
+  { key: "parLevel", label: "Par level", type: "number", hint: "How much you want on the shelf" }, { key: "reorderPoint", label: "Reorder point", type: "number", hint: "Low-stock alert at or below this" },
+  { key: "yieldPct", label: "Yield %", type: "number", def: 100, hint: "Usable share after trimming or prep" }, { key: "trackBatch", label: "Track batch and expiry", type: "checkbox" }, { key: "batch", label: "Current batch or lot" }, { key: "expiry", label: "Expiry date", placeholder: "2026-12-31" }];
+RENDER.inventory = async () => {
+  const tab = S.invTab || "stock", edit = can("inventory.edit"); S.ing = await records("ingredients");
+  const head = `<div class="tools"><div class="tabs"><button data-act="invTab" data-t="stock" aria-pressed="${tab === "stock"}">Stock on hand</button><button data-act="invTab" data-t="ledger" aria-pressed="${tab === "ledger"}">Stock ledger</button></div><span class="grow"></span>
+    <button class="btn ghost sm" data-act="stockCsv">Export CSV</button>${edit ? `<button class="btn" data-act="ingNew">Add ingredient</button>` : ""}</div>`;
+  if (tab === "ledger") { S.moves = await records("stock_moves"); const names = Object.fromEntries(S.ing.map(i => [i.id, i]));
+    return head + table([{ label: "When", cell: m => esc(when(m.at)) }, { label: "Ingredient", cell: m => esc((names[m.ingredientId] || {}).name || m.ingredientId) }, { label: "Type", cell: m => pill(m.type, m.type === "waste" ? "bad" : m.type === "purchase" ? "ok" : "") },
+      { label: "Change", cls: "r", cell: m => (num(m.qty) > 0 ? "+" : "") + num(m.qty) + " " + esc((names[m.ingredientId] || {}).unit || "") }, { label: "Reference", cell: m => esc(m.ref || m.note || "") }, { label: "By", cell: m => esc(m.by) }], S.moves, "No stock movements yet. Purchases, completed orders, waste and counts appear here."); }
+  const value = S.ing.reduce((s, i) => s + num(i.onHand) * num(i.unitCost), 0), low = S.ing.filter(i => num(i.reorderPoint) > 0 && num(i.onHand) <= num(i.reorderPoint)).length;
+  return head + `<div class="tiles">${tile(S.ing.length, "Stock items")}${tile(money(value), "Stock value")}${tile(low, "At or below reorder point")}</div>` +
+    table([{ label: "Item", cell: i => `<b style="font-weight:500">${esc(i.name)}</b>${i.trackBatch && i.expiry ? `<br><span class="soft small">Batch ${esc(i.batch || "none")}, expires ${esc(i.expiry)}</span>` : ""}` }, { label: "On hand", cls: "r", cell: i => num(i.onHand) + " " + esc(i.unit) },
+      { label: "Par", cls: "r", cell: i => num(i.parLevel) || "" }, { label: "Reorder at", cls: "r", cell: i => num(i.reorderPoint) || "" }, { label: "Unit cost", cls: "r", cell: i => money(i.unitCost) },
+      { label: "Status", cell: i => num(i.onHand) < 0 ? pill("Negative, count it", "bad") : num(i.reorderPoint) > 0 && num(i.onHand) <= num(i.reorderPoint) ? pill("Low", "warn") : pill("OK", "ok") },
+      { label: "", cls: "a", cell: i => edit ? `<button class="btn ghost sm" data-act="ingAdjust" data-id="${esc(i.id)}">Adjust</button> <button class="btn ghost sm" data-act="ingEdit" data-id="${esc(i.id)}">Edit</button>` : "" }],
+      S.ing, "No ingredients yet. Add the ingredients and packaging your recipes use.");
+};
+ACT.invTab = d => { S.invTab = d.t; show("inventory"); };
+ACT.ingNew = () => form("Add ingredient", ING_FIELDS, {}, v => { const id = slug(v.name); if (S.ing.some(i => i.id === id)) throw new Error("That ingredient already exists."); return api("/data/ingredients/" + id, "PUT", v); });
+ACT.ingEdit = d => { const i = S.ing.find(x => x.id === d.id); form("Edit " + i.name, ING_FIELDS, i, v => api("/data/ingredients/" + d.id, "PUT", v), { onDelete: () => api("/data/ingredients/" + d.id, "DELETE") }); };
+ACT.ingAdjust = d => { const i = S.ing.find(x => x.id === d.id); form("Adjust " + i.name, [{ key: "type", label: "What happened", type: "select", options: [["count", "Stock count (enter what is on the shelf)"], ["adjustment", "Adjustment (enter the change, + or −)"], ["purchase", "Purchase received without a PO (+)"], ["transfer", "Transfer to or from another branch (+ or −)"], ["return", "Return to supplier (−)"]] },
+  { key: "qty", label: "Quantity in " + i.unit, type: "number", req: true }, { key: "note", label: "Note" }], {}, v => api("/inventory/adjust", "POST", { ingredientId: d.id, ...v }), { before: `<p class="soft">On hand now: ${num(i.onHand)} ${esc(i.unit)}</p>`, save: "Record" }); };
+ACT.stockCsv = () => download("stock.csv", [["Item", "Unit", "On hand", "Par", "Reorder point", "Unit cost", "Value"], ...S.ing.map(i => [i.name, i.unit, num(i.onHand), num(i.parLevel), num(i.reorderPoint), (num(i.unitCost) / 100).toFixed(2), (num(i.onHand) * num(i.unitCost) / 100).toFixed(2)])]);
+
+/* ================= recipes (bill of materials) ================= */
+RENDER.recipes = async () => {
+  const [m, rec, ing] = await Promise.all([menuData(), records("recipes"), records("ingredients")]); S.rec = Object.fromEntries(rec.map(r => [r.id, r])); S.ing = ing; const byId = Object.fromEntries(ing.map(i => [i.id, i]));
+  const rows = m.items.map(i => { const lines = (S.rec[i.itemId] || {}).lines || [], cost = lines.reduce((s, l) => s + num(l.qty) * num((byId[l.ingredientId] || {}).unitCost) / ((num((byId[l.ingredientId] || {}).yieldPct) || 100) / 100), 0); return { ...i, lines, cost }; });
+  return `<p class="soft" style="margin-bottom:14px; max-width:70ch">A recipe lists what one portion uses. When an order is marked completed, stock is deducted from these quantities automatically.</p>` +
+    table([{ label: "Menu item", cell: r => `<b style="font-weight:500">${esc(r.name)}</b>` }, { label: "Recipe", cell: r => r.lines.length ? `<span class="small">${esc(r.lines.map(l => num(l.qty) + " " + ((byId[l.ingredientId] || {}).unit || "") + " " + ((byId[l.ingredientId] || {}).name || l.ingredientId)).join(", "))}</span>` : pill("No recipe yet", "warn") },
+      { label: "Food cost", cls: "r", cell: r => r.lines.length ? money(r.cost) : "" }, { label: "Of price", cls: "r", cell: r => r.lines.length && r.price ? Math.round(100 * r.cost / r.price) + "%" : "" },
+      { label: "", cls: "a", cell: r => can("inventory.edit") ? `<button class="btn ghost sm" data-act="recEdit" data-id="${esc(r.itemId)}">${r.lines.length ? "Edit recipe" : "Add recipe"}</button>` : "" }], rows, "Add menu items first, then give each one a recipe.");
+};
+const recLine = (l = {}) => `<div class="row"><select data-f="ing"><option value="">Choose ingredient</option>${S.ing.map(i => `<option value="${esc(i.id)}" ${i.id === l.ingredientId ? "selected" : ""}>${esc(i.name)} (${esc(i.unit)})</option>`).join("")}</select>
+  <input type="number" data-f="qty" min="0" step="any" placeholder="Qty" value="${l.qty ?? ""}"><button class="btn ghost sm" data-act="lineDrop">Remove</button></div>`;
+ACT.recEdit = d => { const item = S.menu.items.find(i => i.itemId === d.id), lines = (S.rec[d.id] || {}).lines || []; if (!S.ing.length) return say("Add ingredients under Inventory first.", true);
+  openSheet("Recipe for " + item.name, `<p class="soft">Quantities for one portion.</p><div class="lines" id="recLines">${(lines.length ? lines : [{}]).map(recLine).join("")}</div>
+    <button class="btn ghost sm" data-act="recAdd" style="margin-top:10px">Add ingredient</button><p class="sheetmsg" id="sheetMsg" role="alert"></p><button class="btn hot" data-act="recSave" data-id="${esc(d.id)}">Save recipe</button>`); };
+ACT.recAdd = () => $("recLines").insertAdjacentHTML("beforeend", recLine());
+ACT.lineDrop = (d, el) => el.closest(".row").remove();
+ACT.recSave = async d => { try { const lines = [...document.querySelectorAll("#recLines .row")].map(r => ({ ingredientId: r.querySelector('[data-f="ing"]').value, qty: parseFloat(r.querySelector('[data-f="qty"]').value) })).filter(l => l.ingredientId);
+  if (lines.some(l => !(l.qty > 0))) throw new Error("Give every ingredient a quantity above zero."); await api("/data/recipes/" + d.id, "PUT", { lines }); closeSheet(); await show("recipes", true); say("Recipe saved."); } catch (e) { $("sheetMsg").textContent = e.message; } };
+
+/* ================= waste ================= */
+RENDER.waste = async () => {
+  const [w, ing] = await Promise.all([records("waste"), records("ingredients")]); S.waste = w; S.ing = ing;
+  const cost = w.reduce((s, x) => s + num(x.cost), 0), by = {}; w.forEach(x => by[x.reason] = (by[x.reason] || 0) + num(x.cost)); const top = Math.max(1, ...Object.values(by));
+  return `<div class="tools"><span class="grow"></span><button class="btn ghost sm" data-act="wasteCsv">Export CSV</button>${can("waste.log") ? `<button class="btn hot" data-act="wasteNew">Log waste</button>` : ""}</div>
+    <div class="tiles">${tile(w.length, "Waste entries")}${tile(money(cost), "Estimated cost")}${tile(w.filter(x => x.stage === "post-consumer").length, "Post-consumer entries")}</div>
+    ${Object.keys(by).length ? `<div class="card"><h2>Cost by reason</h2>${Object.entries(by).sort((a, b) => b[1] - a[1]).map(([r, c]) => `<div style="margin-top:10px"><div class="row" style="justify-content:space-between"><span>${esc(r)}</span><b style="font-weight:500">${money(c)}</b></div><div class="meter"><i style="width:${100 * c / top}%"></i></div></div>`).join("")}</div>` : ""}` +
+    table([{ label: "When", cell: x => esc(when(x.at)) }, { label: "Item", cell: x => esc(x.ingredientName) }, { label: "Quantity", cls: "r", cell: x => num(x.qty) + " " + esc(x.unit) }, { label: "Reason", cell: x => pill(x.reason) },
+      { label: "Stage", cell: x => esc(x.stage) }, { label: "Cost", cls: "r", cell: x => money(x.cost) }, { label: "By", cell: x => esc(x.by) }, { label: "Note", cell: x => `<span class="small">${esc(x.note || "")}</span>` }], w, "No waste logged yet.");
+};
+ACT.wasteNew = () => { if (!S.ing.length) return say("Add ingredients under Inventory first.", true);
+  form("Log waste", [{ key: "ingredientId", label: "What was wasted", type: "select", options: S.ing.map(i => [i.id, i.name + " (" + i.unit + ")"]) }, { key: "qty", label: "Quantity", type: "number", req: true },
+    { key: "reason", label: "Reason", type: "select", options: me.wasteReasons }, { key: "stage", label: "Stage", type: "select", options: [["pre-consumer", "Pre-consumer (kitchen)"], ["post-consumer", "Post-consumer (returned or unclaimed)"]] },
+    { key: "orderId", label: "Order number, if linked" }, { key: "note", label: "Note" }], {}, v => api("/waste", "POST", v), { save: "Log waste" }); };
+ACT.wasteCsv = () => download("waste.csv", [["When", "Item", "Quantity", "Unit", "Reason", "Stage", "Cost", "Branch", "Order", "By", "Note"], ...S.waste.map(x => [x.at, x.ingredientName, x.qty, x.unit, x.reason, x.stage, (num(x.cost) / 100).toFixed(2), x.branchId, x.orderId, x.by, x.note])]);
+
+/* ================= purchasing ================= */
+const SUP_FIELDS = [{ key: "name", label: "Supplier name", req: true }, { key: "contact", label: "Contact person" }, { key: "phone", label: "Phone" }, { key: "email", label: "Email" }, { key: "licence", label: "Trade licence reference" }, { key: "terms", label: "Payment terms", placeholder: "30 days" }, { key: "categories", label: "Product categories" }];
+RENDER.purchasing = async () => {
+  const [sup, pos, ing] = await Promise.all([records("suppliers"), records("purchase_orders"), records("ingredients")]); S.sup = sup; S.pos = pos; S.ing = ing; const edit = can("purchasing.edit"), sn = Object.fromEntries(sup.map(s => [s.id, s.name]));
+  const poTotal = p => (p.status === "received" ? p.received.reduce((s, l) => s + num(l.qtyReceived) * num(l.unitCost), 0) : (p.lines || []).reduce((s, l) => s + num(l.qty) * num(l.unitCost), 0));
+  return `<div class="tools"><h2 class="grow" style="font-size:1.05rem; font-weight:600">Purchase orders</h2>${edit ? `<button class="btn" data-act="poNew">New purchase order</button>` : ""}</div>` +
+    table([{ label: "PO", cell: p => `<b style="font-weight:500">${esc(p.id)}</b>` }, { label: "Supplier", cell: p => esc(sn[p.supplierId] || p.supplierId) }, { label: "Lines", cell: p => `<span class="small">${esc((p.lines || []).map(l => num(l.qty) + " " + ((ing.find(i => i.id === l.ingredientId) || {}).name || l.ingredientId)).join(", "))}</span>` },
+      { label: "Value", cls: "r", cell: p => money(poTotal(p)) }, { label: "Status", cell: p => pill(p.status, p.status === "received" ? "ok" : p.status === "approved" ? "hi" : "warn") },
+      { label: "", cls: "a", cell: p => p.status === "draft" ? `${edit ? `<button class="btn ghost sm" data-act="poEdit" data-id="${esc(p.id)}">Edit</button> ` : ""}${can("purchasing.approve") ? `<button class="btn sm" data-act="poApprove" data-id="${esc(p.id)}">Approve</button>` : ""}` : p.status === "approved" && edit ? `<button class="btn sm" data-act="poReceive" data-id="${esc(p.id)}">Receive goods</button>` : `<button class="btn ghost sm" data-act="poView" data-id="${esc(p.id)}">Variance</button>` }],
+      pos.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))), "No purchase orders yet.") +
+    `<div class="tools" style="margin-top:8px"><h2 class="grow" style="font-size:1.05rem; font-weight:600">Suppliers</h2>${edit ? `<button class="btn" data-act="supNew">Add supplier</button>` : ""}</div>` +
+    table([{ label: "Supplier", cell: s => `<b style="font-weight:500">${esc(s.name)}</b>` }, { label: "Contact", cell: s => esc([s.contact, s.phone, s.email].filter(Boolean).join(", ")) }, { label: "Licence", cell: s => esc(s.licence || "") }, { label: "Terms", cell: s => esc(s.terms || "") },
+      { label: "", cls: "a", cell: s => edit ? `<button class="btn ghost sm" data-act="supEdit" data-id="${esc(s.id)}">Edit</button>` : "" }], sup, "No suppliers yet.");
+};
+ACT.supNew = () => form("Add supplier", SUP_FIELDS, {}, v => api("/data/suppliers/" + slug(v.name), "PUT", v));
+ACT.supEdit = d => { const s = S.sup.find(x => x.id === d.id); form("Edit " + s.name, SUP_FIELDS, s, v => api("/data/suppliers/" + d.id, "PUT", v), { onDelete: () => api("/data/suppliers/" + d.id, "DELETE") }); };
+const poLine = (l = {}) => `<div class="row"><select data-f="ing"><option value="">Choose item</option>${S.ing.map(i => `<option value="${esc(i.id)}" data-cost="${num(i.unitCost)}" ${i.id === l.ingredientId ? "selected" : ""}>${esc(i.name)} (${esc(i.unit)})</option>`).join("")}</select>
+  <input type="number" data-f="qty" min="0" step="any" placeholder="Qty" value="${l.qty ?? ""}"><input type="number" data-f="cost" min="0" step="0.01" placeholder="Unit cost" value="${l.unitCost != null ? (num(l.unitCost) / 100).toFixed(2) : ""}"><button class="btn ghost sm" data-act="lineDrop">Remove</button></div>`;
+function poSheet(p) { if (!S.sup.length || !S.ing.length) return say("Add at least one supplier and one ingredient first.", true);
+  openSheet(p ? "Edit " + p.id : "New purchase order", `<label for="poSup">Supplier</label><select id="poSup">${S.sup.map(s => `<option value="${esc(s.id)}" ${p && p.supplierId === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select>
+    <label>Lines: item, quantity, unit cost in ${cur()}</label><div class="lines" id="poLines">${((p && p.lines) || [{}]).map(poLine).join("")}</div><button class="btn ghost sm" data-act="poAddLine" style="margin-top:10px">Add line</button>
+    <p class="sheetmsg" id="sheetMsg" role="alert"></p><div class="row"><button class="btn hot" data-act="poSave" data-id="${p ? esc(p.id) : ""}">Save as draft</button>${p ? `<button class="btn warn" data-act="poDelete" data-id="${esc(p.id)}">Delete</button>` : ""}</div>`); }
+ACT.poNew = () => poSheet(null); ACT.poEdit = d => poSheet(S.pos.find(p => p.id === d.id)); ACT.poAddLine = () => $("poLines").insertAdjacentHTML("beforeend", poLine());
+ACT.poSave = async d => { try { const lines = [...document.querySelectorAll("#poLines .row")].map(r => ({ ingredientId: r.querySelector('[data-f="ing"]').value, qty: parseFloat(r.querySelector('[data-f="qty"]').value), unitCost: Math.round(parseFloat(r.querySelector('[data-f="cost"]').value || "0") * 100) })).filter(l => l.ingredientId);
+  if (!lines.length || lines.some(l => !(l.qty > 0))) throw new Error("Add at least one line with a quantity above zero."); const id = d.id || "PO-" + new Date().toISOString().slice(2, 10).replace(/-/g, "") + "-" + Math.floor(100 + Math.random() * 900);
+  await api("/data/purchase_orders/" + id, "PUT", { supplierId: $("poSup").value, lines, branchId: $("branch").hidden || $("branch").value === "all" ? "main" : $("branch").value }); closeSheet(); await show("purchasing", true); say("Purchase order saved as a draft. A manager approves it next."); } catch (e) { $("sheetMsg").textContent = e.message; } };
+ACT.poDelete = async d => { if (!confirm("Delete this draft?")) return; try { await api("/data/purchase_orders/" + d.id, "DELETE"); closeSheet(); await show("purchasing", true); } catch (e) { $("sheetMsg").textContent = e.message; } };
+ACT.poApprove = d => attempt(async () => { await api("/purchase-orders/" + d.id + "/approve", "POST"); await show("purchasing", true); }, "Approved. Receive the goods when they arrive.");
+ACT.poReceive = d => { const p = S.pos.find(x => x.id === d.id); openSheet("Receive " + p.id, `<p class="soft">Enter what arrived and the invoiced unit cost. Stock and ingredient costs update when you save.</p>
+  <div class="lines" id="grn">${p.lines.map(l => { const i = S.ing.find(x => x.id === l.ingredientId) || {}; return `<div class="row" data-ing="${esc(l.ingredientId)}"><span style="flex:2">${esc(i.name || l.ingredientId)}<br><span class="soft small">Ordered ${num(l.qty)} ${esc(i.unit || "")}</span></span>
+    <input type="number" data-f="qty" min="0" step="any" value="${num(l.qty)}" aria-label="Quantity received"><input type="number" data-f="cost" min="0" step="0.01" value="${(num(l.unitCost) / 100).toFixed(2)}" aria-label="Unit cost"></div>`; }).join("")}</div>
+  <p class="sheetmsg" id="sheetMsg" role="alert"></p><button class="btn hot" data-act="poReceiveSave" data-id="${esc(p.id)}">Record goods received</button>`); };
+ACT.poReceiveSave = async d => { try { const lines = [...document.querySelectorAll("#grn .row")].map(r => ({ ingredientId: r.dataset.ing, qtyReceived: parseFloat(r.querySelector('[data-f="qty"]').value || "0"), unitCost: Math.round(parseFloat(r.querySelector('[data-f="cost"]').value || "0") * 100) }));
+  await api("/purchase-orders/" + d.id + "/receive", "POST", { lines }); closeSheet(); await show("purchasing", true); say("Goods received. Stock and costs are updated."); } catch (e) { $("sheetMsg").textContent = e.message; } };
+ACT.poView = d => { const p = S.pos.find(x => x.id === d.id); openSheet("Variance for " + p.id, table([{ label: "Item", cell: l => esc((S.ing.find(i => i.id === l.ingredientId) || {}).name || l.ingredientId) }, { label: "Ordered", cls: "r", cell: l => num(l.qtyOrdered) }, { label: "Received", cls: "r", cell: l => num(l.qtyReceived) },
+  { label: "Qty variance", cls: "r", cell: l => { const v = num(l.qtyReceived) - num(l.qtyOrdered); return v ? pill((v > 0 ? "+" : "") + v, "warn") : "0"; } }, { label: "Cost variance", cls: "r", cell: l => { const v = num(l.unitCost) - num(l.unitCostOrdered); return v ? pill((v > 0 ? "+" : "") + (v / 100).toFixed(2), v > 0 ? "bad" : "ok") : "0"; } }], p.received || [], "Nothing received.") + `<p class="soft small">Received by ${esc(p.receivedBy)} on ${esc(when(p.receivedAt))}.</p>`); };
+
+/* ================= assets ================= */
+const ASSET_FIELDS = [{ key: "name", label: "Asset name or number", req: true }, { key: "type", label: "Type", type: "select", options: ["hot box", "insulated bag", "pan", "tray", "crate", "other"] }, { key: "code", label: "Barcode or QR code" }, { key: "replacementCost", label: "Replacement cost", type: "money" }, { key: "branchId", label: "Home branch", type: "select", options: [] }];
+RENDER.assets = async () => { S.assets = await records("assets"); ASSET_FIELDS[4].options = me.locations.map(l => [l.locationId, l.name]); const edit = can("assets.edit"), tone = { in: "ok", out: "hi", maintenance: "warn", lost: "bad" };
+  return `<div class="tools"><span class="soft small grow">Track reusable equipment: who has it and when it is due back.</span>${edit ? `<button class="btn" data-act="assetNew">Add asset</button>` : ""}</div>` +
+    table([{ label: "Asset", cell: a => `<b style="font-weight:500">${esc(a.name)}</b><br><span class="soft small">${esc(a.type || "")} ${esc(a.code || "")}</span>` }, { label: "Status", cell: a => { const late = a.status === "out" && a.dueAt && ts(a.dueAt) < Date.now(); return pill(late ? "Overdue" : a.status === "in" || !a.status ? "In store" : a.status === "out" ? "Checked out" : a.status, late ? "bad" : tone[a.status || "in"]); } },
+      { label: "With", cell: a => esc(a.holder || "") }, { label: "Due back", cell: a => a.dueAt ? esc(when(a.dueAt)) : "" }, { label: "Condition", cell: a => esc(a.condition || "good") }, { label: "Replacement", cls: "r", cell: a => num(a.replacementCost) ? money(a.replacementCost) : "" },
+      { label: "", cls: "a", cell: a => edit ? `${a.status === "out" ? `<button class="btn sm" data-act="assetIn" data-id="${esc(a.id)}">Check in</button>` : `<button class="btn sm" data-act="assetOut" data-id="${esc(a.id)}">Check out</button>`} <button class="btn ghost sm" data-act="assetEdit" data-id="${esc(a.id)}">Edit</button>` : "" }], S.assets, "No assets yet. Add hot boxes, bags, trays and crates you want to track."); };
+const assetSave = (id, v, old = {}) => api("/data/assets/" + id, "PUT", { status: old.status || "in", holder: old.holder || "", dueAt: old.dueAt || "", condition: old.condition || "good", ...v });
+ACT.assetNew = () => form("Add asset", ASSET_FIELDS, {}, v => assetSave(slug(v.name), v));
+ACT.assetEdit = d => { const a = S.assets.find(x => x.id === d.id); form("Edit " + a.name, ASSET_FIELDS, a, v => assetSave(d.id, v, a), { onDelete: () => api("/data/assets/" + d.id, "DELETE") }); };
+ACT.assetOut = d => form("Check out", [{ key: "holder", label: "Who is taking it (staff, driver, order or catering job)", req: true }, { key: "dueAt", label: "Due back", type: "datetime-local" }, { key: "note", label: "Note" }], {}, v => api("/assets/" + d.id + "/move", "POST", { action: "checkout", ...v }), { save: "Check out" });
+ACT.assetIn = d => form("Check in", [{ key: "condition", label: "Condition", type: "select", options: ["good", "damaged", "lost"] }, { key: "note", label: "Note" }], {}, v => api("/assets/" + d.id + "/move", "POST", { action: "checkin", ...v }), { save: "Check in" });
+
+/* ================= customers and offers ================= */
+function segment(c) { const days = (Date.now() - c.last) / 864e5; if (!c.orders) return "No orders"; if (days > 60) return "Inactive"; if (days > 30) return "Lapsing"; if (c.orders >= 5 && days <= 14) return "Champion"; if (c.orders >= 3) return "Frequent"; return "New"; }
+RENDER.customers = async () => {
+  const [o, cust] = await Promise.all([api("/orders"), records("customers")]); const by = Object.fromEntries(cust.map(c => [c.id, { ...c, orders: 0, spend: 0, last: 0, items: {} }]));
+  o.orders.filter(x => x.customerPhone && x.status !== "cancelled").forEach(x => { const c = by[x.customerPhone] || (by[x.customerPhone] = { id: x.customerPhone, phone: x.customerPhone, name: x.customerName, orders: 0, spend: 0, last: 0, items: {} });
+    c.orders++; c.spend += num(x.total); c.last = Math.max(c.last, ts(x.createdAt)); (x.items || []).forEach(i => c.items[i.name] = (c.items[i.name] || 0) + (i.quantity || 1)); });
+  S.cust = Object.values(by).map(c => ({ ...c, seg: segment(c), usual: Object.entries(c.items).sort((a, b) => b[1] - a[1]).map(e => e[0])[0] || "" })).sort((a, b) => b.spend - a.spend);
+  const count = s => S.cust.filter(c => c.seg === s).length, tone = { Champion: "hi", Frequent: "ok", New: "", Lapsing: "warn", Inactive: "bad" };
+  return `<div class="tools"><span class="soft small grow">Customers are added when staff link a phone number to an order, with the customer's consent recorded.</span><button class="btn ghost sm" data-act="custCsv">Export CSV</button></div>
+    <div class="tiles">${["Champion", "Frequent", "New", "Lapsing", "Inactive"].map(s => tile(count(s), s)).join("")}</div>` +
+    table([{ label: "Customer", cell: c => `<b style="font-weight:500">${esc(c.name || "No name")}</b><br><span class="soft small">${esc(c.phone || c.id)}</span>` }, { label: "Segment", cell: c => pill(c.seg, tone[c.seg]) }, { label: "Orders", cls: "r", cell: c => c.orders },
+      { label: "Spend", cls: "r", cell: c => money(c.spend) }, { label: "Average", cls: "r", cell: c => c.orders ? money(c.spend / c.orders) : "" }, { label: "Last order", cell: c => c.last ? esc(when(new Date(c.last).toISOString())) : "" },
+      { label: "Usual", cell: c => esc(c.usual) }, { label: "Offers", cell: c => c.marketingConsent ? pill("Consented", "ok") : pill("No consent") }], S.cust, "No customers yet. Open an order and link the customer's phone number to start building profiles.");
+};
+ACT.custCsv = () => download("customers.csv", [["Name", "Phone", "Segment", "Orders", "Spend", "Last order", "Marketing consent"], ...S.cust.map(c => [c.name, c.phone || c.id, c.seg, c.orders, (c.spend / 100).toFixed(2), c.last ? new Date(c.last).toISOString() : "", c.marketingConsent ? "yes" : "no"])]);
+const COUPON_FIELDS = [{ key: "code", label: "Code", req: true, placeholder: "KARAK10" }, { key: "kind", label: "Discount type", type: "select", options: [["percent", "Percent off"], ["amount", "Amount off"]] }, { key: "value", label: "Value (percent, or amount in currency)", type: "number", req: true },
+  { key: "validFrom", label: "Valid from", placeholder: "2026-10-01" }, { key: "validTo", label: "Valid to", placeholder: "2026-12-31" }, { key: "usageLimit", label: "Usage limit, 0 for none", type: "number", def: 0 }, { key: "branchId", label: "Branch", type: "select", options: [] }, { key: "active", label: "Active", type: "checkbox", def: true }];
+const CAMP_FIELDS = [{ key: "name", label: "Campaign name", req: true }, { key: "segment", label: "Send to segment", type: "select", options: ["Champion", "Frequent", "New", "Lapsing", "Inactive"] }, { key: "channel", label: "Channel", type: "select", options: ["WhatsApp", "Web Push"] },
+  { key: "message", label: "Message", type: "textarea", req: true }, { key: "coupon", label: "Coupon code to include" }];
+RENDER.offers = async () => { const [co, ca] = await Promise.all([records("coupons"), records("campaigns")]); S.coupons = co; S.camps = ca; const edit = can("crm.edit"); COUPON_FIELDS[6].options = [["all", "All branches"], ...me.locations.map(l => [l.locationId, l.name])];
+  return `<div class="tools"><h2 class="grow" style="font-size:1.05rem; font-weight:600">Coupons</h2>${edit ? `<button class="btn" data-act="couponNew">Add coupon</button>` : ""}</div>` +
+    table([{ label: "Code", cell: c => `<b style="font-weight:500">${esc(c.code)}</b>` }, { label: "Discount", cell: c => c.kind === "percent" ? num(c.value) + "% off" : cur() + " " + num(c.value).toFixed(2) + " off" }, { label: "Valid", cell: c => esc([c.validFrom, c.validTo].filter(Boolean).join(" to ")) },
+      { label: "Limit", cls: "r", cell: c => num(c.usageLimit) || "None" }, { label: "Branch", cell: c => esc(c.branchId === "all" || !c.branchId ? "All" : branchName(c.branchId)) }, { label: "Status", cell: c => c.active ? pill("Active", "ok") : pill("Off") },
+      { label: "", cls: "a", cell: c => edit ? `<button class="btn ghost sm" data-act="couponEdit" data-id="${esc(c.id)}">Edit</button>` : "" }], co, "No coupons yet.") +
+    `<div class="tools" style="margin-top:8px"><h2 class="grow" style="font-size:1.05rem; font-weight:600">Campaigns</h2>${edit ? `<button class="btn" data-act="campNew">Draft campaign</button>` : ""}</div>
+    <p class="soft small" style="margin:-6px 0 12px">Campaigns are saved as drafts. Sending needs a WhatsApp Business account and Web Push keys, which are not connected yet.</p>` +
+    table([{ label: "Campaign", cell: c => `<b style="font-weight:500">${esc(c.name)}</b><br><span class="soft small">${esc(c.message)}</span>` }, { label: "Segment", cell: c => esc(c.segment) }, { label: "Channel", cell: c => esc(c.channel) }, { label: "Coupon", cell: c => esc(c.coupon || "") }, { label: "Status", cell: () => pill("Draft", "warn") },
+      { label: "", cls: "a", cell: c => edit ? `<button class="btn ghost sm" data-act="campEdit" data-id="${esc(c.id)}">Edit</button>` : "" }], ca, "No campaigns drafted yet."); };
+ACT.couponNew = () => form("Add coupon", COUPON_FIELDS, {}, v => api("/data/coupons/" + slug(v.code), "PUT", { ...v, code: v.code.toUpperCase() }));
+ACT.couponEdit = d => { const c = S.coupons.find(x => x.id === d.id); form("Edit " + c.code, COUPON_FIELDS, c, v => api("/data/coupons/" + d.id, "PUT", { ...v, code: v.code.toUpperCase() }), { onDelete: () => api("/data/coupons/" + d.id, "DELETE") }); };
+ACT.campNew = () => form("Draft campaign", CAMP_FIELDS, {}, v => api("/data/campaigns/" + slug(v.name), "PUT", { ...v, status: "draft" }));
+ACT.campEdit = d => { const c = S.camps.find(x => x.id === d.id); form("Edit " + c.name, CAMP_FIELDS, c, v => api("/data/campaigns/" + d.id, "PUT", { ...v, status: "draft" }), { onDelete: () => api("/data/campaigns/" + d.id, "DELETE") }); };
+
+/* ================= reports ================= */
+RENDER.reports = async () => {
+  const tab = S.repTab || "sales", days = S.repDays || 14;
+  const head = `<div class="tools"><div class="tabs">${[["sales", "Sales"], ["voice", "Voice"], ["stock", "Stock and waste"]].map(([k, l]) => `<button data-act="repTab" data-t="${k}" aria-pressed="${k === tab}">${l}</button>`).join("")}</div><span class="grow"></span>
+    <select data-change="repDays" style="width:auto" aria-label="Period">${[7, 14, 30].map(d => `<option value="${d}" ${d === days ? "selected" : ""}>Last ${d} days</option>`).join("")}</select></div>`;
+  if (tab === "sales") { const d = await api("/dashboard" + bq("days=" + days)), top = Math.max(1, ...d.days.map(x => x.revenue));
+    return head + `<div class="tiles">${tile(d.orders, "Orders")}${tile(money(d.revenue), "Sales")}${tile(money(d.averageOrder), "Average order")}${tile(money(d.refunded), "Refunded")}${tile(d.averagePrepSeconds ? span(d.averagePrepSeconds) : "No data", "Average time to ready")}</div>
+      <div class="card"><h2>Sales per day</h2><div class="bars">${d.days.map(x => `<div class="${x.revenue ? "" : "zero"}" style="height:${Math.max(1, 100 * x.revenue / top)}%" title="${x.date}: ${money(x.revenue)} from ${x.orders} orders"></div>`).join("")}</div>
+        <div class="axis">${d.days.map((x, n) => `<span>${d.days.length <= 14 || n % 3 === 0 ? x.date.slice(5) : ""}</span>`).join("")}</div><p class="soft small" style="margin-top:8px">Days are counted in UTC. Cancelled orders are left out.</p></div>
+      <div class="grid2"><div>${table([{ label: "Best sellers", cell: i => esc(i.name) }, { label: "Sold", cls: "r", cell: i => i.quantity }, { label: "Sales", cls: "r", cell: i => money(i.revenue) }], d.topItems, "No orders in this period.")}</div>
+        <div>${table([{ label: "Payment", cell: e => esc(e[0] === "unpaid" ? "Not yet paid" : e[0]) }, { label: "Value", cls: "r", cell: e => money(e[1]) }], Object.entries(d.byPayment), "No payments in this period.")}</div></div>`; }
+  if (tab === "voice") { const d = await api("/insights" + bq("days=" + days)), u = d.usage;
+    return head + `<div class="tiles">${tile(d.calls, "Voice calls")}${tile(d.conversion + "%", "Ended with an order")}${tile(d.abandoned, "Abandoned with items")}${tile(d.failed, "Ended with an error")}${tile(span(d.averageSeconds), "Average call")}</div>
+      <div class="tiles">${tile(u.minutes, "Minutes on calls")}${tile(u.inputTokens.toLocaleString(), "Input tokens")}${tile(u.outputTokens.toLocaleString(), "Output tokens")}${u.ratesSet ? tile(cur() + " " + u.estimatedCost.toFixed(2), "Estimated voice cost") : ""}</div>
+      ${u.ratesSet ? "" : `<p class="soft small" style="margin:-6px 0 14px">Enter your voice model rates under Settings to see estimated cost.</p>`}
+      <div class="grid2"><div>${table([{ label: "Asked about but not ordered", cell: i => esc(i.name) }, { label: "Calls", cls: "r", cell: i => i.calls }], d.notOrdered, "Nothing yet.")}</div>
+      <div>${table([{ label: "Recent calls", cell: c => esc(when(c.startedAt)) }, { label: "Length", cls: "r", cell: c => span(c.durationSec) }, { label: "Outcome", cell: c => c.orderPlaced ? "Order " + esc(c.orderId) : c.error ? pill("Error", "bad") : "No order" }], d.recent, "No calls recorded in this period.")}</div></div>
+      <p class="soft small">Recognition confidence and human takeover are not measured yet; the voice model does not report them.</p>`; }
+  const [ing, waste, moves] = await Promise.all([records("ingredients"), records("waste"), records("stock_moves")]); const since = Date.now() - days * 864e5, w = waste.filter(x => ts(x.at) >= since), used = {};
+  moves.filter(m => m.type === "consumption" && ts(m.at) >= since).forEach(m => used[m.ingredientId] = (used[m.ingredientId] || 0) - num(m.qty));
+  return head + `<div class="tiles">${tile(money(ing.reduce((s, i) => s + num(i.onHand) * num(i.unitCost), 0)), "Stock value")}${tile(ing.filter(i => num(i.reorderPoint) > 0 && num(i.onHand) <= num(i.reorderPoint)).length, "Low-stock items")}${tile(money(w.reduce((s, x) => s + num(x.cost), 0)), "Waste cost in period")}${tile(w.length, "Waste entries in period")}</div>` +
+    table([{ label: "Consumption from completed orders", cell: i => esc(i.name) }, { label: "Used", cls: "r", cell: i => +num(used[i.id]).toFixed(2) + " " + esc(i.unit) }, { label: "Cost", cls: "r", cell: i => money(num(used[i.id]) * num(i.unitCost)) }, { label: "On hand", cls: "r", cell: i => num(i.onHand) + " " + esc(i.unit) }], ing.filter(i => used[i.id]), "No recipe-based consumption in this period. Complete an order whose items have recipes.");
+};
+ACT.repTab = d => { S.repTab = d.t; show("reports"); }; ACT.repDays = (d, el) => { S.repDays = Number(el.value); show("reports"); };
+
+/* ================= team ================= */
+RENDER.team = async () => { S.staff = (await api("/staff")).staff;
+  return `<div class="tools"><span class="soft small grow">Each person signs in with their own username and password or PIN. The built-in admin account is a merchant admin.</span><button class="btn" data-act="staffNew">Add person</button></div>` +
+    table([{ label: "Username", cell: s => `<b style="font-weight:500">${esc(s.username)}</b>` }, { label: "Role", cell: s => esc(ROLE_NAMES[s.role] || s.role) }, { label: "Branch", cell: s => esc(s.location === "all" ? "All branches" : branchName(s.location)) },
+      { label: "", cls: "a", cell: s => `<button class="btn ghost sm" data-act="staffEdit" data-id="${esc(s.username)}">Edit</button>` }], S.staff, "No team members yet. Add your kitchen, window and stock staff.") +
+    `<div class="card"><h2>What each role can do</h2><p class="soft small">Merchant admin: everything. Store manager: everything except team and settings, including refunds and purchase approval. Cashier or window: orders, payment, waste. Kitchen: kitchen display, order status, waste, stock view. Inventory and purchasing: stock, recipes, waste, assets, purchase orders. Read-only analyst: view only.</p></div>`; };
+const staffFields = isNew => [{ key: "username", label: "Username", req: true, readonly: !isNew }, { key: "role", label: "Role", type: "select", options: me.roles.filter(r => r !== "platform_admin" || me.role === "platform_admin").map(r => [r, ROLE_NAMES[r] || r]) },
+  { key: "location", label: "Branch", type: "select", options: [["all", "All branches"], ...me.locations.map(l => [l.locationId, l.name])] }, { key: "password", label: isNew ? "Password or PIN (6 or more characters)" : "New password or PIN (leave empty to keep)", type: "password", req: isNew }];
+const staffSave = v => api("/staff/" + slug(v.username), "PUT", Object.assign({ role: v.role, location: v.location }, v.password ? { password: v.password } : {}));
+ACT.staffNew = () => form("Add person", staffFields(true), { role: "cashier" }, staffSave);
+ACT.staffEdit = d => { const s = S.staff.find(x => x.username === d.id); form("Edit " + s.username, staffFields(false), s, staffSave, { onDelete: () => api("/staff/" + d.id, "DELETE") }); };
+
+/* ================= settings ================= */
+const SET_BUSINESS = [{ key: "legalName", label: "Legal business name" }, { key: "trn", label: "Tax registration number (TRN)", hint: "15 digits. Shown on tax invoices." }, { key: "address", label: "Address", type: "textarea" }, { key: "currency", label: "Currency" },
+  { key: "vatRate", label: "VAT rate %", type: "number" }, { key: "pricesIncludeVat", label: "Menu prices include VAT", type: "checkbox" }, { key: "prepSlaMinutes", label: "Preparation target in minutes", type: "number", hint: "Orders older than this are flagged on the kitchen display." }];
+const SET_VOICE = [{ key: "greeting", label: "Greeting", req: true }, { key: "voice", label: "Voice", type: "select", options: [] }, { key: "upsell", label: "Upsell rule", type: "textarea" }, { key: "hoursEnabled", label: "Only take orders during opening hours", type: "checkbox" },
+  { key: "openTime", label: "Opens", type: "time" }, { key: "closeTime", label: "Closes", type: "time" }, { key: "utcOffset", label: "Time zone offset", hint: "UAE is +04:00" }, { key: "closedMessage", label: "Message when closed", req: true },
+  { key: "accessCode", label: "Access code for the ordering app", hint: "Leave empty for open access." }, { key: "costPer1kInput", label: "Voice input rate per 1,000 tokens", type: "number" }, { key: "costPer1kOutput", label: "Voice output rate per 1,000 tokens", type: "number" }];
+RENDER.settings = async () => { S.set = await api("/settings"); SET_VOICE[1].options = me.voices; const site = location.origin + location.pathname.replace(/console\.html$/, "");
+  const line = (fields) => fields.map(f => `<div class="alert"><div class="soft">${esc(f.label)}</div><b style="font-weight:500; text-align:end">${f.type === "checkbox" ? (S.set[f.key] ? "Yes" : "No") : esc(S.set[f.key] === "" || S.set[f.key] == null ? "Not set" : S.set[f.key])}</b></div>`).join("");
+  return `<div class="grid2"><div class="card"><div class="row"><h2 class="grow" style="margin:0">Business and tax</h2><button class="btn ghost sm" data-act="setEdit" data-g="business">Edit</button></div>${line(SET_BUSINESS)}</div>
+    <div class="card"><div class="row"><h2 class="grow" style="margin:0">Voice attendant</h2><button class="btn ghost sm" data-act="setEdit" data-g="voice">Edit</button></div>${line(SET_VOICE)}</div></div>
+    <div class="tools"><h2 class="grow" style="font-size:1.05rem; font-weight:600">Branches</h2><button class="btn" data-act="branchNew">Add branch</button></div>` +
+    table([{ label: "Branch", cell: l => `<b style="font-weight:500">${esc(l.name)}</b>` }, { label: "Ordering link for QR codes and signage", cell: l => `<a href="${esc(site)}?location=${esc(l.locationId)}" target="_blank" rel="noopener">${esc(site)}?location=${esc(l.locationId)}</a>` },
+      { label: "", cls: "a", cell: l => `<button class="btn ghost sm" data-act="branchEdit" data-id="${esc(l.locationId)}">Rename</button>` }], me.locations, "") +
+    `<p class="soft small">VAT and receipt settings should be checked with your tax advisor before going live.</p>`; };
+const setSave = async v => { const all = { ...S.set, ...v }; ["costPer1kInput", "costPer1kOutput", "vatRate"].forEach(k => all[k] = parseFloat(all[k]) || 0); all.prepSlaMinutes = Math.round(num(all.prepSlaMinutes)) || 8; await api("/settings", "PUT", all); me = await api("/me"); };
+ACT.setEdit = d => form(d.g === "business" ? "Business and tax" : "Voice attendant", d.g === "business" ? SET_BUSINESS : SET_VOICE, S.set, setSave);
+const branchDone = r => { me.locations = r.locations; };
+ACT.branchNew = () => form("Add branch", [{ key: "name", label: "Branch name", req: true }], {}, async v => branchDone(await api("/locations/" + slug(v.name), "PUT", v)));
+ACT.branchEdit = d => form("Rename branch", [{ key: "name", label: "Branch name", req: true }], me.locations.find(l => l.locationId === d.id), async v => branchDone(await api("/locations/" + d.id, "PUT", v)), d.id === "main" ? {} : { onDelete: async () => branchDone(await api("/locations/" + d.id, "DELETE")) });
+
+/* ================= audit and launch check ================= */
+RENDER.audit = async () => table([{ label: "When", cell: e => esc(when(e.at)) }, { label: "Who", cell: e => `${esc(e.user)} <span class="soft small">${esc(ROLE_NAMES[e.role] || e.role)}</span>` }, { label: "Action", cell: e => esc(String(e.action).replace(/_/g, " ")) },
+  { label: "Target", cell: e => esc(e.target) }, { label: "Detail", cell: e => `<span class="small">${esc(e.detail)}</span>` }], await records("audit"), "No activity recorded yet.");
+RENDER.launch = async () => { const [set, m, ing, rec, staff, o] = await Promise.all([api("/settings"), menuData(), records("ingredients"), records("recipes"), api("/staff"), api("/orders")]); const withRecipe = m.items.filter(i => rec.some(r => r.id === i.itemId && (r.lines || []).length)).length;
+  const checks = [["Business name and TRN entered", !!(set.legalName && set.trn), "settings", "Needed for VAT receipts."], ["Menu has items", m.items.length > 0, "menu", m.items.length + " items in " + m.categories.length + " categories."],
+    ["Ingredients added", ing.length > 0, "inventory", ing.length + " stock items."], ["Every menu item has a recipe", m.items.length > 0 && withRecipe === m.items.length, "recipes", withRecipe + " of " + m.items.length + " items have one."],
+    ["Kitchen and window staff added", staff.staff.some(s => s.role === "kitchen") && staff.staff.some(s => s.role === "cashier"), "team", "At least one kitchen and one cashier account."],
+    ["A test order has been completed", o.orders.some(x => x.status === "completed"), "kitchen", "Place a voice order and take it through the kitchen display."],
+    ["Online payment gateway connected", false, "", "Not available yet. Orders are paid at the window."], ["WhatsApp and Web Push connected", false, "", "Not available yet. Campaigns stay as drafts."], ["Arabic voice ordering", false, "", "Not available yet. The current voice model does not support Arabic."]];
+  const done = checks.filter(c => c[1]).length;
+  return `<div class="card"><h2>${done} of ${checks.length} ready</h2><div class="meter" style="margin-bottom:6px"><i style="width:${100 * done / checks.length}%"></i></div>
+    ${checks.map(c => `<div class="alert">${c[1] ? pill("Ready", "ok") : pill(c[2] ? "To do" : "Not available", c[2] ? "warn" : "")}<div><b style="font-weight:500">${esc(c[0])}</b><br><span class="soft small">${esc(c[3])}</span></div>${c[2] && !c[1] ? `<button class="btn ghost sm" data-goto="${c[2]}">Open</button>` : ""}</div>`).join("")}</div>`; };
+
+start();
+</script>
+</body>
+</html>
