@@ -18,6 +18,44 @@ except ModuleNotFoundError:
     from order_state import OrderState
     from ui_state_manager import set_ui_state, get_ui_state
 
+CURRENCY = "AED"  # shown and spoken as UAE dirhams
+_SAUCES = ("ketchup", "mustard", "mayo", "bbq sauce", "chipotle mayo", "special sauce")
+
+
+def _load_shop_config():
+    """Use the admin panel's settings module if it has been added to the project."""
+    import importlib
+    for module in ("agent.shop_config", "shop_config"):
+        try:
+            return importlib.import_module(module)
+        except ModuleNotFoundError:
+            continue
+    return None
+
+
+_shop = _load_shop_config()
+if _shop:
+    get_burger_config, current_location = _shop.get_burger_config, _shop.current_location
+    note_added, note_order = _shop.note_added, _shop.note_order
+else:
+    # No admin panel installed: burger prices come from the constants further down this file.
+    def get_burger_config() -> dict:
+        extras = {k: v for k, v in _TOPPING_PRICES.items() if k not in ("beef patty", "chicken patty")}
+        return {
+            "basePrice": _CUSTOM_BURGER_BASE_PRICE,
+            "toppings": {k: v for k, v in extras.items() if k not in _SAUCES},
+            "sauces": {k: v for k, v in extras.items() if k in _SAUCES},
+        }
+
+    def current_location() -> str:
+        return "main"
+
+    def note_added(item_id: str) -> None:
+        pass
+
+    def note_order(order_id: str, total: int) -> None:
+        pass
+
 logger = logging.getLogger(__name__)
 
 
@@ -81,7 +119,10 @@ def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_inst
     menu_item = response.get("Item")
     if not menu_item:
         return {"error": f"Item '{item_id}' not found in category '{category_id}'."}
+    if menu_item.get("available") is False:
+        return {"error": f"'{menu_item.get('name', item_id)}' is sold out right now. Apologise and offer something else."}
     _order_state.add_item(item_id, menu_item.get("name", ""), quantity, int(menu_item.get("price", 0)), special_instructions)
+    note_added(item_id)
     summary = _order_state.get_summary()
 
     # Auto-update the UI: refresh the order display (don't highlight — that opens the modal)
@@ -129,7 +170,10 @@ def place_order(user_id: str = "guest") -> dict:
     if _order_state.is_empty():
         return {"error": "Cannot place an empty order."}
     order_record = _order_state.place_order(user_id)
+    order_record["locationId"] = current_location()  # which store took the order
+    order_record.setdefault("status", "received")     # the admin panel moves it on from here
     _orders_table.put_item(Item=order_record)
+    note_order(order_record["orderId"], order_record["total"])
     logger.info(
         "ORDER_PLACED: orderId=%s userId=%s total=%s itemCount=%s",
         order_record["orderId"],
@@ -163,19 +207,20 @@ def cancel_order(tool_context=None) -> dict:
 
 
 # --- Custom Burger Builder ---
+# Prices are edited in the admin panel and read from shop_config.get_burger_config().
+# The constants below are only the starting defaults, kept for reference and tests.
 
-# Base price in cents, plus per-topping prices
-_CUSTOM_BURGER_BASE_PRICE = 899  # $8.99 for patty + bun
+_CUSTOM_BURGER_BASE_PRICE = 899  # AED 8.99 for patty + bun
 _TOPPING_PRICES = {
     # Patty options (included in base)
     "beef patty": 0,
     "chicken patty": 0,
-    # Cheese (+$1.00)
+    # Cheese (+1.00)
     "american cheese": 100,
     "cheddar cheese": 100,
     "pepper jack cheese": 100,
     "swiss cheese": 100,
-    # Premium toppings (+$1.50)
+    # Premium toppings (+1.50)
     "bacon": 150,
     "avocado": 150,
     "fried egg": 150,
@@ -202,11 +247,8 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
 
     Args:
         patty: The patty type — "beef patty" or "chicken patty".
-        toppings: List of toppings. Options: "american cheese", "cheddar cheese",
-            "pepper jack cheese", "swiss cheese", "bacon", "avocado", "fried egg",
-            "lettuce", "tomato", "onion", "pickles", "jalapeños", "mushrooms".
-        sauces: List of sauces. Options: "ketchup", "mustard", "mayo", "bbq sauce",
-            "chipotle mayo", "special sauce". Defaults to none.
+        toppings: List of toppings, using the names in the BUILD YOUR OWN BURGER section of your instructions.
+        sauces: List of sauces, using the names in your instructions. Defaults to none.
         quantity: Number of custom burgers (default 1).
 
     Returns:
@@ -217,21 +259,26 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
     if quantity < 1:
         return {"error": "Quantity must be at least 1."}
 
+    config = get_burger_config()
+    base_price = int(config.get("basePrice", _CUSTOM_BURGER_BASE_PRICE))
+    topping_prices = {str(k).lower(): int(v) for k, v in (config.get("toppings") or {}).items()}
+    sauce_prices = {str(k).lower(): int(v) for k, v in (config.get("sauces") or {}).items()}
+
     # Validate patty
     patty = patty.lower().strip()
     if patty not in ("beef patty", "chicken patty"):
         return {"error": f"Invalid patty '{patty}'. Choose 'beef patty' or 'chicken patty'."}
 
     # Calculate price
-    total_price = _CUSTOM_BURGER_BASE_PRICE
+    total_price = base_price
     selected_toppings = []
-    price_breakdown = [{"item": f"Custom burger ({patty})", "price": _CUSTOM_BURGER_BASE_PRICE}]
+    price_breakdown = [{"item": f"Custom burger ({patty})", "price": base_price}]
 
     for topping in toppings:
         topping = topping.lower().strip()
-        if topping not in _TOPPING_PRICES:
-            return {"error": f"Unknown topping '{topping}'. Available: {', '.join(sorted(_TOPPING_PRICES.keys()))}"}
-        price = _TOPPING_PRICES[topping]
+        if topping not in topping_prices:
+            return {"error": f"Unknown topping '{topping}'. Available: {', '.join(sorted(topping_prices))}"}
+        price = topping_prices[topping]
         total_price += price
         selected_toppings.append(topping)
         if price > 0:
@@ -240,9 +287,13 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
     selected_sauces = []
     for sauce in sauces:
         sauce = sauce.lower().strip()
-        if sauce not in _TOPPING_PRICES:
-            return {"error": f"Unknown sauce '{sauce}'. Available: ketchup, mustard, mayo, bbq sauce, chipotle mayo, special sauce."}
+        if sauce not in sauce_prices:
+            return {"error": f"Unknown sauce '{sauce}'. Available: {', '.join(sorted(sauce_prices))}"}
+        price = sauce_prices[sauce]
+        total_price += price
         selected_sauces.append(sauce)
+        if price > 0:
+            price_breakdown.append({"item": f"+ {sauce}", "price": price})
 
     # Build description for the order
     parts = [patty]
@@ -261,6 +312,7 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
     logger.info("build_custom_burger: %s toppings=%s sauces=%s price=%s", patty, selected_toppings, selected_sauces, total_price)
 
     _order_state.add_item(item_id, name, quantity, total_price, description)
+    note_added("custom-burger")
     summary = _order_state.get_summary()
 
     # Auto-update the UI: close burger builder, update order
@@ -280,6 +332,6 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
         "patty": patty,
         "toppings": selected_toppings,
         "sauces": selected_sauces,
-        "price": f"${total_price / 100:.2f}",
+        "price": f"{CURRENCY} {total_price / 100:.2f}",
         "total": summary["total"],
     })
