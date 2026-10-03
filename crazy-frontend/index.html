@@ -1,436 +1,475 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Drive-thru voice ordering</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E3B2E">
+<title>VoiceBite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --night:#1D1140; --dusk:#2C1A66; --ketchup:#FF4B33; --mustard:#FFC93C;
-  --board:#FFF4D6; --mint:#2FE0C2; --ink:#1D1140; --paper:#FFFFFF;
-  --display:"Bungee","Impact","Arial Black",sans-serif;
-  --body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --palm:#0E3B2E; --palm-2:#17543F; --tomato:#F0462B; --citron:#D7F25A; --mist:#F1F5EC; --sheet:#FFFFFF;
+  --text:#12241D; --soft:#5C6B64; --line:#DCE4D8; --ok:#1B8A4B;
+  --font:"Readex Pro","Segoe UI",Tahoma,system-ui,sans-serif;
 }
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%}
-body{
-  font-family:var(--body); color:var(--board); line-height:1.45;
-  background:
-    radial-gradient(900px 500px at 12% -10%, #5B2FB8 0%, transparent 60%),
-    radial-gradient(700px 500px at 100% 110%, #B3264F 0%, transparent 55%),
-    var(--night);
-  background-attachment:fixed;
-}
-button,input{font:inherit}
+html{-webkit-text-size-adjust:100%}
+body{margin:0; font-family:var(--font); color:var(--text); background:var(--mist); line-height:1.45;
+  padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+button,input{font:inherit; color:inherit}
 button{cursor:pointer}
-:focus-visible{outline:3px solid var(--mint); outline-offset:3px}
+:focus-visible{outline:3px solid #1F6FEB; outline-offset:3px}
+[hidden]{display:none !important}
+h1,h2,h3,p{margin:0}
 
-.lane{max-width:1400px; margin:0 auto; padding:20px; display:grid; gap:20px;
-  grid-template-columns:330px minmax(0,1fr) 300px; align-items:start}
-@media (max-width:1100px){ .lane{grid-template-columns:300px minmax(0,1fr)} .ticket-col{grid-column:1 / -1} }
-@media (max-width:720px){ .lane{grid-template-columns:minmax(0,1fr); padding:12px} }
+.wrap{max-width:1120px; margin:0 auto; padding:0 16px}
+.top{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 0 10px}
+.brand{display:flex; align-items:center; gap:9px; font-weight:700; font-size:1.2rem; letter-spacing:-.01em}
+.mark{width:22px; height:22px; border-radius:50%; background:var(--tomato);
+  -webkit-mask:radial-gradient(circle 7px at 88% 12%,#0000 97%,#000); mask:radial-gradient(circle 7px at 88% 12%,#0000 97%,#000)}
+.lang{border:1.5px solid var(--palm); background:transparent; border-radius:999px; padding:7px 14px; font-weight:500}
+.store{display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; padding-bottom:12px; color:var(--soft); font-size:.95rem}
+.store b{color:var(--text); font-weight:600}
+.open{color:var(--ok); font-weight:500}
+.open::before{content:""; display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--ok); margin-inline-end:6px}
 
-/* ---------- speaker box ---------- */
-.speaker{background:var(--dusk); border:4px solid var(--mustard); border-radius:28px 28px 14px 14px;
-  padding:18px; position:sticky; top:20px; box-shadow:0 14px 0 #120A2B}
-@media (max-width:720px){ .speaker{position:static} }
-.sign{font-family:var(--display); font-size:1.75rem; line-height:1.02; margin:0 0 4px; color:var(--mustard);
-  text-shadow:3px 3px 0 var(--ketchup)}
-.sub{margin:0 0 12px; font-size:.95rem; opacity:.85}
-#grille{display:block; width:100%; aspect-ratio:1; border-radius:50%; background:#120A2B;
-  border:6px solid #120A2B; box-shadow:inset 0 0 0 3px #47308F}
-.status{min-height:2.9em; margin:12px 0; font-weight:600}
-.status.bad{color:#FFD0C7}
-.go{width:100%; border:0; border-radius:14px; padding:16px 14px; font-family:var(--display); font-size:1.15rem;
-  background:var(--ketchup); color:#fff; box-shadow:0 6px 0 #9E2413; transition:transform .08s, box-shadow .08s}
-.go:active{transform:translateY(4px); box-shadow:0 2px 0 #9E2413}
-.go.live{background:var(--board); color:var(--ink); box-shadow:0 6px 0 #BFA865}
-.ghost{width:100%; margin-top:14px; background:transparent; color:var(--board); border:2px dashed #7C63CF;
-  border-radius:12px; padding:10px; font-weight:600}
-.said{margin:14px 0 0; padding:0; list-style:none; display:grid; gap:8px; max-height:230px; overflow:auto}
-.said li{padding:8px 12px; border-radius:14px; font-size:.95rem; max-width:92%}
-.said .assistant{background:#47308F; border-bottom-left-radius:4px}
-.said .user{background:var(--mustard); color:var(--ink); justify-self:end; border-bottom-right-radius:4px}
-details{margin-top:14px; font-size:.85rem}
-summary{cursor:pointer; opacity:.8}
-details input{width:100%; margin-top:8px; padding:8px; border-radius:8px; border:2px solid #7C63CF;
-  background:#120A2B; color:var(--board)}
+/* ---------- voice hero ---------- */
+.hero{background:var(--palm); color:#fff; border-radius:26px; padding:24px 20px; display:grid; gap:18px; grid-template-columns:auto 1fr; align-items:center}
+.hero h1{font-size:clamp(1.9rem,7vw,2.9rem); line-height:1.05; font-weight:600; letter-spacing:-.02em; grid-column:1 / -1}
+.talk{position:relative; width:108px; height:108px; border:0; background:transparent; border-radius:50%; padding:0; --lvl:0}
+.talk::before{content:""; position:absolute; inset:-8px; border-radius:50%; border:2px solid var(--citron); opacity:0;
+  transform:scale(calc(1 + var(--lvl) * .35)); transition:transform .08s linear}
+.talk.live::before{opacity:.9}
+.bite{position:absolute; inset:0; border-radius:50%; background:var(--tomato);
+  -webkit-mask:radial-gradient(circle 27px at 86% 13%,#0000 98%,#000); mask:radial-gradient(circle 27px at 86% 13%,#0000 98%,#000)}
+.talk svg,.bars{position:absolute; inset:0; margin:auto}
+.talk svg{width:40px; height:40px}
+.bars{display:none; width:46px; height:44px; align-items:center; justify-content:space-between}
+.bars i{width:6px; border-radius:3px; background:#fff; height:8px; transition:height .08s linear}
+.talk.live svg{display:none} .talk.live .bars{display:flex}
+.say{min-width:0}
+.say .lead{font-size:1.05rem; font-weight:500}
+.say .state{color:#CFE3D8; font-size:.95rem; margin-top:4px}
+.say .state.bad{color:#FFD3C9}
+.caps{grid-column:1 / -1; display:grid; gap:8px; margin:0; padding:0; list-style:none}
+.caps li{padding:9px 13px; border-radius:14px; font-size:.95rem; max-width:92%}
+.caps .assistant{background:var(--palm-2)}
+.caps .user{background:var(--citron); color:var(--text); justify-self:end}
+.note{grid-column:1 / -1; font-size:.85rem; color:#CFE3D8}
 
-/* ---------- menu board ---------- */
-.board{background:var(--board); color:var(--ink); border-radius:18px; padding:18px; position:relative;
-  box-shadow:0 0 0 6px #120A2B, 0 0 70px rgba(255,201,60,.35); min-height:420px}
-.tabs{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px}
-.tab{border:0; background:var(--ink); color:var(--board); font-family:var(--display); font-size:.9rem;
-  padding:9px 14px; border-radius:10px}
-.tab[aria-pressed="true"]{background:var(--ketchup); color:#fff; transform:rotate(-2deg)}
-.items{display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
-.item{background:#fff; border:3px solid var(--ink); border-radius:14px; padding:10px; display:grid; gap:6px;
-  transition:transform .25s, background .25s, box-shadow .25s}
-.item.lit{background:var(--mustard); transform:scale(1.04) rotate(-1deg); box-shadow:7px 7px 0 var(--ketchup)}
-.pic{height:104px; border-radius:9px; background:#FFE9A8; display:grid; place-items:center; font-size:3rem; overflow:hidden}
-.pic img{width:100%; height:100%; object-fit:cover}
-.item h3{margin:0; font-size:1.02rem; font-weight:800; line-height:1.2}
-.item p{margin:0; font-size:.86rem; opacity:.8}
-.price{font-family:var(--display); color:var(--ketchup); font-size:1.05rem}
-.item.lit .price{color:var(--ink)}
-.empty{padding:70px 16px; text-align:center; font-size:1.1rem; max-width:34ch; margin:0 auto}
-.empty b{display:block; font-family:var(--display); font-size:1.5rem; margin-bottom:8px}
+/* ---------- menu ---------- */
+.search{margin:18px 0 12px; position:relative}
+.search input{width:100%; padding:13px 16px; border:1.5px solid var(--line); border-radius:14px; background:var(--sheet)}
+.chips{display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none; border:1.5px solid var(--line); background:var(--sheet); border-radius:999px; padding:8px 15px; font-weight:500}
+.chip[aria-pressed="true"]{background:var(--palm); border-color:var(--palm); color:#fff}
+.items{background:var(--sheet); border-radius:20px; padding:4px 14px; display:grid; grid-template-columns:1fr}
+.item{display:grid; grid-template-columns:76px 1fr; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); align-items:center; border-radius:0}
+.item:last-child{border-bottom:0}
+.item.lit{background:var(--citron); margin:0 -14px; padding-inline:14px; border-radius:16px; border-bottom-color:transparent}
+.tile{width:76px; height:76px; border-radius:18px; background:var(--mist); display:grid; place-items:center; font-size:2.3rem; overflow:hidden}
+.tile img{width:100%; height:100%; object-fit:cover}
+.item h3{font-size:1.02rem; font-weight:600; line-height:1.25}
+.item p{font-size:.86rem; color:var(--soft); margin-top:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+.buy{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px}
+.price{font-weight:600; font-variant-numeric:tabular-nums}
+.pop{font-size:.75rem; font-weight:500; background:var(--citron); border-radius:6px; padding:1px 7px; margin-inline-start:6px}
+.item.lit .pop{background:var(--sheet)}
+.add{border:0; background:var(--palm); color:#fff; border-radius:999px; padding:8px 18px; font-weight:500}
+.none{padding:36px 8px; text-align:center; color:var(--soft)}
 
-/* burger builder */
-.builder{margin-bottom:16px; background:var(--ink); color:var(--board); border-radius:14px; padding:16px;
-  display:grid; grid-template-columns:minmax(150px,220px) 1fr; gap:18px; align-items:center}
-@media (max-width:520px){ .builder{grid-template-columns:1fr} }
-.stack{display:flex; flex-direction:column; gap:4px; align-items:center}
-.layer{width:100%; text-align:center; font-size:.78rem; font-weight:800; color:var(--ink); padding:5px 6px; border-radius:8px;
-  animation:drop .35s cubic-bezier(.2,1.6,.4,1)}
-.bun-top{background:#E9A23B; border-radius:60px 60px 10px 10px; padding:14px 6px 8px}
-.bun-bot{background:#E9A23B; border-radius:8px 8px 22px 22px}
-.sauce{background:var(--ketchup); color:#fff; width:86%}
-.topping{background:var(--mint); width:94%}
-.patty{background:#6B3A1E; color:#fff}
-.patty.wait{background:transparent; border:2px dashed #7C63CF; color:var(--board)}
-.builder h3{font-family:var(--display); margin:0 0 6px; font-size:1.15rem; color:var(--mustard)}
-.builder p{margin:0}
-@keyframes drop{from{transform:translateY(-22px); opacity:0}}
+/* ---------- order panel ---------- */
+.order{background:var(--sheet); border-radius:22px 22px 0 0; padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));
+  position:fixed; inset-inline:0; bottom:0; z-index:30; max-height:86vh; overflow:auto; transform:translateY(105%); transition:transform .25s ease;
+  box-shadow:0 -10px 40px rgba(14,59,46,.22)}
+.order.show{transform:none}
+.order header{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px}
+.order h2{font-size:1.25rem; font-weight:600}
+.close{border:0; background:var(--mist); border-radius:999px; padding:7px 14px}
+.lines{list-style:none; margin:0; padding:0}
+.lines li{display:grid; grid-template-columns:1fr auto; gap:4px 12px; padding:12px 0; border-bottom:1px solid var(--line)}
+.lines small{color:var(--soft); grid-column:1 / -1}
+.qty{display:inline-flex; align-items:center; gap:10px; margin-top:6px}
+.qty button{width:30px; height:30px; border-radius:50%; border:1.5px solid var(--line); background:var(--sheet); font-weight:600; line-height:1}
+.sum{display:flex; justify-content:space-between; font-size:1.15rem; font-weight:600; margin-top:14px; font-variant-numeric:tabular-nums}
+.vat{color:var(--soft); font-size:.86rem; margin-top:2px}
+.cta{width:100%; border:0; background:var(--tomato); color:#fff; border-radius:16px; padding:15px; font-weight:600; font-size:1.02rem; margin-top:16px}
+.ghost{width:100%; border:1.5px solid var(--palm); background:transparent; border-radius:16px; padding:13px; font-weight:500; margin-top:14px}
+.hint{color:var(--soft); padding:18px 0 4px}
+.builder{background:var(--mist); border-radius:14px; padding:12px 14px; margin-bottom:6px; font-size:.93rem}
+.builder b{display:block; margin-bottom:2px}
+.steps{list-style:none; margin:16px 0 0; padding:0; counter-reset:s}
+.steps li{position:relative; padding:0 0 22px; padding-inline-start:40px; color:var(--soft); counter-increment:s}
+.steps li::before{content:counter(s); position:absolute; inset-inline-start:0; top:-2px; width:26px; height:26px; border-radius:50%;
+  border:2px solid var(--line); background:var(--sheet); display:grid; place-items:center; font-size:.8rem; font-weight:600}
+.steps li::after{content:""; position:absolute; inset-inline-start:12px; top:28px; bottom:2px; width:2px; background:var(--line)}
+.steps li:last-child::after{display:none}
+.steps li.done{color:var(--text)} .steps li.done::before{background:var(--ok); border-color:var(--ok); color:#fff}
+.steps li.now{color:var(--text); font-weight:600} .steps li.now::before{background:var(--citron); border-color:var(--palm); color:var(--text)}
+.bigno{font-size:2.2rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; margin-top:2px}
+.tag{display:inline-block; background:var(--citron); border-radius:8px; padding:3px 9px; font-size:.82rem; margin-top:8px}
 
-/* ---------- order ticket ---------- */
-.ticket{background:var(--paper); color:var(--ink); padding:18px 16px 30px; position:sticky; top:20px;
-  -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/20px 100%;
-          mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/20px 100%}
-@media (max-width:1100px){ .ticket{position:static} }
-.ticket h2{font-family:var(--display); font-size:1.15rem; margin:0 0 10px}
-.lines{list-style:none; margin:0; padding:0; font-variant-numeric:tabular-nums}
-.lines li{display:grid; grid-template-columns:auto 1fr auto; gap:8px; padding:8px 0; border-bottom:2px dashed #C9C2DC}
-.lines small{grid-column:2 / -1; opacity:.7}
-.total{display:flex; justify-content:space-between; font-family:var(--display); font-size:1.25rem; margin-top:12px}
-.stamp{margin-top:14px; border:4px solid var(--ketchup); color:var(--ketchup); font-family:var(--display);
-  text-align:center; padding:8px; border-radius:10px; transform:rotate(-4deg); animation:drop .4s cubic-bezier(.2,1.6,.4,1)}
-.hint{opacity:.7; margin:0}
+.bar{position:fixed; inset-inline:12px; bottom:calc(12px + env(safe-area-inset-bottom,0px)); z-index:20; border:0; background:var(--palm); color:#fff;
+  border-radius:18px; padding:15px 18px; display:flex; justify-content:space-between; align-items:center; font-weight:500; box-shadow:0 8px 24px rgba(14,59,46,.3)}
+.bar b{font-weight:600; font-variant-numeric:tabular-nums}
+.shade{position:fixed; inset:0; background:rgba(14,59,46,.45); z-index:25}
+.toast{position:fixed; inset-inline:16px; top:14px; z-index:40; background:var(--text); color:#fff; border-radius:14px; padding:12px 16px; max-width:460px; margin-inline:auto}
 
-@media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
+@media (min-width:960px){
+  body{padding-bottom:40px}
+  .layout{display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:26px; align-items:start}
+  .hero{padding:32px; grid-template-columns:auto 1fr; column-gap:26px}
+  .talk{width:128px; height:128px}
+  .items{grid-template-columns:1fr 1fr; column-gap:28px}
+  .item:nth-last-child(2):nth-child(odd){border-bottom:0}
+  .order{position:sticky; top:16px; inset-inline:auto; transform:none; border-radius:22px; box-shadow:none; max-height:calc(100vh - 32px); z-index:1}
+  .bar,.shade,.close{display:none !important}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none !important; animation:none !important} }
 </style>
 </head>
 <body>
-<main class="lane">
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><span class="mark" aria-hidden="true"></span>VoiceBite</div>
+    <button class="lang" id="lang"></button>
+  </div>
+  <div class="store"><b id="storeName"></b><span id="storeBranch"></span><span class="open" id="storeOpen"></span></div>
 
-  <section class="speaker" aria-label="Order speaker">
-    <h1 class="sign">Talk to order</h1>
-    <p class="sub">Say what you want. The attendant builds your order on the board.</p>
-    <canvas id="grille" width="560" height="560" aria-hidden="true"></canvas>
-    <p class="status" id="status" role="status">Press Start order and allow the microphone.</p>
-    <button class="go" id="go">Start order</button>
-    <ul class="said" id="said" aria-label="Conversation"></ul>
-    <button class="ghost" id="demo">Preview with a sample menu</button>
-    <details>
-      <summary>Order line address</summary>
-      <input id="wsurl" aria-label="WebSocket address of the agent" spellcheck="false">
-    </details>
-  </section>
+  <div class="layout">
+    <main>
+      <section class="hero" aria-labelledby="heroTitle">
+        <h1 id="heroTitle"></h1>
+        <button class="talk" id="talk">
+          <span class="bite" aria-hidden="true"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>
+          <span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        </button>
+        <div class="say"><p class="lead" id="lead"></p><p class="state" id="state" role="status"></p></div>
+        <ul class="caps" id="caps" aria-live="polite"></ul>
+        <p class="note" id="voiceNote" hidden></p>
+      </section>
 
-  <section class="board" aria-label="Menu board">
-    <div id="builder"></div>
-    <div class="tabs" id="tabs"></div>
-    <div id="items"></div>
-  </section>
+      <div class="search"><input type="search" id="q" autocomplete="off"></div>
+      <div class="chips" id="chips"></div>
+      <div id="items"></div>
+    </main>
 
-  <aside class="ticket-col">
-    <div class="ticket" aria-label="Your order">
-      <h2>Your order</h2>
-      <ul class="lines" id="lines"></ul>
-      <div id="totals"></div>
-    </div>
-  </aside>
+    <aside class="order" id="order" aria-labelledby="orderTitle"></aside>
+  </div>
+</div>
 
-</main>
+<div class="shade" id="shade" hidden></div>
+<button class="bar" id="bar" hidden></button>
+<div class="toast" id="toast" role="status" hidden></div>
 
 <script>
-/* ================= settings ================= */
+/* ================= configuration ================= */
 const DEFAULT_WS = "wss://devx-ai-voice-commerce.onrender.com/ws";
-const RATE = 16000;          // the agent expects 16 kHz mono PCM
-const CHUNK = 4096;          // ~256 ms per message, stays under the agent's 50 messages / 10 s limit
+const MERCHANT = { name: { en: "Demo Kitchen", ar: "مطبخ تجريبي" }, branch: { en: "Drive-through lane 1", ar: "مسار السيارات 1" } };
+const VAT_RATE = 5;            // UAE VAT, prices shown are VAT-inclusive
+const IMAGE_BASE = "";         // set to a folder URL to show food photos; icons are used until then
+const RATE = 16000, CHUNK = 4096;
 
+/* Menu shown before the attendant connects. Once a call starts, the live menu from the kitchen replaces it. */
+const I = (itemId, name, description, price, featured, sortOrder) => ({ itemId, name, description, price, featured: !!featured, sortOrder });
+const BUILT_IN = {
+  categories: [["custom", "Build Your Own", 0], ["burgers", "Burgers", 1], ["chicken", "Chicken", 2], ["sides", "Sides", 3], ["drinks", "Drinks", 4], ["desserts", "Desserts", 5]]
+    .map(([categoryId, name, sortOrder]) => ({ categoryId, name, sortOrder })),
+  menuItems: {
+    custom: [I("custom-burger", "Build Your Own Burger", "Start with a beef or chicken patty and pick your toppings, cheese and sauces.", 899, 1, 1)],
+    burgers: [I("classic-burger", "Classic Burger", "Quarter-pound beef patty with lettuce, tomato, onion and pickles on a toasted sesame bun", 799, 1, 1),
+      I("cheeseburger", "Cheeseburger", "Quarter-pound beef patty with melted American cheese, lettuce, tomato and special sauce", 899, 1, 2),
+      I("double-burger", "Double Burger", "Two quarter-pound beef patties with cheese, lettuce, tomato and pickles", 1199, 0, 4),
+      I("veggie-burger", "Veggie Burger", "Plant-based patty with avocado, lettuce, tomato and chipotle mayo", 999, 0, 5)],
+    chicken: [I("chicken-sandwich", "Crispy Chicken Sandwich", "Crispy breaded chicken breast with pickles and mayo on a brioche bun", 899, 1, 1),
+      I("spicy-chicken", "Spicy Chicken Sandwich", "Crispy chicken breast in spicy sauce with jalapeños and pepper jack cheese", 999, 0, 2),
+      I("chicken-nuggets-6", "Chicken Nuggets (6 pc)", "Six crispy all-white-meat nuggets with a dipping sauce", 599, 0, 3),
+      I("chicken-nuggets-10", "Chicken Nuggets (10 pc)", "Ten crispy all-white-meat nuggets with two dipping sauces", 899, 0, 4)],
+    sides: [I("fries", "French Fries", "Golden crispy fries seasoned with sea salt", 349, 1, 1), I("onion-rings", "Onion Rings", "Thick-cut onion rings in a crispy batter", 449, 0, 2),
+      I("mozzarella-sticks", "Mozzarella Sticks", "Six breaded mozzarella sticks with marinara sauce", 549, 0, 3), I("side-salad", "Side Salad", "Mixed greens with tomato, cucumber and your choice of dressing", 399, 0, 4)],
+    drinks: [I("cola", "Cola", "Ice-cold fountain cola", 249, 0, 1), I("lemonade", "Fresh Lemonade", "Freshly squeezed lemonade with a hint of mint", 349, 1, 2), I("iced-tea", "Iced Tea", "Sweet or unsweetened iced tea", 249, 0, 3),
+      I("milkshake-chocolate", "Chocolate Milkshake", "Thick chocolate milkshake topped with whipped cream", 549, 0, 4), I("milkshake-vanilla", "Vanilla Milkshake", "Classic vanilla milkshake made with vanilla bean ice cream", 549, 0, 5)],
+    desserts: [I("apple-pie", "Apple Pie", "Warm apple pie with a flaky crust and cinnamon filling", 299, 0, 1), I("sundae", "Hot Fudge Sundae", "Vanilla soft serve with hot fudge, whipped cream and a cherry", 449, 1, 2), I("cookie", "Chocolate Chip Cookie", "Warm freshly baked chocolate chip cookie", 199, 0, 3)]
+  }
+};
+const ICON = { "custom-burger": "🍔", "classic-burger": "🍔", cheeseburger: "🍔", "double-burger": "🍔", "veggie-burger": "🥬", "chicken-sandwich": "🥪", "spicy-chicken": "🌶️",
+  "chicken-nuggets-6": "🍗", "chicken-nuggets-10": "🍗", fries: "🍟", "onion-rings": "🧅", "mozzarella-sticks": "🧀", "side-salad": "🥗", cola: "🥤", lemonade: "🍋", "iced-tea": "🧋",
+  "milkshake-chocolate": "🍫", "milkshake-vanilla": "🍦", "apple-pie": "🥧", sundae: "🍨", cookie: "🍪" };
+const CAT_ICON = { custom: "🍔", burgers: "🍔", chicken: "🍗", sides: "🍟", drinks: "🥤", desserts: "🍨" };
+
+/* Arabic display names. Menu content will come from the merchant's own configuration; these cover the demo menu. */
+const AR = {
+  cat: { custom: "اصنع برجرك", burgers: "برجر", chicken: "دجاج", sides: "أطباق جانبية", drinks: "مشروبات", desserts: "حلويات" },
+  item: { "custom-burger": "اصنع برجرك", "classic-burger": "برجر كلاسيك", cheeseburger: "تشيز برجر", "double-burger": "دبل برجر", "veggie-burger": "برجر نباتي",
+    "chicken-sandwich": "ساندويتش دجاج مقرمش", "spicy-chicken": "ساندويتش دجاج حار", "chicken-nuggets-6": "ناجتس دجاج (6 قطع)", "chicken-nuggets-10": "ناجتس دجاج (10 قطع)",
+    fries: "بطاطس مقلية", "onion-rings": "حلقات البصل", "mozzarella-sticks": "أصابع الموزاريلا", "side-salad": "سلطة جانبية", cola: "كولا", lemonade: "ليموناضة طازجة", "iced-tea": "شاي مثلج",
+    "milkshake-chocolate": "ميلك شيك شوكولاتة", "milkshake-vanilla": "ميلك شيك فانيلا", "apple-pie": "فطيرة التفاح", sundae: "صنداي بالشوكولاتة الساخنة", cookie: "كوكيز برقائق الشوكولاتة" }
+};
+
+const T = {
+  en: { switchTo: "العربية", open: "Open now", title: "Say your order", lead: "Tap the button and talk, or pick from the menu below.", start: "Start talking", end: "End the call",
+    idle: "The attendant answers in a few seconds.", mic: "Asking for the microphone…", calling: "Calling the attendant… a sleeping kitchen can take a minute to wake.",
+    listening: "Listening. Go ahead.", ended: "Call ended. Tap the button to talk again.", micBlocked: "The microphone is blocked. Allow it from the address bar, then tap the button again.",
+    unreachable: "The attendant can't be reached right now. Order from the menu below, or try again in a minute.", hungUp: "The attendant couldn't take the call. Order from the menu below, or try again in a minute.",
+    needCode: "This ordering page needs an access code. Tap the button to enter it.", codeSaved: "Code saved. Tap the button to start.", codePrompt: "Enter the access code for this ordering page",
+    voiceNote: "", search: "Search the menu", popular: "Popular", add: "Add", nothing: "Nothing on the menu matches that. Try another word.",
+    yourOrder: "Your order", close: "Close", empty: "Your order is empty. Say what you'd like, or tap Add on any item.", total: "Total", vat: "Includes 5% VAT of", place: "Place order, pay at window",
+    view: "View order", item1: "item", itemN: "items", asked: "Asked the attendant to add", askedPlace: "Asked the attendant to place your order.", building: "Building your burger",
+    orderNo: "Order", received: "Received", preparing: "Preparing", ready: "Ready for pickup", completed: "Completed", payAt: "Pay at the window when you collect.",
+    preview: "Preview order, not sent to the kitchen", again: "Start a new order", aed: "AED", less: "One less", more: "One more" },
+  ar: { switchTo: "English", open: "مفتوح الآن", title: "اطلب بصوتك", lead: "اضغط الزر وتحدث، أو اختر من القائمة أدناه.", start: "ابدأ التحدث", end: "إنهاء المحادثة",
+    idle: "يرد عليك الموظف خلال ثوانٍ.", mic: "جارٍ طلب إذن الميكروفون…", calling: "جارٍ الاتصال بالموظف… قد يستغرق ذلك دقيقة.",
+    listening: "أسمعك، تفضل.", ended: "انتهت المحادثة. اضغط الزر للتحدث مرة أخرى.", micBlocked: "الميكروفون محظور. اسمح به من شريط العنوان ثم اضغط الزر مرة أخرى.",
+    unreachable: "تعذر الوصول إلى الموظف الآن. اطلب من القائمة أدناه أو حاول بعد دقيقة.", hungUp: "تعذر على الموظف استقبال المحادثة. اطلب من القائمة أدناه أو حاول بعد دقيقة.",
+    needCode: "هذه الصفحة تحتاج إلى رمز دخول. اضغط الزر لإدخاله.", codeSaved: "تم حفظ الرمز. اضغط الزر للبدء.", codePrompt: "أدخل رمز الدخول لصفحة الطلب",
+    voiceNote: "الموظف الصوتي يتحدث الإنجليزية حالياً. الطلب من القائمة متاح بالعربية.", search: "ابحث في القائمة", popular: "الأكثر طلباً", add: "أضف", nothing: "لا يوجد صنف مطابق. جرّب كلمة أخرى.",
+    yourOrder: "طلبك", close: "إغلاق", empty: "طلبك فارغ. قل ما تريد أو اضغط «أضف» على أي صنف.", total: "الإجمالي", vat: "يشمل ضريبة القيمة المضافة 5% بقيمة", place: "أرسل الطلب وادفع عند النافذة",
+    view: "عرض الطلب", item1: "صنف", itemN: "أصناف", asked: "طلبنا من الموظف إضافة", askedPlace: "طلبنا من الموظف إرسال طلبك.", building: "جارٍ تحضير برجرك",
+    orderNo: "طلب", received: "تم الاستلام", preparing: "قيد التحضير", ready: "جاهز للاستلام", completed: "مكتمل", payAt: "ادفع عند النافذة عند الاستلام.",
+    preview: "طلب تجريبي، لم يُرسل إلى المطبخ", again: "طلب جديد", aed: "د.إ", less: "إنقاص واحد", more: "إضافة واحد" }
+};
+
+/* ================= state ================= */
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const money = c => "$" + (Number(c || 0) / 100).toFixed(2);
+const params = new URLSearchParams(location.search);
+const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
 
-let wsUrl = new URLSearchParams(location.search).get("ws");
-try { wsUrl = wsUrl || localStorage.getItem("wsUrl"); } catch (e) {}
-wsUrl = wsUrl || DEFAULT_WS;
-$("wsurl").value = wsUrl;
-$("wsurl").addEventListener("change", e => {
-  wsUrl = e.target.value.trim() || DEFAULT_WS;
-  try { localStorage.setItem("wsUrl", wsUrl); } catch (err) {}
+let lang = params.get("lang") || store.get("lang") || ((navigator.language || "").startsWith("ar") ? "ar" : "en");
+if (!T[lang]) lang = "en";
+let menu = BUILT_IN, activeCat = "popular", query = "", lit = null;
+let cart = [], agentCart = null, agentTotal = 0, builder = null, order = null, sheetOpen = false;
+let stateKey = "idle", stateBad = false, toastTimer = null, previewTimer = null;
+
+const t = k => T[lang][k];
+const money = c => lang === "ar" ? (Number(c || 0) / 100).toFixed(2) + " " + t("aed") : t("aed") + " " + (Number(c || 0) / 100).toFixed(2);
+const catName = c => lang === "ar" && AR.cat[c.categoryId] ? AR.cat[c.categoryId] : c.name;
+const itemName = i => lang === "ar" && AR.item[i.itemId] ? AR.item[i.itemId] : i.name;
+const allItems = () => Object.entries(menu.menuItems || {}).flatMap(([cat, list]) => (list || []).map(i => ({ ...i, cat })));
+const findItem = id => allItems().find(i => i.itemId === id);
+const lines = () => live && agentCart ? agentCart : cart;
+const total = () => live && agentCart ? (agentTotal || agentCart.reduce((s, l) => s + (l.unitPrice ?? l.price ?? 0) * (l.quantity || 1), 0)) : cart.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
+const count = () => lines().reduce((s, l) => s + (l.quantity || 1), 0);
+
+function toast(text) { const el = $("toast"); el.textContent = text; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, 3200); }
+function setState(key, bad) { stateKey = key; stateBad = !!bad; $("state").textContent = t(key); $("state").classList.toggle("bad", stateBad); }
+
+/* ================= rendering ================= */
+function renderChrome() {
+  document.documentElement.lang = lang; document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+  $("lang").textContent = t("switchTo");
+  $("storeName").textContent = MERCHANT.name[lang]; $("storeBranch").textContent = MERCHANT.branch[lang]; $("storeOpen").textContent = t("open");
+  $("heroTitle").textContent = t("title"); $("lead").textContent = t("lead"); $("q").placeholder = t("search"); $("q").setAttribute("aria-label", t("search"));
+  $("talk").setAttribute("aria-label", live ? t("end") : t("start"));
+  $("voiceNote").textContent = t("voiceNote"); $("voiceNote").hidden = !t("voiceNote");
+  setState(stateKey, stateBad);
+}
+function renderMenu() {
+  const cats = [...(menu.categories || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  $("chips").innerHTML = [{ categoryId: "popular", name: t("popular") }, ...cats].map(c =>
+    `<button class="chip" data-cat="${esc(c.categoryId)}" aria-pressed="${!query && c.categoryId === activeCat}">${esc(c.categoryId === "popular" ? c.name : catName(c))}</button>`).join("");
+  const q = query.trim().toLowerCase();
+  let list = allItems();
+  if (q) list = list.filter(i => (i.name + " " + (i.description || "") + " " + (AR.item[i.itemId] || "")).toLowerCase().includes(q));
+  else if (activeCat === "popular") list = list.filter(i => i.featured);
+  else list = list.filter(i => i.cat === activeCat).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  $("items").innerHTML = list.length ? `<div class="items">` + list.map(i => {
+    const icon = ICON[i.itemId] || CAT_ICON[i.cat] || "🍽️";
+    const pic = IMAGE_BASE && i.imageUrl ? `<img src="${esc(IMAGE_BASE + i.imageUrl)}" alt="" onerror="this.replaceWith('${icon}')">` : icon;
+    return `<article class="item ${i.itemId === lit ? "lit" : ""}" data-item="${esc(i.itemId)}">
+      <div class="tile" aria-hidden="true">${pic}</div>
+      <div><h3>${esc(itemName(i))}${i.featured && activeCat !== "popular" ? `<span class="pop">${esc(t("popular"))}</span>` : ""}</h3>
+        ${lang === "en" && i.description ? `<p>${esc(i.description)}</p>` : ""}
+        <div class="buy"><span class="price">${money(i.price)}</span><button class="add" data-add="${esc(i.itemId)}" aria-label="${esc(t("add") + " " + itemName(i))}">${esc(t("add"))}</button></div></div>
+    </article>`; }).join("") + `</div>` : `<p class="none">${esc(t("nothing"))}</p>`;
+  const el = lit && document.querySelector(".item.lit"); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+}
+const STEPS = ["received", "preparing", "ready", "completed"];
+function renderOrder() {
+  const el = $("order"), head = title => `<header><h2 id="orderTitle">${esc(title)}</h2><button class="close" data-act="close">${esc(t("close"))}</button></header>`;
+  if (order) {
+    el.innerHTML = head(t("orderNo")) + `<p class="bigno">${esc(order.number)}</p>${order.preview ? `<span class="tag">${esc(t("preview"))}</span>` : ""}
+      <ol class="steps">${STEPS.map((s, n) => `<li class="${n < order.status ? "done" : n === order.status ? "now" : ""}">${esc(t(s))}</li>`).join("")}</ol>
+      <p class="vat">${esc(t("payAt"))}</p><div class="sum"><span>${esc(t("total"))}</span><span>${money(order.total)}</span></div>
+      <button class="ghost" data-act="again">${esc(t("again"))}</button>`;
+  } else {
+    const ls = lines(), sum = total();
+    el.innerHTML = head(t("yourOrder")) +
+      (builder ? `<div class="builder"><b>${esc(t("building"))}</b>${esc([builder.patty, ...(builder.toppings || []), ...(builder.sauces || [])].filter(Boolean).join(", ") || "…")}<br>${money(builder.price)}</div>` : "") +
+      (ls.length ? `<ul class="lines">${ls.map(l => { const known = findItem(l.itemId); return `<li><span>${esc(known ? itemName(known) : l.name)}</span><span class="price">${money((l.unitPrice ?? l.price ?? 0) * (l.quantity || 1))}</span>
+          ${l.specialInstructions ? `<small>${esc(l.specialInstructions)}</small>` : ""}
+          <span class="qty"><button data-qty="-1" data-id="${esc(l.itemId)}" aria-label="${esc(t("less"))}">−</button><span>${esc(l.quantity || 1)}</span><button data-qty="1" data-id="${esc(l.itemId)}" aria-label="${esc(t("more"))}">+</button></span></li>`; }).join("")}</ul>
+        <div class="sum"><span>${esc(t("total"))}</span><span>${money(sum)}</span></div><p class="vat">${esc(t("vat"))} ${money(Math.round(sum * VAT_RATE / (100 + VAT_RATE)))}</p>
+        <button class="cta" data-act="place">${esc(t("place"))}</button>` : `<p class="hint">${esc(t("empty"))}</p>`);
+  }
+  const n = count(), showBar = !order && n > 0;
+  $("bar").hidden = !(showBar || order) || sheetOpen;
+  $("bar").innerHTML = order ? `<span>${esc(t("orderNo"))} ${esc(order.number)}</span><b>${esc(t(STEPS[order.status]))}</b>` : `<span>${esc(t("view"))} (${n} ${esc(n === 1 ? t("item1") : t("itemN"))})</span><b>${money(total())}</b>`;
+  el.classList.toggle("show", sheetOpen); $("shade").hidden = !sheetOpen;
+}
+function render() { renderChrome(); renderMenu(); renderOrder(); }
+function sheet(open) { sheetOpen = open; renderOrder(); }
+
+/* ================= ordering ================= */
+function addItem(id) {
+  const i = findItem(id); if (!i) return;
+  if (live) { sendText(`Please add one ${i.name} to my order.`); return toast(t("asked") + " " + itemName(i)); }
+  const line = cart.find(l => l.itemId === id);
+  if (line) line.quantity++; else cart.push({ itemId: id, name: i.name, quantity: 1, unitPrice: i.price });
+  renderOrder();
+}
+function changeQty(id, delta) {
+  const line = lines().find(l => l.itemId === id); if (!line) return;
+  if (live) return sendText(delta > 0 ? `Please add one more ${line.name} to my order.` : `Please remove one ${line.name} from my order.`);
+  line.quantity += delta; if (line.quantity < 1) cart = cart.filter(l => l !== line);
+  renderOrder();
+}
+function placeOrder() {
+  if (live) { sendText("That's everything. Please place my order."); return toast(t("askedPlace")); }
+  // Without the attendant there is no order service to send to yet, so this shows the tracking flow as a preview.
+  order = { number: "P-" + Math.floor(1000 + Math.random() * 9000), status: 0, total: total(), preview: true };
+  cart = []; sheet(true);
+  clearInterval(previewTimer);
+  previewTimer = setInterval(() => { if (!order || !order.preview || order.status >= 3) return clearInterval(previewTimer); order.status++; renderOrder(); }, 6000);
+}
+function newOrder() { clearInterval(previewTimer); order = null; agentCart = null; agentTotal = 0; builder = null; sheet(false); }
+
+$("lang").onclick = () => { lang = lang === "en" ? "ar" : "en"; store.set("lang", lang); render(); };
+$("q").addEventListener("input", e => { query = e.target.value; lit = null; renderMenu(); });
+$("chips").addEventListener("click", e => { const b = e.target.closest(".chip"); if (!b) return; activeCat = b.dataset.cat; query = ""; $("q").value = ""; lit = null; renderMenu(); });
+$("items").addEventListener("click", e => { const b = e.target.closest("[data-add]"); if (b) addItem(b.dataset.add); });
+$("order").addEventListener("click", e => {
+  const q = e.target.closest("[data-qty]"); if (q) return changeQty(q.dataset.id, Number(q.dataset.qty));
+  const a = e.target.closest("[data-act]"); if (!a) return;
+  if (a.dataset.act === "close") sheet(false); else if (a.dataset.act === "place") placeOrder(); else if (a.dataset.act === "again") newOrder();
 });
+$("bar").onclick = () => sheet(true);
+$("shade").onclick = () => sheet(false);
 
-// Free Render services sleep. Knock on the door early so it is awake by the time the customer presses Start.
-try { fetch(wsUrl.replace(/^ws/, "http").replace(/\/ws$/, "/ping"), { mode: "no-cors" }).catch(() => {}); } catch (e) {}
-
-/* ================= screen state (set by the agent) ================= */
-const STATE_KEYS = ["categories","menuItems","highlightedCategory","highlightedItem","orderItems","orderTotal","orderConfirmed","orderNumber","burgerBuilder"];
-const blank = () => ({ categories: [], menuItems: {}, highlightedCategory: null, highlightedItem: null,
-                       orderItems: [], orderTotal: 0, orderConfirmed: false, orderNumber: null, burgerBuilder: null });
-let ui = blank();
-let pickedCat = null;   // category the customer tapped
-
-const ICON = { burgers:"🍔", chicken:"🍗", sides:"🍟", drinks:"🥤", desserts:"🍨" };
-const iconFor = cat => ICON[cat] || (String(cat).includes("build") || String(cat).includes("custom") ? "🍔" : "🍽️");
-
-function catOfItem(itemId) {
-  for (const [cat, list] of Object.entries(ui.menuItems || {}))
-    if ((list || []).some(i => i.itemId === itemId)) return cat;
-  return null;
+/* ================= voice call ================= */
+let wsUrl = params.get("ws") || store.get("wsUrl") || DEFAULT_WS;
+const STORE_LOCATION = params.get("location") || "";
+let accessCode = params.get("code") || store.get("accessCode") || "";
+function lineAddress() {
+  const q = new URLSearchParams(); if (STORE_LOCATION) q.set("location", STORE_LOCATION); if (accessCode) q.set("code", accessCode);
+  const extra = q.toString(); return wsUrl + (extra ? (wsUrl.includes("?") ? "&" : "?") + extra : "");
 }
+// Free hosting sleeps when idle; wake the kitchen while the customer reads the menu.
+try { fetch(wsUrl.replace(/^ws/, "http").replace(/\/ws(\?.*)?$/, "/ping"), { mode: "no-cors" }).catch(() => {}); } catch (e) {}
 
-function render() {
-  const cats = [...(ui.categories || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-  const litCat = ui.highlightedItem ? catOfItem(ui.highlightedItem) : null;
-  const active = litCat || ui.highlightedCategory || pickedCat || (cats[0] && cats[0].categoryId);
+let ctx, micStream, proc, micAn, outAn, outGain, ws, live = false, openedAt = 0, gotAnything = false, playHead = 0, lastLine = null;
+const playing = new Set();
 
-  $("tabs").innerHTML = cats.map(c =>
-    `<button class="tab" data-cat="${esc(c.categoryId)}" aria-pressed="${c.categoryId === active}">${esc(c.name)}</button>`).join("");
-
-  const list = [...((ui.menuItems || {})[active] || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-  $("items").innerHTML = cats.length
-    ? `<div class="items">` + list.map(i => `
-        <article class="item ${i.itemId === ui.highlightedItem ? "lit" : ""}" data-item="${esc(i.itemId)}">
-          <div class="pic">${i.imageUrl ? `<img src="${esc(i.imageUrl)}" alt="" onerror="this.replaceWith('${iconFor(active)}')">` : iconFor(active)}</div>
-          <h3>${esc(i.name)}</h3>
-          <p>${esc(i.description)}</p>
-          <span class="price">${money(i.price)}</span>
-        </article>`).join("") + `</div>`
-    : `<p class="empty"><b>Menu board</b>The menu lights up here as soon as the attendant picks up.</p>`;
-
-  const lit = document.querySelector(".item.lit");
-  if (lit) lit.scrollIntoView({ block: "nearest", behavior: "smooth" });
-
-  const b = ui.burgerBuilder;
-  $("builder").innerHTML = b && b.active ? `
-    <div class="builder">
-      <div class="stack">
-        <div class="layer bun-top">bun</div>
-        ${(b.sauces || []).map(s => `<div class="layer sauce">${esc(s)}</div>`).join("")}
-        ${(b.toppings || []).map(t => `<div class="layer topping">${esc(t)}</div>`).join("")}
-        <div class="layer patty ${b.patty ? "" : "wait"}">${esc(b.patty || "pick a patty")}</div>
-        <div class="layer bun-bot">bun</div>
-      </div>
-      <div><h3>Your burger so far</h3>
-        <p>${b.patty ? "Add toppings and sauces, or say you're done." : "Beef or chicken?"}</p>
-        <p class="price" style="color:var(--mustard)">${money(b.price)}</p></div>
-    </div>` : "";
-
-  const items = ui.orderItems || [];
-  $("lines").innerHTML = items.map(i => `
-    <li><span>${esc(i.quantity || 1)}×</span><span>${esc(i.name)}</span>
-        <span>${money((i.unitPrice ?? i.price ?? 0) * (i.quantity || 1))}</span>
-        ${i.specialInstructions ? `<small>${esc(i.specialInstructions)}</small>` : ""}</li>`).join("");
-  $("totals").innerHTML = items.length
-    ? `<div class="total"><span>Total</span><span>${money(ui.orderTotal)}</span></div>` +
-      (ui.orderConfirmed ? `<div class="stamp">Order ${esc(ui.orderNumber || "")} placed</div>` : "")
-    : `<p class="hint">Nothing yet. Ask for a cheeseburger and watch it land here.</p>`;
-}
-$("tabs").addEventListener("click", e => {
-  const t = e.target.closest(".tab"); if (!t) return;
-  pickedCat = t.dataset.cat; ui.highlightedCategory = null; ui.highlightedItem = null; render();
-});
-
-function applyState(obj) {
-  if (!obj || typeof obj !== "object") return false;
-  if (!STATE_KEYS.some(k => k in obj)) return false;
-  for (const k of STATE_KEYS) if (k in obj) ui[k] = obj[k];
-  render(); return true;
-}
-
-/* ================= conversation text ================= */
-let lastLine = null;
-function say(role, text, final) {
-  if (!text) return;
-  role = role === "user" ? "user" : "assistant";
+function sendText(text) { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "bidi_text_input", text, role: "user" })); }
+function caption(role, text, final) {
+  if (!text) return; role = role === "user" ? "user" : "assistant";
   if (lastLine && lastLine.role === role && !lastLine.final) lastLine.el.textContent = text;
   else {
     if (lastLine && lastLine.role === role && lastLine.el.textContent === text) return;
-    const li = document.createElement("li"); li.className = role; li.textContent = text;
-    $("said").appendChild(li); lastLine = { role, el: li };
-    while ($("said").children.length > 12) $("said").firstChild.remove();
+    const li = document.createElement("li"); li.className = role; li.dir = "auto"; li.textContent = text; $("caps").appendChild(li); lastLine = { role, el: li };
+    while ($("caps").children.length > 3) $("caps").firstChild.remove();
   }
   lastLine.final = final !== false;
-  $("said").scrollTop = $("said").scrollHeight;
 }
-
-/* ================= messages from the agent ================= */
-let gotAnything = false;
-function onMessage(m) {
-  gotAnything = true;
-  const p = m.payload || {};
-  switch (m.type) {
-    case "bidi_audio_stream": playChunk(m.audio, m.sample_rate || RATE); return;
-    case "bidi_transcript_stream": say(m.role, m.text || m.current_transcript || m.delta, m.is_final); return;
-    case "bidi_interruption": stopPlayback(); return;
-    case "bidi_error": setStatus("The attendant hit a problem: " + (m.message || m.error || "unknown error") + ".", true); return;
-    case "order_update": ui.orderItems = p.items || []; ui.orderTotal = p.total || 0; render(); return;
-    case "order_confirmed": ui.orderItems = p.items || ui.orderItems; ui.orderTotal = p.total ?? ui.orderTotal;
-                            ui.orderConfirmed = true; ui.orderNumber = p.orderNumber; render(); return;
-    case "highlight_category": case "browse_category": ui.highlightedCategory = p.categoryId; ui.highlightedItem = null; render(); return;
-    case "highlight_item": case "show_item_detail": ui.highlightedItem = p.itemId; render(); return;
+const STATE_KEYS = ["categories", "menuItems", "highlightedCategory", "highlightedItem", "orderItems", "orderTotal", "orderConfirmed", "orderNumber", "burgerBuilder"];
+function applyState(s) {
+  if (!s || typeof s !== "object" || !STATE_KEYS.some(k => k in s)) return false;
+  if (Array.isArray(s.categories) && s.categories.length && s.menuItems) menu = { categories: s.categories, menuItems: s.menuItems };
+  if ("highlightedCategory" in s && s.highlightedCategory) { activeCat = s.highlightedCategory; query = ""; $("q").value = ""; lit = null; }
+  if ("highlightedItem" in s) { lit = s.highlightedItem || null; const it = lit && findItem(lit); if (it) { activeCat = it.cat; query = ""; $("q").value = ""; } }
+  if (Array.isArray(s.orderItems)) agentCart = s.orderItems;
+  if ("orderTotal" in s) agentTotal = s.orderTotal || 0;
+  if ("burgerBuilder" in s) builder = s.burgerBuilder && s.burgerBuilder.active ? s.burgerBuilder : null;
+  if (s.orderConfirmed && s.orderNumber && !(order && order.number === s.orderNumber)) {
+    order = { number: s.orderNumber, status: 0, total: agentTotal || total(), preview: false }; cart = []; sheetOpen = true;
   }
-  // Full screen state from update_ui / load_menu. Accept it wherever the agent tucked it.
+  renderMenu(); renderOrder(); return true;
+}
+function onMessage(m) {
+  gotAnything = true; const p = m.payload || {};
+  switch (m.type) {
+    case "bidi_audio_stream": return playChunk(m.audio, m.sample_rate || RATE);
+    case "bidi_transcript_stream": return caption(m.role, m.text || m.current_transcript || m.delta, m.is_final);
+    case "bidi_interruption": return stopPlayback();
+    case "order_update": return applyState({ orderItems: p.items || [], orderTotal: p.total || 0 });
+    case "order_confirmed": return applyState({ orderItems: p.items || agentCart || [], orderTotal: p.total ?? agentTotal, orderConfirmed: true, orderNumber: p.orderNumber });
+    case "highlight_category": case "browse_category": return applyState({ highlightedCategory: p.categoryId });
+    case "highlight_item": case "show_item_detail": return applyState({ highlightedItem: p.itemId });
+  }
   for (const c of [m.state, m.ui_state, m.uiState, m.payload, m.data, m]) if (applyState(c)) return;
 }
 
-/* ================= audio ================= */
-let ctx, micStream, proc, micAn, outAn, outGain, ws, live = false, openedAt = 0;
-let playHead = 0; const playing = new Set();
-
-function b64FromI16(i16) {
-  const u8 = new Uint8Array(i16.buffer); let s = "";
-  for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
-  return btoa(s);
-}
-function f32FromB64(b64) {
-  const bin = atob(b64), n = bin.length >> 1, out = new Float32Array(n);
-  for (let i = 0; i < n; i++) { let v = bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8); if (v >= 32768) v -= 65536; out[i] = v / 32768; }
-  return out;
-}
-function to16k(f32, rate) {
-  if (rate === RATE) return f32;
-  const ratio = rate / RATE, n = Math.floor(f32.length / ratio), out = new Float32Array(n);
-  for (let i = 0; i < n; i++) { const p = i * ratio, a = Math.floor(p), b = Math.min(a + 1, f32.length - 1), t = p - a; out[i] = f32[a] * (1 - t) + f32[b] * t; }
-  return out;
-}
+function b64FromI16(i16) { const u8 = new Uint8Array(i16.buffer); let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+function f32FromB64(b64) { const bin = atob(b64), n = bin.length >> 1, out = new Float32Array(n);
+  for (let i = 0; i < n; i++) { let v = bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8); if (v >= 32768) v -= 65536; out[i] = v / 32768; } return out; }
+function to16k(f32, rate) { if (rate === RATE) return f32; const ratio = rate / RATE, n = Math.floor(f32.length / ratio), out = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const p = i * ratio, a = Math.floor(p), b = Math.min(a + 1, f32.length - 1), f = p - a; out[i] = f32[a] * (1 - f) + f32[b] * f; } return out; }
 function playChunk(b64, rate) {
-  if (!ctx || !b64) return;
-  const f = f32FromB64(b64); if (!f.length) return;
+  if (!ctx || !b64) return; const f = f32FromB64(b64); if (!f.length) return;
   const buf = ctx.createBuffer(1, f.length, rate); buf.copyToChannel(f, 0);
   const src = ctx.createBufferSource(); src.buffer = buf; src.connect(outGain);
-  playHead = Math.max(playHead, ctx.currentTime + 0.06);
-  src.start(playHead); playHead += buf.duration;
+  playHead = Math.max(playHead, ctx.currentTime + 0.06); src.start(playHead); playHead += buf.duration;
   playing.add(src); src.onended = () => playing.delete(src);
 }
 function stopPlayback() { playing.forEach(s => { try { s.stop(); } catch (e) {} }); playing.clear(); playHead = 0; }
 
-function setStatus(text, bad) { $("status").textContent = text; $("status").classList.toggle("bad", !!bad); }
-
-async function start() {
-  if (live) return stop("Order ended. Press Start order to go again.");
-  demoOff(); ui = blank(); pickedCat = null; render(); $("said").innerHTML = ""; lastLine = null; gotAnything = false;
-  setStatus("Asking for the microphone…");
-  try {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
-  } catch (e) {
-    return setStatus("Microphone is blocked. Allow it from the icon in the address bar, then press Start order.", true);
-  }
+async function startCall() {
+  if (live) return endCall("ended");
+  $("caps").innerHTML = ""; lastLine = null; gotAnything = false; openedAt = 0; agentCart = null; agentTotal = 0; builder = null;
+  setState("mic");
+  try { micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } }); }
+  catch (e) { return setState("micBlocked", true); }
   try { ctx = new AudioContext({ sampleRate: RATE }); } catch (e) { ctx = new AudioContext(); }
   await ctx.resume();
-  outGain = ctx.createGain(); outAn = ctx.createAnalyser(); outAn.fftSize = 512;
-  outGain.connect(outAn); outAn.connect(ctx.destination);
-  const mic = ctx.createMediaStreamSource(micStream);
-  micAn = ctx.createAnalyser(); micAn.fftSize = 512; mic.connect(micAn);
-  proc = ctx.createScriptProcessor(4096, 1, 1);
-  const silent = ctx.createGain(); silent.gain.value = 0;
-  mic.connect(proc); proc.connect(silent); silent.connect(ctx.destination);
-
+  outGain = ctx.createGain(); outAn = ctx.createAnalyser(); outAn.fftSize = 512; outGain.connect(outAn); outAn.connect(ctx.destination);
+  const mic = ctx.createMediaStreamSource(micStream); micAn = ctx.createAnalyser(); micAn.fftSize = 512; mic.connect(micAn);
+  proc = ctx.createScriptProcessor(4096, 1, 1); const silent = ctx.createGain(); silent.gain.value = 0; mic.connect(proc); proc.connect(silent); silent.connect(ctx.destination);
   const acc = new Int16Array(CHUNK); let fill = 0;
   proc.onaudioprocess = ev => {
     if (!ws || ws.readyState !== 1) return;
     const f = to16k(ev.inputBuffer.getChannelData(0), ctx.sampleRate);
-    for (let i = 0; i < f.length; i++) {
-      const v = Math.max(-1, Math.min(1, f[i])); acc[fill++] = v < 0 ? v * 32768 : v * 32767;
-      if (fill === CHUNK) {
-        ws.send(JSON.stringify({ type: "bidi_audio_input", audio: b64FromI16(acc), format: "pcm", sample_rate: RATE, channels: 1 }));
-        fill = 0;
-      }
-    }
+    for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); acc[fill++] = v < 0 ? v * 32768 : v * 32767;
+      if (fill === CHUNK) { ws.send(JSON.stringify({ type: "bidi_audio_input", audio: b64FromI16(acc), format: "pcm", sample_rate: RATE, channels: 1 })); fill = 0; } }
   };
-
-  setStatus("Calling the attendant… a sleeping server can take up to a minute to wake.");
-  live = true; $("go").textContent = "End order"; $("go").classList.add("live");
-  try { ws = new WebSocket(wsUrl); } catch (e) { return stop("That order line address isn't valid: " + wsUrl, true); }
+  live = true; $("talk").classList.add("live"); renderChrome(); setState("calling");
+  try { ws = new WebSocket(lineAddress()); } catch (e) { return endCall("unreachable", true); }
   ws.onopen = () => {
-    openedAt = Date.now();
-    setStatus("Connected. Go ahead, the attendant is listening.");
-    ws.send(JSON.stringify({ type: "bidi_text_input", text: "Hello", role: "user" }));
+    openedAt = Date.now(); setState("listening");
+    const picked = cart.map(l => `${l.quantity} x ${l.name}`).join(", ");   // hand over anything already tapped into the cart
+    sendText(picked ? `Hello. I have already picked these from the menu: ${picked}. Please add them to my order.` : "Hello");
+    renderOrder();
   };
   ws.onmessage = ev => { try { onMessage(JSON.parse(ev.data)); } catch (e) { console.warn("Unreadable message", ev.data); } };
-  ws.onerror = () => {};
-  ws.onclose = () => {
+  ws.onclose = ev => {
     if (!live) return;
-    if (!openedAt) stop("Couldn't reach the order line at " + wsUrl + ". If the server was asleep, wait 30 seconds and press Start order.", true);
-    else if (!gotAnything) stop("The attendant hung up without answering. Check the agent's logs on Render; its AWS keys, region or menu table are probably missing.", true);
-    else stop("The call ended. Press Start order to go again.");
+    if (ev.code === 4401) { const entered = (prompt(t("codePrompt")) || "").trim(); accessCode = entered; store.set("accessCode", entered); return endCall(entered ? "codeSaved" : "needCode", !entered); }
+    if (!openedAt) endCall("unreachable", true); else if (!gotAnything) endCall("hungUp", true); else endCall("ended");
   };
 }
-function stop(message, bad) {
-  live = false; openedAt = 0;
-  try { ws && ws.close(); } catch (e) {} ws = null;
-  stopPlayback();
+function endCall(key, bad) {
+  if (agentCart && !order) cart = agentCart.map(l => ({ itemId: l.itemId, name: l.name, quantity: l.quantity || 1, unitPrice: l.unitPrice ?? l.price ?? 0, specialInstructions: l.specialInstructions }));
+  live = false; openedAt = 0; agentCart = null; builder = null;
+  try { ws && ws.close(); } catch (e) {} ws = null; stopPlayback();
   try { proc && proc.disconnect(); } catch (e) {} proc = null;
-  micStream && micStream.getTracks().forEach(t => t.stop()); micStream = null;
+  micStream && micStream.getTracks().forEach(tr => tr.stop()); micStream = null;
   try { ctx && ctx.close(); } catch (e) {} ctx = null; micAn = outAn = null;
-  $("go").textContent = "Start order"; $("go").classList.remove("live");
-  setStatus(message || "Press Start order and allow the microphone.", bad);
+  $("talk").classList.remove("live"); $("talk").style.setProperty("--lvl", 0); renderChrome(); setState(key || "idle", bad); renderOrder();
 }
-$("go").addEventListener("click", start);
+$("talk").onclick = startCall;
 
-/* ================= speaker grille (the voice meter) ================= */
-const cv = $("grille"), g = cv.getContext("2d");
-const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const tmp = new Uint8Array(512);
-function level(an) {
-  if (!an) return 0; an.getByteTimeDomainData(tmp);
-  let s = 0; for (let i = 0; i < tmp.length; i++) { const v = (tmp[i] - 128) / 128; s += v * v; }
-  return Math.min(1, Math.sqrt(s / tmp.length) * 4);
-}
-let mL = 0, oL = 0, demoPulse = 0;
-function draw(t) {
-  mL += (level(micAn) - mL) * 0.3; oL += ((outAn ? level(outAn) : demoPulse) - oL) * 0.3;
-  const W = cv.width, c = W / 2, them = oL > mL, L = still ? 0 : Math.max(mL, oL);
-  g.clearRect(0, 0, W, W);
-  for (let ring = 0; ring < 9; ring++) {
-    const n = ring === 0 ? 1 : ring * 7, R = ring * 29;
-    for (let k = 0; k < n; k++) {
-      const a = (k / n) * Math.PI * 2 + ring * 0.4;
-      const wave = still ? 0 : Math.sin(t / 260 - ring * 0.9 + k * 0.5) * 0.5 + 0.5;
-      const r = 4 + L * 13 * wave * (1 - ring / 12);
-      g.beginPath(); g.arc(c + Math.cos(a) * R, c + Math.sin(a) * R, r, 0, Math.PI * 2);
-      g.fillStyle = L < 0.04 ? "#47308F" : them ? (ring % 2 ? "#FF4B33" : "#FFC93C") : (ring % 2 ? "#2FE0C2" : "#FFF4D6");
-      g.fill();
-    }
-  }
-  requestAnimationFrame(draw);
-}
-requestAnimationFrame(draw);
-
-/* ================= sample preview (no server, no sound) ================= */
-let demoTimers = [];
-function demoOff() { demoTimers.forEach(clearTimeout); demoTimers = []; demoPulse = 0; }
-$("demo").addEventListener("click", () => {
-  if (live) stop(); demoOff(); ui = blank(); pickedCat = null; $("said").innerHTML = ""; lastLine = null;
-  setStatus("Sample preview. Nothing here is connected to the attendant.");
-  const I = (id, name, d, price) => ({ itemId: id, name, description: d, price });
-  const menu = {
-    categories: [{ categoryId: "burgers", name: "Burgers", sortOrder: 1 }, { categoryId: "sides", name: "Sides", sortOrder: 2 }, { categoryId: "drinks", name: "Drinks", sortOrder: 3 }],
-    menuItems: {
-      burgers: [I("classic-burger", "Classic Burger", "Beef, lettuce, tomato, house sauce", 799), I("cheeseburger", "Cheeseburger", "Classic with melted American cheese", 899), I("veggie-burger", "Veggie Burger", "Grilled veggie patty, all the fixings", 849)],
-      sides: [I("french-fries", "French Fries", "Crisp, salted, hot", 349), I("onion-rings", "Onion Rings", "Beer-battered rings", 399)],
-      drinks: [I("cola", "Cola", "Ice cold", 199), I("vanilla-milkshake", "Vanilla Milkshake", "Thick and creamy", 499)]
-    }
-  };
-  const steps = [
-    [0,    () => { applyState(menu); say("assistant", "Welcome to our drive-thru! How can I help you?"); }],
-    [2200, () => { say("user", "What's on the cheeseburger?"); applyState({ highlightedItem: "cheeseburger" }); }],
-    [4600, () => { say("user", "I'll take one, plus fries."); applyState({ highlightedItem: null, highlightedCategory: "sides",
-                   orderItems: [{ name: "Cheeseburger", quantity: 1, unitPrice: 899 }, { name: "French Fries", quantity: 1, unitPrice: 349 }], orderTotal: 1248 }); }],
-    [7000, () => { say("user", "And build me a burger."); applyState({ highlightedCategory: "burgers", burgerBuilder: { active: true, patty: null, toppings: [], sauces: [], price: 899 } }); }],
-    [8800, () => applyState({ burgerBuilder: { active: true, patty: "beef patty", toppings: ["bacon"], sauces: [], price: 1049 } })],
-    [10400,() => applyState({ burgerBuilder: { active: true, patty: "beef patty", toppings: ["bacon", "pickles"], sauces: ["bbq sauce"], price: 1049 } })],
-    [12600,() => applyState({ burgerBuilder: null, orderItems: [{ name: "Cheeseburger", quantity: 1, unitPrice: 899 }, { name: "French Fries", quantity: 1, unitPrice: 349 },
-                   { name: "Custom Burger", quantity: 1, unitPrice: 1049, specialInstructions: "beef, bacon, pickles, bbq sauce" }], orderTotal: 2297 })],
-    [14600,() => { say("assistant", "You're all set. Pull forward!"); applyState({ orderConfirmed: true, orderNumber: "#4821" }); demoPulse = 0; }]
-  ];
-  steps.forEach(([ms, fn]) => demoTimers.push(setTimeout(() => { demoPulse = 0.5; fn(); }, ms)));
-});
+/* voice level: the ring and bars move with whoever is speaking */
+const tmp = new Uint8Array(512), bars = [...document.querySelectorAll(".bars i")], calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function level(an) { if (!an) return 0; an.getByteTimeDomainData(tmp); let s = 0; for (let i = 0; i < tmp.length; i++) { const v = (tmp[i] - 128) / 128; s += v * v; } return Math.min(1, Math.sqrt(s / tmp.length) * 4); }
+let smooth = 0;
+(function tick(now) {
+  if (live && !calm) { smooth += (Math.max(level(micAn), level(outAn)) - smooth) * 0.35; $("talk").style.setProperty("--lvl", smooth.toFixed(3));
+    bars.forEach((b, n) => b.style.height = (8 + smooth * 34 * (0.55 + 0.45 * Math.sin(now / 130 + n * 1.3))).toFixed(0) + "px"); }
+  requestAnimationFrame(tick);
+})(0);
 
 render();
 </script>
