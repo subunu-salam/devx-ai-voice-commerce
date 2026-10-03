@@ -40,6 +40,11 @@ def get_table():
     return _table
 
 
+def _sold_out(item: dict) -> bool:
+    """Items are available unless the admin panel has marked them sold out."""
+    return item.get("available") is False
+
+
 @tool
 def get_categories(tool_context=None) -> dict:
     """Returns all menu categories."""
@@ -63,13 +68,15 @@ def get_categories(tool_context=None) -> dict:
 
 @tool
 def get_items_by_category(category_id: str) -> dict:
-    """Returns all menu items in a given category."""
+    """Returns all available menu items in a given category."""
     response = get_table().query(
         KeyConditionExpression="PK = :pk AND begins_with(SK, :sk_prefix)",
         ExpressionAttributeValues={":pk": f"CATEGORY#{category_id}", ":sk_prefix": "ITEM#"},
     )
     items = []
     for item in response.get("Items", []):
+        if _sold_out(item):
+            continue
         sk = item.get("SK", "")
         item_id = sk.replace("ITEM#", "") if sk.startswith("ITEM#") else sk
         items.append({
@@ -104,6 +111,7 @@ def get_item_details(item_id: str, category_id: str) -> dict:
         "category": item.get("category", ""),
         "featured": bool(item.get("featured", False)),
         "sortOrder": int(item.get("sortOrder", 0)),
+        "available": not _sold_out(item),
     }
     return _sanitize_result(result)
 
@@ -117,6 +125,8 @@ def get_recommendations(tool_context=None) -> dict:
     )
     items = []
     for item in response.get("Items", []):
+        if _sold_out(item):
+            continue
         pk = item.get("PK", "")
         sk = item.get("SK", "")
         category_id = pk.replace("CATEGORY#", "") if pk.startswith("CATEGORY#") else pk
