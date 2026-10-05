@@ -324,7 +324,8 @@ def list_orders(location: Optional[str] = None, user: dict = Depends(need("order
     scope = _scope(user, location)
     rows = [r for r in _scan_all(orders_table) if _in_scope(r, scope)]
     for row in rows:
-        row.setdefault("status", "received")
+        if row.get("status") not in STATUSES:   # older voice orders were saved as "confirmed"
+            row["status"] = "received"
         row.setdefault("locationId", DEFAULT_LOCATION)
         row.setdefault("paymentStatus", "unpaid")
     rows.sort(key=lambda r: str(r.get("createdAt", "")), reverse=True)

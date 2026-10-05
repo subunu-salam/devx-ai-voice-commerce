@@ -6,6 +6,7 @@
 import json
 import logging
 import os
+import re
 from decimal import Decimal
 
 import boto3
@@ -57,6 +58,24 @@ else:
         pass
 
 logger = logging.getLogger(__name__)
+
+
+def _spoken(amount: int) -> str:
+    """The amount exactly as the attendant should say it, so speech and screen always match."""
+    return f"{int(amount) / 100:.2f} dirhams"
+
+
+def _show_order_on_screen() -> dict:
+    """Push the real order and its total to the customer's screen; returns the summary."""
+    summary = _order_state.get_summary()
+    try:
+        current = get_ui_state()
+        current["orderItems"] = summary["items"]
+        current["orderTotal"] = summary["total"]
+        set_ui_state(current)
+    except Exception as e:
+        logger.warning("could not update the screen: %s", e)
+    return summary
 
 
 def _sanitize_result(result: dict) -> dict:
@@ -139,7 +158,9 @@ def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_inst
         "status": "added",
         "item": str(menu_item.get("name", "")),
         "quantity": quantity,
+        "itemPriceText": _spoken(int(menu_item.get("price", 0))),
         "total": summary["total"],
+        "totalText": _spoken(summary["total"]),
     })
 
 
@@ -148,30 +169,38 @@ def remove_from_order(item_id: str, quantity: int = 1) -> dict:
     """Removes a menu item from the current order."""
     if not _order_state.remove_item(item_id, quantity):
         return {"error": f"Item '{item_id}' is not in the current order."}
-    summary = _order_state.get_summary()
-    return _sanitize_result({"status": "removed", "item": item_id, "total": summary["total"], "itemCount": len(summary["items"])})
+    summary = _show_order_on_screen()
+    return _sanitize_result({"status": "removed", "item": item_id, "total": summary["total"], "totalText": _spoken(summary["total"]), "itemCount": len(summary["items"])})
 
 
 @tool
 def get_order_summary(tool_context=None) -> dict:
     """Returns the current order summary."""
-    summary = _order_state.get_summary()
+    summary = _show_order_on_screen()
     items_brief = [f"{i['name']} x{i['quantity']}" for i in summary["items"]]
-    return _sanitize_result({"items": items_brief, "total": summary["total"]})
+    return _sanitize_result({"items": items_brief, "total": summary["total"], "totalText": _spoken(summary["total"])})
 
 
 @tool
-def place_order(user_id: str = "guest") -> dict:
+def place_order(vehicle_number: str = "", user_id: str = "guest") -> dict:
     """Finalizes the order, persists to DynamoDB, returns order number.
-    
+
+    Ask the customer for their vehicle plate number as the LAST question, then call this.
+
     Args:
+        vehicle_number: The customer's vehicle plate number, e.g. "D 12345". Required: staff use it to bring the order to the right car.
         user_id: The customer identifier. Defaults to "guest".
     """
     if _order_state.is_empty():
         return {"error": "Cannot place an empty order."}
+    vehicle = re.sub(r"[^A-Za-z0-9 ]", " ", str(vehicle_number or "")).upper()
+    vehicle = re.sub(r"\s+", " ", vehicle).strip()[:20]
+    if len(vehicle.replace(" ", "")) < 2:
+        return {"error": "The vehicle plate number is missing. Ask the customer for their vehicle plate number, then call place_order again with vehicle_number."}
     order_record = _order_state.place_order(user_id)
+    order_record["vehicleNumber"] = vehicle          # staff serve the order to this car
     order_record["locationId"] = current_location()  # which store took the order
-    order_record.setdefault("status", "received")     # the admin panel moves it on from here
+    order_record["status"] = "received"              # first step on the kitchen display
     _orders_table.put_item(Item=order_record)
     note_order(order_record["orderId"], order_record["total"])
     logger.info(
@@ -188,6 +217,8 @@ def place_order(user_id: str = "guest") -> dict:
         current = get_ui_state()
         current["orderConfirmed"] = True
         current["orderNumber"] = order_record["orderId"]
+        current["orderTotal"] = order_record["total"]
+        current["vehicleNumber"] = vehicle
         current["burgerBuilder"] = None
         current["highlightedItem"] = None
         current["highlightedCategory"] = None
@@ -195,7 +226,8 @@ def place_order(user_id: str = "guest") -> dict:
     except Exception as e:
         logger.warning("place_order: failed to update UI: %s", e)
 
-    return _sanitize_result({"status": "confirmed", "orderId": order_record["orderId"], "total": order_record["total"]})
+    return _sanitize_result({"status": "confirmed", "orderId": order_record["orderId"], "vehicleNumber": vehicle,
+                             "total": order_record["total"], "totalText": _spoken(order_record["total"])})
 
 
 @tool
@@ -203,6 +235,7 @@ def cancel_order(tool_context=None) -> dict:
     """Clears all items from the current order."""
     logger.info("ORDER_CANCELLED: itemCount=%s", len(_order_state.items))
     _order_state.cancel()
+    _show_order_on_screen()
     return _sanitize_result({"status": "cancelled"})
 
 
@@ -333,5 +366,7 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
         "toppings": selected_toppings,
         "sauces": selected_sauces,
         "price": f"{CURRENCY} {total_price / 100:.2f}",
+        "priceText": _spoken(total_price),
         "total": summary["total"],
+        "totalText": _spoken(summary["total"]),
     })

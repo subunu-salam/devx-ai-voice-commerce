@@ -1,5 +1,5 @@
 // VoiceBite service worker. Network first, so a new deploy always shows up; the cache only covers a dropped connection.
-const CACHE = "voicebite-v1";
+const CACHE = "voicebite-v2";
 const SHELL = ["./", "manifest.json", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", event => {

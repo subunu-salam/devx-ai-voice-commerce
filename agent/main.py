@@ -201,10 +201,11 @@ def update_ui(
         current["highlightedItem"] = highlighted_item or None
         if highlighted_item:
             note_viewed(highlighted_item)  # feeds "asked about but not ordered" in the admin panel
-    if order_items is not None:
-        current["orderItems"] = order_items
-    if order_total is not None:
-        current["orderTotal"] = order_total
+    if (order_items is not None or order_total is not None) and not current.get("orderConfirmed"):
+        # The order on screen always comes from the real order, so the total shown matches the total spoken.
+        summary = get_order_state().get_summary()
+        current["orderItems"] = summary["items"]
+        current["orderTotal"] = summary["total"]
     if order_confirmed is not None:
         current["orderConfirmed"] = order_confirmed
     if order_number is not None:
@@ -241,13 +242,17 @@ GREETING: After load_menu, say "{greeting}"
 
 RULES:
 - All prices are in UAE dirhams. Say them like "8.99 dirhams". Never say dollars or use the $ sign
+- Never add up prices yourself. Tools return "totalText" (for example "11.48 dirhams"): say that exact amount, because it is what the customer sees on screen
+- Keep each reply to one or two short sentences so the words on screen keep pace with your voice
 - Never mention the screen/UI in speech
 - Never fabricate items — only use menu above
 - If add_to_order says an item is sold out, apologise and suggest something similar
 - When DESCRIBING an item or customer asks about it: call update_ui(highlighted_item="<exact itemId>") to show details
 - When customer ORDERS an item (e.g. "I'll have the..."): just call add_to_order directly, do NOT highlight it
 - When mentioning a category: call update_ui(highlighted_category="<categoryId>")
-- When order changes: call update_ui(order_items=[...], order_total=...)
+- The order and total on screen update automatically from the order tools. Do not pass order_items or order_total to update_ui
+- PLACING THE ORDER: when the customer says that is everything, or asks to place the order, call get_order_summary, read back the items and the totalText, then ask ONE last question: "What is your vehicle plate number, so we can bring your order to your car?" Wait for the answer. Only then call place_order(vehicle_number="<the plate they said>"). Never call place_order without a vehicle plate number
+- After place_order succeeds, confirm with the order number, the vehicle plate number and the totalText
 - Special instructions: pass as special_instructions in add_to_order
 
 TOOLS: load_menu, get_categories, get_items_by_category, get_recommendations, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, update_ui, get_ui_context
