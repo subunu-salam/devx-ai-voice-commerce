@@ -190,6 +190,7 @@ def show_products(category_id: str = "", item_ids: list = None) -> dict:
     current["highlightedItem"] = None
     current["highlightedCategory"] = category
     set_ui_state(current)
+    logger.info("show_products: category=%s cards=%s", category_id or "-", len(shown))
     return {"status": "shown", "cards": len(shown),
             "next": "Say one short sentence such as 'Here you go, which one would you like?'. Do not read the items or prices out."}
 
@@ -269,6 +270,43 @@ def update_ui(
     return {"status": "updated"}
 
 
+_SHOWING = re.compile(r"\bhere(?:'s| is| are| you go)\b|\btake a look\b|\bthese are\b|\bcheck out\b", re.IGNORECASE)
+
+
+def _cards_for_speech(text: str) -> None:
+    """Safety net: put a category's cards on screen when the attendant says "here are our desserts".
+
+    Voice models sometimes say the sentence and skip the show_products call that should go with it.
+    This runs on every line the attendant speaks and does nothing if those cards are already showing.
+    """
+    text = str(text or "")
+    if not _SHOWING.search(text):
+        return
+    current = get_ui_state()
+    menu_items = current.get("menuItems") or {}
+    if not menu_items or current.get("orderConfirmed"):
+        return
+    spoken = text.lower()
+    found = []
+    for cat in current.get("categories") or []:
+        cat_id, name = str(cat.get("categoryId", "")), str(cat.get("name", "")).lower()
+        words = {w for w in (cat_id.lower(), name, name.rstrip("s"), cat_id.lower().rstrip("s")) if len(w) > 2}
+        hits = [m.start() for w in words for m in re.finditer(r"\b" + re.escape(w) + r"\b", spoken)]
+        if hits and menu_items.get(cat_id):
+            found.append((min(hits), cat_id))
+    if not found:
+        return
+    cat_id = min(found)[1]   # the category named first
+    cards = _menu_ids(menu_items, cat_id)
+    if current.get("shownItems") == cards:
+        return
+    current["shownItems"] = cards
+    current["highlightedCategory"] = cat_id
+    current["highlightedItem"] = None
+    set_ui_state(current)
+    logger.info("cards shown from speech (no show_products call): category=%s cards=%s", cat_id, len(cards))
+
+
 SYSTEM_PROMPT_TEMPLATE = """\
 You are the warm, friendly voice attendant for VoiceBite, helping customers order food.
 
@@ -285,6 +323,7 @@ GREETING: The menu is already on the customer's screen. Your very first reply is
 Say the greeting ONCE only. Never repeat it later in the call, and never end later replies with "How can I help you?" or anything like it. After the greeting, answer what was asked or ask one specific question (for example "Anything to drink with that?").
 
 SHOW, DON'T LIST:
+- ALWAYS call show_products BEFORE you say "here are..." or name a category you are offering. Saying it without calling the tool leaves the customer looking at nothing
 - The customer has a screen. When they ask what you have, ask about a category ("do you have burgers?"), or want ideas, call show_products and then say ONE short sentence, like "Yes, here are our burgers. Which one would you like?"
 - NEVER read out a list of items, descriptions or prices. The cards on screen already show them. Name at most two items in one reply, and only when recommending
 - Whole category: show_products(category_id="burgers"). Popular picks or "what do you recommend": show_products(category_id="popular"). A custom set (spicy things, vegetarian things, two items to compare): show_products(item_ids=[...])
@@ -500,7 +539,7 @@ async def voice_chat(websocket: WebSocket) -> None:
         get_order_state().cancel()  # a new call never inherits the previous caller's unplaced items
         if len(tools) > 1:
             try:
-                _push_menu()  # menu goes on screen straight away, so the attendant greets once and has no tool call to make first
+                logger.info("menu preloaded: %s categories", len(_push_menu()))  # menu goes on screen straight away, so the attendant greets once and has no tool call to make first
             except Exception as menu_err:
                 logger.warning("Could not preload the menu: %s", menu_err)
         start_session(location)
@@ -513,6 +552,11 @@ async def voice_chat(websocket: WebSocket) -> None:
                     note_usage(data.get("inputTokens", 0), data.get("outputTokens", 0))
             except Exception:
                 pass  # usage tracking must never interrupt a call
+            try:
+                if data.get("type") == "bidi_transcript_stream" and data.get("role") == "assistant":
+                    _cards_for_speech(data.get("text") or data.get("current_transcript") or data.get("delta") or "")
+            except Exception as show_err:
+                logger.warning("Could not show cards from speech: %s", show_err)
             try:
                 await websocket.send_json(data)
             except (TypeError, ValueError):
