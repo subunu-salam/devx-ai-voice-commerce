@@ -1,12 +1,13 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
-"""Order management tools for the drive-thru voice ordering agent."""
+"""Order management tools for the VoiceBite voice ordering agent."""
 
 import json
 import logging
 import os
 import re
+import secrets
 from decimal import Decimal
 
 import boto3
@@ -201,6 +202,7 @@ def place_order(vehicle_number: str = "", user_id: str = "guest") -> dict:
     order_record["vehicleNumber"] = vehicle          # staff serve the order to this car
     order_record["locationId"] = current_location()  # which store took the order
     order_record["status"] = "received"              # first step on the kitchen display
+    order_record["trackToken"] = secrets.token_urlsafe(16)  # lets this customer's phone, and nobody else, follow the order
     _orders_table.put_item(Item=order_record)
     note_order(order_record["orderId"], order_record["total"])
     logger.info(
@@ -219,6 +221,8 @@ def place_order(vehicle_number: str = "", user_id: str = "guest") -> dict:
         current["orderNumber"] = order_record["orderId"]
         current["orderTotal"] = order_record["total"]
         current["vehicleNumber"] = vehicle
+        current["trackToken"] = order_record["trackToken"]
+        current["shownItems"] = []
         current["burgerBuilder"] = None
         current["highlightedItem"] = None
         current["highlightedCategory"] = None

@@ -253,6 +253,10 @@ tr.click:hover td{background:#F3F7EE}
 .name .wv{color:#fff} .name .wb{color:var(--tomato)}
 .plate{display:inline-block; background:var(--text); color:#fff; border-radius:7px; padding:2px 9px; font-weight:600; letter-spacing:.06em; font-size:.86rem; white-space:nowrap}
 .ticket .plate{margin:6px 0 2px; font-size:1rem; padding:3px 11px}
+.arr{display:inline-block; border-radius:8px; padding:3px 10px; font-weight:600; font-size:.9rem; background:var(--line); white-space:nowrap}
+.arr.arriving{background:#FFE08A} .arr.arrived{background:var(--ok); color:#fff}
+.ticket .arr{display:block; width:fit-content; margin:6px 0 2px; font-size:1rem; padding:5px 12px}
+.ticket.here{box-shadow:0 0 0 3px var(--ok)}
 @media (max-width:900px){ .side{position:fixed; height:auto; max-height:none} .side nav{flex:1 1 auto} }
 @media print{ body *{visibility:hidden} .receipt,.receipt *{visibility:visible} .receipt{position:absolute; inset:0 auto auto 0; width:80mm; border-radius:0} }
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
@@ -554,23 +558,38 @@ ACT.closeStale = async () => { if (!confirm(`Cancel ${S.stale.length} orders tha
   await attempt(async () => { for (const id of S.stale) await api("/orders/" + encodeURIComponent(id), "PATCH", { status: "cancelled" }); await show("today"); }, "Old orders cancelled."); };
 
 /* ================= kitchen display ================= */
+/* Where the customer is, as sent by their phone: "on_the_way" (with minutes and distance), "arriving" (about 5 minutes), "arrived". */
+const farText = m => m >= 1000 ? (m / 1000).toFixed(1) + " km" : Math.max(10, Math.round(m / 10) * 10) + " m";
+function arrText(o) {
+  if (o.arrivalState === "arrived") return "Customer is here";
+  const since = (Date.now() - ts(o.arrivalUpdatedAt)) / 60000, left = o.etaMinutes == null ? null : Math.max(1, Math.round(num(o.etaMinutes) - (isNaN(since) ? 0 : since)));   // counts down between updates
+  const parts = [left == null ? (o.arrivalState === "arriving" ? "About 5 min away" : "On the way") : "About " + left + " min away"];
+  if (o.distanceM != null && num(o.distanceM) > 0 && since < 3) parts.push(farText(num(o.distanceM)));
+  return parts.join(", ");
+}
+const arrHtml = o => o.arrivalState && active(o) ? `<span class="arr ${esc(o.arrivalState)}" ${tip(o.arrivalSource === "gps" ? "From the customer's phone location" : "The customer tapped this in the app")}>${esc(arrText(o))}</span>` : "";
+const arrKey = o => [o.orderId, o.status, o.arrivalState || "", o.etaMinutes ?? "", o.distanceM ?? ""];
 function kdsHtml() {
   const st = S.station || "all", lanes = [["received", "New", "Start preparing", "preparing"], ["preparing", "Preparing", "Mark ready", "ready"], ["ready", "Ready for pickup", "Handed over", "completed"]];
   const stations = ["all", ...new Set(S.orders.filter(active).flatMap(o => (o.items || []).map(i => stationOf(i.itemId))))];
   return `<div class="tools"><div class="tabs">${stations.map(s => `<button data-act="kdsStation" data-station="${s}" aria-pressed="${s === st}">${s === "all" ? "All stations" : s[0].toUpperCase() + s.slice(1)}</button>`).join("")}</div>
     <span class="grow"></span><span class="soft small">Target ${sla()} min. Updates every 6 seconds.</span><button class="btn ghost sm" data-act="kdsFull">Full screen</button></div>
     <div class="kds">${lanes.map(([status, label, next, to]) => { const list = S.orders.filter(o => o.status === status).filter(o => st === "all" || (o.items || []).some(i => stationOf(i.itemId) === st)).sort((a, b) => ts(a.createdAt) - ts(b.createdAt));
-      return `<section class="lane"><h2><span>${label}</span><span class="soft">${list.length}</span></h2>${list.map(o => `<article class="ticket ${status}" data-ts="${ts(o.createdAt)}" data-status="${status}">
-        <header><h3>${esc(o.orderId)}</h3><span class="age"></span></header>${o.vehicleNumber ? `<p class="plate" ${tip("Vehicle plate")}>${esc(o.vehicleNumber)}</p>` : ""}
+      return `<section class="lane"><h2><span>${label}</span><span class="soft">${list.length}</span></h2>${list.map(o => `<article class="ticket ${status} ${o.arrivalState === "arrived" ? "here" : ""}" data-ts="${ts(o.createdAt)}" data-status="${status}" data-id="${esc(o.orderId)}">
+        <header><h3>${esc(o.orderId)}</h3><span class="age"></span></header>${o.vehicleNumber ? `<p class="plate" ${tip("Vehicle plate")}>${esc(o.vehicleNumber)}</p>` : ""}${arrHtml(o)}
         <ul>${(o.items || []).filter(i => st === "all" || stationOf(i.itemId) === st).map(i => `<li>${esc(i.quantity || 1)}× ${esc(i.name)}${i.specialInstructions ? `<small>${esc(i.specialInstructions)}</small>` : ""}</li>`).join("")}</ul>
         ${can("orders.status") ? `<button class="btn ${status === "received" ? "hot" : ""}" data-act="kdsNext" data-id="${esc(o.orderId)}" data-to="${to}">${next}</button>` : ""}</article>`).join("") || `<p class="empty">None</p>`}</section>`; }).join("")}</div>`;
 }
-function kdsTick() { document.querySelectorAll(".ticket").forEach(t => { const s = (Date.now() - num(t.dataset.ts)) / 1000; t.querySelector(".age").textContent = span(s); t.classList.toggle("late", t.dataset.status !== "ready" && s / 60 > sla()); }); }
+function kdsTick() { document.querySelectorAll(".ticket").forEach(t => { const s = (Date.now() - num(t.dataset.ts)) / 1000; t.querySelector(".age").textContent = span(s); t.classList.toggle("late", t.dataset.status !== "ready" && s / 60 > sla());
+  const a = t.querySelector(".arr"), o = a && S.orders.find(x => x.orderId === t.dataset.id); if (o) a.textContent = arrText(o); }); }
 function beep() { try { const c = S.audio || (S.audio = new AudioContext()), o = c.createOscillator(), g = c.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(.15, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .5); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + .5); } catch (e) {} }
 RENDER.kitchen = async () => {
   await menuData(); S.orders = (await api("/orders" + bq())).orders; S.seen = new Set(S.orders.map(o => o.orderId));
-  timers.push(setInterval(kdsTick, 1000), setInterval(async () => { try { const fresh = (await api("/orders" + bq())).orders; if (fresh.some(o => !S.seen.has(o.orderId))) beep(); fresh.forEach(o => S.seen.add(o.orderId));
-    if (JSON.stringify(fresh.map(o => [o.orderId, o.status])) !== JSON.stringify(S.orders.map(o => [o.orderId, o.status]))) { S.orders = fresh; $("view").innerHTML = kdsHtml(); kdsTick(); } } catch (e) {} }, 6000));
+  timers.push(setInterval(kdsTick, 1000), setInterval(async () => { try { const fresh = (await api("/orders" + bq())).orders; const wasHere = new Set(S.orders.filter(o => o.arrivalState === "arrived").map(o => o.orderId)), near = new Set(S.orders.filter(o => o.arrivalState === "arriving").map(o => o.orderId));
+    if (fresh.some(o => !S.seen.has(o.orderId))) beep(); fresh.forEach(o => S.seen.add(o.orderId));
+    const news = fresh.filter(o => active(o) && ((o.arrivalState === "arrived" && !wasHere.has(o.orderId)) || (o.arrivalState === "arriving" && !near.has(o.orderId))));
+    if (news.length) { beep(); setTimeout(beep, 350); say(news.map(o => `Order ${o.orderId}${o.vehicleNumber ? " (" + o.vehicleNumber + ")" : ""}: ${o.arrivalState === "arrived" ? "customer is here" : "about 5 minutes away"}`).join(". ") + "."); }
+    if (JSON.stringify(fresh.map(arrKey)) !== JSON.stringify(S.orders.map(arrKey))) { S.orders = fresh; $("view").innerHTML = kdsHtml(); kdsTick(); } } catch (e) {} }, 6000));
   setTimeout(kdsTick, 0); return kdsHtml();
 };
 ACT.kdsStation = d => { S.station = d.station; $("view").innerHTML = kdsHtml(); kdsTick(); };
@@ -583,7 +602,7 @@ RENDER.orders = async () => {
   S.orders = (await api("/orders" + bq())).orders; const f = S.orderFilter || "active", list = S.orders.filter(o => f === "all" || active(o));
   return `<div class="tools"><div class="tabs"><button data-act="orderFilter" data-f="active" aria-pressed="${f === "active"}">Active</button><button data-act="orderFilter" data-f="all" aria-pressed="${f === "all"}">All</button></div>
     <span class="grow"></span><button class="btn ghost sm" data-act="ordersCsv">Export CSV</button></div>` +
-  table([{ label: "Order", cell: o => `<b style="font-weight:500">${esc(o.orderId)}</b>` }, { label: "Vehicle", cell: o => o.vehicleNumber ? `<span class="plate">${esc(o.vehicleNumber)}</span>` : "" }, { label: "Placed", cell: o => esc(when(o.createdAt)) }, { label: "Branch", cell: o => esc(branchName(o.locationId)) },
+  table([{ label: "Order", cell: o => `<b style="font-weight:500">${esc(o.orderId)}</b>` }, { label: "Vehicle", cell: o => (o.vehicleNumber ? `<span class="plate">${esc(o.vehicleNumber)}</span> ` : "") + arrHtml(o) }, { label: "Placed", cell: o => esc(when(o.createdAt)) }, { label: "Branch", cell: o => esc(branchName(o.locationId)) },
     { label: "Items", cell: o => `<span class="small">${esc((o.items || []).map(i => (i.quantity || 1) + "× " + i.name).join(", "))}</span>` }, { label: "Total", cls: "r", cell: o => money(o.total) },
     { label: "Status", cell: o => pill(o.status, STATUS_TONE[o.status]) }, { label: "Payment", cell: o => pill(PAY_LABEL[o.paymentStatus] || o.paymentStatus, PAY_TONE[o.paymentStatus]) }],
     list, f === "all" ? "No orders yet. Orders placed by voice appear here." : "No active orders.", o => `class="click" data-act="orderOpen" data-id="${esc(o.orderId)}"`);
@@ -600,6 +619,7 @@ function receiptHtml(o) { const b = me.business, v = vatSplit(num(o.total));
     <p class="small" style="margin-top:8px">${esc(PAY_LABEL[o.paymentStatus] || "")}${o.paymentMethod ? " by " + esc(o.paymentMethod) + ", " + esc(when(o.paidAt)) : ""}</p></div>`; }
 ACT.orderOpen = d => { const o = S.orders.find(x => x.orderId === d.id); if (!o) return; S.order = o; const paid = ["captured", "partially_refunded"].includes(o.paymentStatus);
   openSheet("Order " + o.orderId, `<div class="row" style="margin:6px 0 12px">${pill(o.status, STATUS_TONE[o.status])}${pill(PAY_LABEL[o.paymentStatus] || o.paymentStatus, PAY_TONE[o.paymentStatus])}<span class="soft small">${esc(when(o.createdAt))}</span></div>
+    ${o.arrivalState ? `<p style="margin:0 0 12px">${arrHtml(o) || esc(arrText(o))} ${o.customerLat != null && active(o) ? `<a class="small" href="https://www.google.com/maps?q=${encodeURIComponent(o.customerLat + "," + o.customerLng)}" target="_blank" rel="noopener">See on map</a>` : ""}</p>` : ""}
     ${receiptHtml(o)}<p class="sheetmsg" id="sheetMsg" role="alert"></p>
     ${can("orders.status") ? `<label for="oStatus">Status</label><select id="oStatus" data-change="orderStatus">${me.statuses.map(s => `<option ${s === o.status ? "selected" : ""}>${s}</option>`).join("")}</select>
       ${o.paymentStatus === "unpaid" && o.status !== "cancelled" ? `<label>Take payment at the window</label><div class="row"><button class="btn" data-act="orderPay" data-m="cash">Paid in cash</button><button class="btn" data-act="orderPay" data-m="card">Paid by card</button></div>` : ""}
@@ -823,7 +843,9 @@ ACT.staffEdit = d => { const s = S.staff.find(x => x.username === d.id); form("E
 
 /* ================= settings ================= */
 const SET_BUSINESS = [{ key: "legalName", label: "Legal business name" }, { key: "trn", label: "Tax registration number (TRN)", hint: "15 digits. Shown on tax invoices." }, { key: "address", label: "Address", type: "textarea" }, { key: "currency", label: "Currency" },
-  { key: "vatRate", label: "VAT rate %", type: "number" }, { key: "pricesIncludeVat", label: "Menu prices include VAT", type: "checkbox" }, { key: "prepSlaMinutes", label: "Preparation target in minutes", type: "number", hint: "Orders older than this are flagged on the kitchen display." }];
+  { key: "vatRate", label: "VAT rate %", type: "number" }, { key: "pricesIncludeVat", label: "Menu prices include VAT", type: "checkbox" }, { key: "prepSlaMinutes", label: "Preparation target in minutes", type: "number", hint: "Orders older than this are flagged on the kitchen display." },
+  { key: "storeLat", label: "Restaurant latitude", type: "number", hint: "For customer distance and arrival time. In Google Maps, right-click your restaurant and click the two numbers to copy them. This is the first number, e.g. 25.2048" },
+  { key: "storeLng", label: "Restaurant longitude", type: "number", hint: "The second number, e.g. 55.2708" }];
 const SET_VOICE = [{ key: "greeting", label: "Greeting", req: true }, { key: "voice", label: "Voice", type: "select", options: [] }, { key: "upsell", label: "Upsell rule", type: "textarea" }, { key: "hoursEnabled", label: "Only take orders during opening hours", type: "checkbox" },
   { key: "openTime", label: "Opens", type: "time" }, { key: "closeTime", label: "Closes", type: "time" }, { key: "utcOffset", label: "Time zone offset", hint: "UAE is +04:00" }, { key: "closedMessage", label: "Message when closed", req: true },
   { key: "accessCode", label: "Access code for the ordering app", hint: "Leave empty for open access." }, { key: "costPer1kInput", label: "Voice input rate per 1,000 tokens", type: "number" }, { key: "costPer1kOutput", label: "Voice output rate per 1,000 tokens", type: "number" }];
@@ -835,7 +857,8 @@ RENDER.settings = async () => { S.set = await api("/settings"); SET_VOICE[1].opt
     table([{ label: "Branch", cell: l => `<b style="font-weight:500">${esc(l.name)}</b>` }, { label: "Ordering link for QR codes and signage", cell: l => `<a href="${esc(site)}?location=${esc(l.locationId)}" target="_blank" rel="noopener">${esc(site)}?location=${esc(l.locationId)}</a>` },
       { label: "", cls: "a", cell: l => `<button class="btn ghost sm" data-act="branchEdit" data-id="${esc(l.locationId)}">Rename</button>` }], me.locations, "") +
     `<p class="soft small">VAT and receipt settings should be checked with your tax advisor before going live.</p>`; };
-const setSave = async v => { const all = { ...S.set, ...v }; ["costPer1kInput", "costPer1kOutput", "vatRate"].forEach(k => all[k] = parseFloat(all[k]) || 0); all.prepSlaMinutes = Math.round(num(all.prepSlaMinutes)) || 8; await api("/settings", "PUT", all); me = await api("/me"); };
+const setSave = async v => { const all = { ...S.set, ...v }; ["costPer1kInput", "costPer1kOutput", "vatRate"].forEach(k => all[k] = parseFloat(all[k]) || 0); all.prepSlaMinutes = Math.round(num(all.prepSlaMinutes)) || 8;
+  ["storeLat", "storeLng"].forEach(k => { const n = parseFloat(all[k]); all[k] = n || null; });   /* empty or 0 means not set */ await api("/settings", "PUT", all); me = await api("/me"); };
 ACT.setEdit = d => form(d.g === "business" ? "Business and tax" : "Voice attendant", d.g === "business" ? SET_BUSINESS : SET_VOICE, S.set, setSave);
 const branchDone = r => { me.locations = r.locations; };
 ACT.branchNew = () => form("Add branch", [{ key: "name", label: "Branch name", req: true }], {}, async v => branchDone(await api("/locations/" + slug(v.name), "PUT", v)));

@@ -157,3 +157,10 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 ## License
 
 This library is licensed under the MIT-0 License. See the LICENSE file.
+## Arrival updates ("5 minutes away" / "I'm here")
+
+After an order is placed, the ordering app (`crazy-frontend/index.html`) shows two buttons, **I'm 5 minutes away** and **I'm here**. Each tap is stored on the order and appears on the kitchen display in the console, with a sound.
+
+Customers can also choose to share their phone's location. The app then works out the distance to the restaurant and a rough driving time by itself (straight-line distance × 1.3 at 30 km/h; no maps service or API key) and sends "on the way", "5 minutes away" and "I'm here" automatically. This needs the restaurant's coordinates: **Console → Settings → Business and tax → Restaurant latitude / longitude**. Until they are entered, only the buttons are shown.
+
+The routes are in `agent/arrival.py` (`GET /orders/{id}/track`, `POST /orders/{id}/arrival`). They are public, so every order gets a private tracking key when it is placed. If the ordering app is served from a different domain than the console, add that domain to the `ADMIN_ORIGINS` environment variable.
