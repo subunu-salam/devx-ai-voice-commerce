@@ -21,6 +21,7 @@ _ui_state = {
     "orderConfirmed": False,
     "orderNumber": None,
     "burgerBuilder": None,
+    "shownItems": [],
 }
 
 _event_loop = None
@@ -96,4 +97,5 @@ def reset_ui_state():
         "orderConfirmed": False,
         "orderNumber": None,
         "burgerBuilder": None,
+    "shownItems": [],
     }

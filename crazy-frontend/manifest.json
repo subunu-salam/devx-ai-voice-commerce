@@ -1,7 +1,7 @@
 {
   "name": "VoiceBite",
   "short_name": "VoiceBite",
-  "description": "Order by voice at the drive-through.",
+  "description": "Order by voice with VoiceBite.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

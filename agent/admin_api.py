@@ -26,7 +26,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 try:
     from agent.shop_config import (
@@ -328,6 +328,7 @@ def list_orders(location: Optional[str] = None, user: dict = Depends(need("order
             row["status"] = "received"
         row.setdefault("locationId", DEFAULT_LOCATION)
         row.setdefault("paymentStatus", "unpaid")
+        row.pop("trackToken", None)   # the customer's private tracking key stays between their phone and the server
     rows.sort(key=lambda r: str(r.get("createdAt", "")), reverse=True)
     return {"orders": rows[:300]}
 
@@ -758,6 +759,13 @@ class SettingsIn(BaseModel):
     vatRate: float = Field(default=5, ge=0, le=100)
     pricesIncludeVat: bool = True
     prepSlaMinutes: int = Field(default=8, ge=1, le=240)
+    storeLat: Optional[float] = Field(default=None, ge=-90, le=90)
+    storeLng: Optional[float] = Field(default=None, ge=-180, le=180)
+
+    @field_validator("storeLat", "storeLng", mode="before")
+    @classmethod
+    def _blank_is_unset(cls, value):
+        return None if isinstance(value, str) and not value.strip() else value
 
 
 @router.get("/settings", dependencies=[Depends(need("settings.manage"))])
@@ -780,6 +788,10 @@ def save_settings(body: SettingsIn, user: dict = Depends(need("settings.manage")
     value = body.model_dump()
     for key in ("costPer1kInput", "costPer1kOutput", "vatRate"):   # stored as text: the database rejects Python floats
         value[key] = repr(value[key])
+    for key in ("storeLat", "storeLng"):
+        value[key] = "" if value[key] is None else repr(value[key])
+    if bool(value["storeLat"]) != bool(value["storeLng"]):
+        raise HTTPException(400, "Enter both the latitude and the longitude of the restaurant, or leave both empty.")
     put_config("SETTINGS", value)
     audit(user, "settings_saved")
     return value

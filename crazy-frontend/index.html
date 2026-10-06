@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="VoiceBite">
-<meta name="description" content="Order by voice at the drive-through.">
+<meta name="description" content="Order by voice with VoiceBite.">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -311,6 +311,39 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 .caps li:empty{display:none}
 .plate{display:inline-block; margin-top:10px; background:#fff; color:var(--text); border-radius:8px; padding:4px 11px; font-weight:600; letter-spacing:.04em}
 
+/* product cards in voice mode: the attendant shows them instead of reading the menu out */
+.orb{transition:width .4s var(--ease), height .4s var(--ease), margin .4s var(--ease)}
+.shelfwrap{width:100%; min-width:0; text-align:start; animation:rise .4s var(--ease)}
+.shelfhead{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin:0 2px 8px; font-size:.8rem; color:#B9CFC4}
+.shelfhead b{color:#fff; font-weight:500; font-size:.98rem}
+.shelf{display:flex; gap:10px; overflow-x:auto; padding:2px 0 4px; scroll-snap-type:x proximity; scrollbar-width:none}
+.shelf::-webkit-scrollbar{display:none}
+.shelf .card{width:148px; background:var(--sheet); color:var(--text); border-radius:20px; padding:8px 8px 10px; transition:background .4s}
+.shelf .card .pic{height:96px; border-radius:14px}
+.shelf .card h3{font-size:.88rem; margin-top:7px; padding:0 2px}
+.shelf .cardrow{padding:0 2px} .shelf .price{white-space:nowrap; font-size:.9rem}
+.shelf .card.lit{background:var(--citron)}
+.voice.shelf-on .vmid{align-content:start; gap:12px}
+.voice.shelf-on .orb{width:64px; height:64px; margin:12px 0 6px}
+.voice.shelf-on .orb::before{inset:-7px} .voice.shelf-on .orb::after{inset:-16px}
+.voice.shelf-on .orb .bite{-webkit-mask:radial-gradient(circle 16px at 86% 13%,#0000 98%,#000); mask:radial-gradient(circle 16px at 86% 13%,#0000 98%,#000)}
+.voice.shelf-on .orb .bars{width:28px; height:26px} .voice.shelf-on .orb .bars i{width:4px; border-radius:2px}
+.voice.shelf-on .caps li:nth-last-child(n+3){display:none}
+
+/* "5 minutes away" and "I'm here" on the placed order */
+.arrive{padding:16px}
+.arrive h2{font-size:1.05rem; font-weight:600}
+.arrive .vat{margin-top:4px}
+.arrbtns{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px}
+.abtn{border:0; border-radius:18px; padding:14px 10px; font-weight:500; line-height:1.2; background:var(--citron); color:var(--text); transition:transform .2s var(--ease)}
+.abtn.go{background:var(--tomato); color:#fff}
+.abtn:active{transform:scale(.97)}
+.abtn:disabled{background:var(--canvas); color:var(--soft); cursor:default; transform:none}
+.abtn.done:disabled{background:var(--ok); color:#fff}
+.georow{display:flex; align-items:center; gap:8px; margin-top:14px; font-size:.86rem; color:var(--soft)}
+.georow .dot{width:8px; height:8px; border-radius:50%; background:var(--ok); flex:none}
+.georow span{flex:1}
+
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
 </head>
@@ -409,6 +442,7 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
         <div class="orb in" id="orb"><span class="bite" aria-hidden="true"></span><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></div>
         <p class="vstate in" id="vstate" role="status"></p>
         <p class="vnote in" id="vnote" hidden></p>
+        <div class="shelfwrap" id="shelfWrap" hidden><div class="shelfhead"><b id="shelfTitle"></b><span data-t="shelfHint"></span></div><div class="shelf" id="shelf"></div></div>
         <div id="spot" style="width:100%"></div>
         <ul class="caps" id="caps" aria-live="polite"></ul>
       </div>
@@ -425,7 +459,7 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 <script>
 /* ================= configuration ================= */
 const DEFAULT_WS = "wss://devx-ai-voice-commerce.onrender.com/ws";
-const MERCHANT = { name: { en: "Demo Kitchen", ar: "مطبخ تجريبي" }, branch: { en: "Drive-through lane 1", ar: "مسار السيارات 1" } };
+const MERCHANT = { name: { en: "Demo Kitchen", ar: "مطبخ تجريبي" }, branch: { en: "Pickup lane 1", ar: "مسار الاستلام 1" } };
 const VAT_RATE = 5;   // UAE VAT; prices shown are VAT-inclusive
 const IMAGE_DIR = "images/";   // food photos sit beside this page; an icon is shown if one is missing
 const RATE = 16000, CHUNK = 4096;
@@ -476,6 +510,11 @@ const T = {
     orderNo: "Order", vehicle: "Vehicle", received: "Received", preparing: "Preparing", ready: "Ready for pickup", completed: "Completed", payAt: "Pay at the window when you collect.",
     preview: "Preview order, not sent to the kitchen", again: "Start a new order", aed: "AED", less: "One less", more: "One more",
     language: "Language", kitchen: "Kitchen", payment: "Payment", build: "Preview build", installTitle: "Install VoiceBite", installText: "Add it to your home screen for one-tap ordering.", install: "Install",
+    shelfHint: "Tap + or just say it", picks: "Our picks",
+    arriveTitle: "On your way?", arriveLead: "Tell the kitchen when you're close, so your food is hot when you pull up.", fiveBtn: "I'm 5 minutes away", hereBtn: "I'm here",
+    arrivingMsg: "Got it. The kitchen knows you're about 5 minutes away.", arrivedMsg: "The kitchen knows you're here. We'll bring your order out to your car.",
+    geoStart: "Update the kitchen automatically with my location", geoStop: "Stop", geoWait: "Finding your location…", geoOn: "Sharing your location with the kitchen", away: "away", about: "about", min: "min",
+    geoBlocked: "Location is blocked. Use the buttons instead.", noReach: "Couldn't reach the kitchen. Please try again.", cancelled: "This order was cancelled. Please speak to the staff.",
     iosHow: "Tap the Share button, then Add to Home Screen.", otherHow: "Open your browser menu and choose Install app or Add to Home screen.", installed: "VoiceBite is installed." },
   ar: { by: "مدعوم من", switchTo: "English", open: "مفتوح الآن", title: "اطلب بصوتك", lead: "تحدث مع الموظف أو اختر من القائمة.", start: "ابدأ التحدث", end: "إنهاء المحادثة",
     idle: "اضغط «إنهاء المحادثة» عند الانتهاء.", mic: "جارٍ طلب إذن الميكروفون…", calling: "جارٍ الاتصال بالموظف. قد يستغرق ذلك دقيقة.",
@@ -489,6 +528,11 @@ const T = {
     orderNo: "طلب", vehicle: "المركبة", received: "تم الاستلام", preparing: "قيد التحضير", ready: "جاهز للاستلام", completed: "مكتمل", payAt: "ادفع عند النافذة عند الاستلام.",
     preview: "طلب تجريبي، لم يُرسل إلى المطبخ", again: "طلب جديد", aed: "د.إ", less: "إنقاص واحد", more: "إضافة واحد",
     language: "اللغة", kitchen: "المطبخ", payment: "الدفع", build: "نسخة تجريبية", installTitle: "ثبّت VoiceBite", installText: "أضفه إلى الشاشة الرئيسية للطلب بضغطة واحدة.", install: "تثبيت",
+    shelfHint: "اضغط + أو قلها بصوتك", picks: "اختياراتنا",
+    arriveTitle: "في الطريق؟", arriveLead: "أخبر المطبخ عند اقترابك ليكون طلبك ساخناً عند وصولك.", fiveBtn: "سأصل خلال 5 دقائق", hereBtn: "لقد وصلت",
+    arrivingMsg: "تم. المطبخ يعلم أنك على بعد 5 دقائق تقريباً.", arrivedMsg: "المطبخ يعلم أنك وصلت. سنحضر طلبك إلى سيارتك.",
+    geoStart: "حدّث المطبخ تلقائياً باستخدام موقعي", geoStop: "إيقاف", geoWait: "جارٍ تحديد موقعك…", geoOn: "تتم مشاركة موقعك مع المطبخ", away: "", about: "حوالي", min: "دقيقة",
+    geoBlocked: "الموقع محظور. استخدم الأزرار بدلاً من ذلك.", noReach: "تعذر الوصول إلى المطبخ. حاول مرة أخرى.", cancelled: "تم إلغاء هذا الطلب. يرجى التحدث مع الموظفين.",
     iosHow: "اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية».", otherHow: "افتح قائمة المتصفح واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».", installed: "تم تثبيت VoiceBite." }
 };
 
@@ -504,7 +548,7 @@ let lang = params.get("lang") || store.get("lang") || ((navigator.language || ""
 if (!T[lang]) lang = "en";
 let view = "home", menu = BUILT_IN, activeCat = "popular", query = "", lit = null;
 let cart = [], agentCart = null, agentTotal = 0, builder = null, order = null;
-let touched = null, spotKey = "";
+let touched = null, spotKey = "", shown = [];   // shown: products the attendant has put on screen during the call
 let live = false, stateKey = "idle", stateBad = false, toastTimer = null, previewTimer = null, lastCount = 0;
 
 const t = k => T[lang][k];
@@ -572,8 +616,8 @@ const STEPS = ["received", "preparing", "ready", "completed"];
 function renderOrder() {
   const el = $("v-order");
   if (order) {
-    el.innerHTML = `<div class="totalblock"><span>${esc(t("orderNo"))}</span><p class="bigno">${esc(order.number)}</p>${order.vehicle ? `<span class="plate">${esc(t("vehicle"))} ${esc(order.vehicle)}</span> ` : ""}${order.preview ? `<span class="tag">${esc(t("preview"))}</span>` : ""}</div>
-      <div class="sheet"><ol class="steps">${STEPS.map((s, n) => `<li class="${n < order.status ? "done" : n === order.status ? "now" : ""}">${esc(t(s))}</li>`).join("")}</ol>
+    el.innerHTML = `<div class="totalblock"><span>${esc(t("orderNo"))}</span><p class="bigno">${esc(order.number)}</p>${order.vehicle ? `<span class="plate">${esc(t("vehicle"))} ${esc(order.vehicle)}</span> ` : ""}${order.preview ? `<span class="tag">${esc(t("preview"))}</span>` : ""}${order.cancelled ? `<span class="tag">${esc(t("cancelled"))}</span>` : ""}</div>
+      ${arrivalHtml()}<div class="sheet"><ol class="steps">${STEPS.map((s, n) => `<li class="${n < order.status ? "done" : n === order.status ? "now" : ""}">${esc(t(s))}</li>`).join("")}</ol>
       <p class="vat">${esc(t("payAt"))}</p><div class="sum"><span>${esc(t("total"))}</span><span>${money(order.total)}</span></div></div>
       <button class="outline" data-act="again">${esc(t("again"))}</button>`;
   } else {
@@ -603,11 +647,96 @@ function renderNav() {
 }
 function centerChip() { const chip = view === "menu" && document.querySelector('.chip[aria-pressed="true"]'); if (chip) chip.scrollIntoView({ block: "nearest", inline: "center" }); }
 function renderSpot() {
-  const key = String(lit) + JSON.stringify(builder) + lang; if (key === spotKey) return; spotKey = key;
-  const i = lit && findItem(lit);
+  const ids = shown.filter(findItem); if (lit && findItem(lit) && ids.length && !ids.includes(lit)) ids.unshift(lit);
+  const key = [lit, JSON.stringify(builder), lang, ids.join(), lines().map(l => l.itemId + ":" + (l.quantity || 1)).join()].join("|"); if (key === spotKey) return; spotKey = key;
+  const shelf = $("shelf"), same = shelf.dataset.ids === ids.join(), at = shelf.scrollLeft;
+  $("shelfWrap").hidden = !ids.length; $("voice").classList.toggle("shelf-on", !!ids.length);
+  if (ids.length) {
+    const first = findItem(ids[0]), oneCat = ids.every(id => findItem(id).cat === first.cat) && ids.length === (menu.menuItems[first.cat] || []).length, cat = oneCat && (menu.categories || []).find(c => c.categoryId === first.cat);
+    $("shelfTitle").textContent = cat ? catName(cat) : t("picks");
+    shelf.innerHTML = ids.map(findItem).map(i => `<article class="card ${i.itemId === lit ? "lit" : ""}" data-item="${esc(i.itemId)}"><div class="pic">${photo(i)}</div>
+      <h3>${esc(itemName(i))}</h3><div class="cardrow"><span class="price">${money(i.price)}</span>${buyControl(i)}</div></article>`).join("");
+    shelf.dataset.ids = ids.join();
+    if (same) shelf.scrollLeft = at; else shelf.scrollLeft = 0;
+    const litCard = lit && shelf.querySelector(".card.lit"); if (litCard) litCard.scrollIntoView({ block: "nearest", inline: "center" });
+  } else { shelf.innerHTML = ""; shelf.dataset.ids = ""; }
+  const i = !ids.length && lit && findItem(lit);
   $("spot").innerHTML = i ? `<div class="spot"><div class="pic">${photo(i)}</div><div><b>${esc(itemName(i))}</b><span class="price">${money(i.price)}</span></div></div>`
     : builder ? `<div class="spot"><div class="pic">🍔</div><div><b>${esc(t("building"))}</b><span>${esc([builder.patty, ...(builder.toppings || []), ...(builder.sauces || [])].filter(Boolean).join(", ") || "…")}</span></div></div>` : "";
 }
+
+/* ================= on the way: tell the kitchen how close you are ================= */
+const apiBase = () => wsUrl.replace(/^ws/, "http").replace(/\/ws(\?.*)?$/, "");
+const tracked = () => !!(order && !order.preview && order.token && order.track !== false);
+let geoWatch = null, geoFix = null, geoSentAt = 0, trackTimer = null;
+function saveOrder() { store.set("order", order && !order.preview ? JSON.stringify(order) : ""); }
+function farText(m) { return m >= 1000 ? (m / 1000).toFixed(1) + " km" : Math.max(10, Math.round(m / 10) * 10) + " m"; }
+function arrivalHtml() {
+  if (!tracked() || order.status >= 3 || order.cancelled) return "";
+  const a = order.arrival || "", here = a === "arrived", near = here || a === "arriving";
+  const geoRow = here || !order.store || !navigator.geolocation ? "" : geoWatch === null
+    ? `<div class="georow"><button class="link" data-arr="geoStart">${esc(t("geoStart"))}</button></div>`
+    : `<div class="georow"><i class="dot" aria-hidden="true"></i><span>${esc(geoFix ? `${t("geoOn")}: ${farText(geoFix.dist)} ${t("away")}, ${t("about")} ${geoFix.eta} ${t("min")}` : t("geoWait"))}</span><button class="link" data-arr="geoStop">${esc(t("geoStop"))}</button></div>`;
+  return `<div class="sheet arrive"><h2>${esc(t("arriveTitle"))}</h2><p class="vat" role="status">${esc(here ? t("arrivedMsg") : near ? t("arrivingMsg") : t("arriveLead"))}</p>
+    <div class="arrbtns"><button class="abtn ${near ? "done" : ""}" data-arr="arriving" ${near ? "disabled" : ""}>${near ? "✓ " : ""}${esc(t("fiveBtn"))}</button>
+    <button class="abtn go ${here ? "done" : ""}" data-arr="arrived" ${here ? "disabled" : ""}>${here ? "✓ " : ""}${esc(t("hereBtn"))}</button></div>${geoRow}</div>`;
+}
+function applyTrack(r) {   // the kitchen's view of the order, from the server
+  if (!order || !r) return;
+  const before = JSON.stringify(order), step = STEPS.indexOf(r.status);
+  if (step >= 0) order.status = Math.max(order.status, step);
+  order.cancelled = r.status === "cancelled"; order.arrival = r.arrivalState || order.arrival || ""; order.store = r.store || null;
+  if (order.status >= 3 || order.cancelled || order.arrival === "arrived") stopGeo();
+  if (JSON.stringify(order) !== before) { saveOrder(); renderOrder(); renderNav(); }
+}
+async function pollTrack() {
+  if (!tracked() || document.hidden) return;
+  try {
+    const r = await fetch(`${apiBase()}/orders/${encodeURIComponent(order.number)}/track?token=${encodeURIComponent(order.token)}`);
+    if (r.status === 404) { order.track = false; stopTracking(); return renderOrder(); }   // order no longer on the server, or an older kitchen without tracking
+    if (r.ok) applyTrack(await r.json());
+  } catch (e) {}
+  if (order && (order.status >= 3 || order.cancelled)) stopTracking();
+}
+function startTracking() { stopTracking(); if (!tracked()) return; pollTrack(); trackTimer = setInterval(pollTrack, 10000); }
+function stopTracking() { clearInterval(trackTimer); trackTimer = null; stopGeo(); }
+async function sendArrival(state, extra, quiet) {
+  if (!tracked()) return false;
+  try {
+    const r = await fetch(`${apiBase()}/orders/${encodeURIComponent(order.number)}/arrival`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: order.token, state, ...extra }) });
+    if (!r.ok) throw new Error(r.status);
+    applyTrack(await r.json()); return true;
+  } catch (e) { if (!quiet) toast(t("noReach")); return false; }
+}
+/* Straight-line distance from the phone to the restaurant, turned into a rough driving time. No maps service or key is involved. */
+const ROAD_FACTOR = 1.3, CITY_KMH = 30, HERE_METRES = 150, NEAR_MINUTES = 5;
+function metresBetween(a, b) { const R = 6371000, rad = x => x * Math.PI / 180, dLat = rad(b.lat - a.lat), dLng = rad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); }
+function onPosition(pos) {
+  if (!tracked() || !order.store || geoWatch === null) return;
+  const me = { lat: pos.coords.latitude, lng: pos.coords.longitude }, dist = Math.round(metresBetween(me, order.store));
+  const eta = Math.max(1, Math.round(dist * ROAD_FACTOR / (CITY_KMH * 1000 / 60)));
+  const sure = !(pos.coords.accuracy > 200);   // a vague fix must not announce an arrival
+  const state = dist <= HERE_METRES && sure ? "arrived" : eta <= NEAR_MINUTES ? "arriving" : "on_the_way";
+  const changed = !geoFix || geoFix.state !== state; geoFix = { dist, eta, state }; renderOrder();
+  if (!changed && Date.now() - geoSentAt < 20000) return;
+  geoSentAt = Date.now(); sendArrival(state, { etaMinutes: state === "arrived" ? 0 : eta, distanceM: dist, lat: me.lat, lng: me.lng, source: "gps" }, true);
+}
+function startGeo() {
+  if (!navigator.geolocation || geoWatch !== null) return;
+  geoFix = null; geoSentAt = 0;
+  geoWatch = navigator.geolocation.watchPosition(onPosition, err => { if (!err || err.code !== 1) return;   // a weak signal or a timeout passes; only a refusal ends sharing
+    stopGeo(); renderOrder(); toast(t("geoBlocked")); }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 });
+  renderOrder();
+}
+function stopGeo() { if (geoWatch !== null && navigator.geolocation) navigator.geolocation.clearWatch(geoWatch); geoWatch = null; geoFix = null; }
+function arrivalTap(what) {
+  if (what === "geoStart") return startGeo();
+  if (what === "geoStop") { stopGeo(); return renderOrder(); }
+  sendArrival(what, {}, false);
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) pollTrack(); });
+
 function renderCart() { renderHome(); renderMenu(); renderOrder(); renderNav(); renderSpot(); }
 function render() { renderChrome(); renderCart(); renderInstall(); }
 
@@ -651,11 +780,12 @@ function placeOrder() {
   cart = []; renderCart(); clearInterval(previewTimer);
   previewTimer = setInterval(() => { if (!order || !order.preview || order.status >= 3) return clearInterval(previewTimer); order.status++; renderOrder(); }, 6000);
 }
-function newOrder() { clearInterval(previewTimer); order = null; agentCart = null; agentTotal = 0; builder = null; renderCart(); go("menu"); }
+function newOrder() { clearInterval(previewTimer); stopTracking(); order = null; saveOrder(); agentCart = null; agentTotal = 0; builder = null; renderCart(); go("menu"); }
 function setLang(l) { lang = l; store.set("lang", l); render(); }
 
 $("app").addEventListener("click", e => {
   const add = e.target.closest("[data-add]"); if (add) return addItem(add.dataset.add, add);
+  const arr = e.target.closest("[data-arr]"); if (arr) return arrivalTap(arr.dataset.arr);
   const q = e.target.closest("[data-qty]"); if (q) return changeQty(q.dataset.id, Number(q.dataset.qty));
   const cat = e.target.closest("[data-cat]"); if (cat) { activeCat = cat.dataset.cat; query = ""; $("q").value = ""; lit = null; renderMenu(); go("menu"); return centerChip(); }
   const nav = e.target.closest("[data-go]"); if (nav) return go(nav.dataset.go);
@@ -745,17 +875,18 @@ function paceCaption(now, dt) {
   let end = cap.shown; while (end < cap.text.length && cap.text[end] !== " ") end++;   // whole words only
   cap.el.textContent = cap.text.slice(0, end);
 }
-const STATE_KEYS = ["categories", "menuItems", "highlightedCategory", "highlightedItem", "orderItems", "orderTotal", "orderConfirmed", "orderNumber", "burgerBuilder", "vehicleNumber"];
+const STATE_KEYS = ["categories", "menuItems", "highlightedCategory", "highlightedItem", "orderItems", "orderTotal", "orderConfirmed", "orderNumber", "burgerBuilder", "vehicleNumber", "shownItems", "trackToken"];
 function applyState(s) {
   if (!s || typeof s !== "object" || !STATE_KEYS.some(k => k in s)) return false;
   if (Array.isArray(s.categories) && s.categories.length && s.menuItems) menu = { categories: s.categories, menuItems: s.menuItems };
   if ("highlightedCategory" in s && s.highlightedCategory) { activeCat = s.highlightedCategory; query = ""; $("q").value = ""; lit = null; }
   if ("highlightedItem" in s) { lit = s.highlightedItem || null; const it = lit && findItem(lit); if (it) { activeCat = it.cat; query = ""; $("q").value = ""; } }
+  if (Array.isArray(s.shownItems)) shown = s.shownItems;
   if (Array.isArray(s.orderItems)) agentCart = s.orderItems;
   if ("orderTotal" in s) agentTotal = s.orderTotal || 0;
   if ("burgerBuilder" in s) builder = s.burgerBuilder && s.burgerBuilder.active ? s.burgerBuilder : null;
   let placed = false;
-  if (s.orderConfirmed && s.orderNumber && !(order && order.number === s.orderNumber)) { order = { number: s.orderNumber, status: 0, total: agentTotal || total(), preview: false, vehicle: s.vehicleNumber || "" }; cart = []; lit = null; placed = true; }
+  if (s.orderConfirmed && s.orderNumber && !(order && order.number === s.orderNumber)) { order = { number: s.orderNumber, status: 0, total: agentTotal || total(), preview: false, vehicle: s.vehicleNumber || "", token: s.trackToken || "", placedAt: Date.now() }; cart = []; lit = null; shown = []; placed = true; saveOrder(); startTracking(); }
   renderCart(); centerChip();
   if (placed) { closeVoice(); go("order"); }
   return true;
@@ -790,7 +921,7 @@ function stopPlayback() { playing.forEach(s => { try { s.stop(); } catch (e) {} 
 
 async function startCall() {
   if (live) return;
-  $("caps").innerHTML = ""; lastLine = null; cap = null; gotAnything = false; openedAt = 0; agentCart = null; agentTotal = 0; builder = null; lit = null; renderSpot();
+  $("caps").innerHTML = ""; lastLine = null; cap = null; gotAnything = false; openedAt = 0; agentCart = null; agentTotal = 0; builder = null; lit = null; shown = []; renderSpot();
   setState("mic");
   try { micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } }); }
   catch (e) { return setState("micBlocked", true); }
@@ -823,7 +954,7 @@ async function startCall() {
 }
 function endCall(key, bad) {
   if (agentCart && !order) cart = agentCart.map(l => ({ itemId: l.itemId, name: l.name, quantity: l.quantity || 1, unitPrice: l.unitPrice ?? l.price ?? 0, specialInstructions: l.specialInstructions }));
-  finishCaption(); live = false; openedAt = 0; agentCart = null; builder = null; lit = null;
+  finishCaption(); live = false; openedAt = 0; agentCart = null; builder = null; lit = null; shown = [];
   try { ws && ws.close(); } catch (e) {} ws = null; stopPlayback();
   try { proc && proc.disconnect(); } catch (e) {} proc = null;
   micStream && micStream.getTracks().forEach(tr => tr.stop()); micStream = null;
@@ -842,7 +973,11 @@ let smooth = 0, lastTick = 0;
   requestAnimationFrame(tick);
 })(0);
 
+try { const saved = JSON.parse(store.get("order") || "null");   // a placed order survives closing and reopening the app
+  if (saved && saved.number && saved.token && Date.now() - (saved.placedAt || 0) < 6 * 36e5 && saved.status < 3 && !saved.cancelled) { order = saved; view = "order"; $("v-home").hidden = true; $("v-order").hidden = false; }
+} catch (e) {}
 render();
+if (order) startTracking();
 requestAnimationFrame(renderNav);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderNav);
 </script>

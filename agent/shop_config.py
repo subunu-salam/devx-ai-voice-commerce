@@ -27,7 +27,7 @@ VOICES = ["tiffany", "matthew", "amy"]
 DEFAULT_LOCATION = "main"
 
 DEFAULT_SETTINGS = {
-    "greeting": "Welcome to our drive-thru! How can I help you?",
+    "greeting": "Welcome to VoiceBite! How can I help you?",
     "voice": "tiffany",
     "upsell": "Suggest combos naturally.",
     "hoursEnabled": False,
@@ -46,6 +46,9 @@ DEFAULT_SETTINGS = {
     "vatRate": "5",
     "pricesIncludeVat": True,
     "prepSlaMinutes": 8,
+    # Where the restaurant is, so the ordering app can work out how far away a customer is. Empty = not set.
+    "storeLat": "",
+    "storeLng": "",
 }
 
 DEFAULT_BURGER = {
