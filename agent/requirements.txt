@@ -1,4 +1,4 @@
-strands-agents[bidi]==1.38.0
+strands-agents[bidi,bidi-gemini]==1.38.0
 aws_sdk_bedrock_runtime==0.5.0
 strands-agents-tools>=0.1.0
 boto3>=1.35.0

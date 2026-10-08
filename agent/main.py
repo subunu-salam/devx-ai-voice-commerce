@@ -71,6 +71,7 @@ def _optional(name: str):
 
 _shop = _optional("shop_config")
 _admin = _optional("admin_api")
+_langs = _optional("voice_languages")  # Arabic and Malayalam voice; without it the attendant is English only
 
 if _shop:
     VOICES, DEFAULT_LOCATION = _shop.VOICES, _shop.DEFAULT_LOCATION
@@ -119,6 +120,10 @@ _current_frontend_state: dict = {
     "visibleCategory": None,
     "selectedItem": None,
 }
+
+
+_call_lang = "en"   # the language of the call in progress
+_call_over = None   # set once the call in progress has finished tidying up (see voice_chat)
 
 
 @tool
@@ -193,6 +198,32 @@ def show_products(category_id: str = "", item_ids: list = None) -> dict:
     logger.info("show_products: category=%s cards=%s", category_id or "-", len(shown))
     return {"status": "shown", "cards": len(shown),
             "next": "Say one short sentence such as 'Here you go, which one would you like?'. Do not read the items or prices out."}
+
+
+def _request_language(language: str) -> dict:
+    """Move the call in progress to another language: the app reconnects in it and keeps the order."""
+    code = _langs.code_for(language) if _langs else ""
+    if not code or code not in _langs.available():
+        choices = ", ".join(_langs.name(c) for c in _langs.available()) if _langs else "English"
+        return {"error": f"That language is not available. Apologise briefly and carry on. Available: {choices}."}
+    if code == _call_lang:
+        return {"status": "already", "next": f"This call is already in {_langs.name(code)}. Carry on."}
+    set_ui_state({"switchLanguage": code, "resumeToken": _langs.issue_resume()})
+    logger.info("language switch: %s -> %s", _call_lang, code)
+    return {"status": "switching", "next": "A colleague is taking over the call now. Say nothing more."}
+
+
+@tool
+def switch_language(language: str) -> dict:
+    """Continue this call in another language. Call it as soon as the customer asks to change language.
+
+    Args:
+        language: "en" for English, "ar" for Arabic, "ml" for Malayalam.
+
+    Returns:
+        Confirmation that the call is being handed over. Say nothing after calling this.
+    """
+    return _request_language(language)
 
 
 @tool
@@ -442,17 +473,26 @@ def _greeting(settings: dict) -> str:
     return re.sub(r"\b(?:(?:our|the)\s+)?drive[\s-]?(?:thru|through)\b", "VoiceBite", text, flags=re.IGNORECASE)
 
 
-def _build_system_prompt(settings: dict) -> str:
-    """Build the system prompt with the current menu, burger prices and attendant settings."""
+def _build_system_prompt(settings: dict, lang: str = "en", resumed: bool = False) -> str:
+    """Build the system prompt with the current menu, burger prices and attendant settings.
+
+    `lang` is the language of the call. `resumed` means the customer has just switched language mid-call,
+    so the attendant carries on with the order instead of greeting again.
+    """
     burger = get_burger_config()
+    greeting, language_rules = _greeting(settings), ""
+    if _langs:
+        greeting = _langs.first_line(lang, resumed, greeting)
+        so_far = [f"{i['quantity']} x {i['name']}" for i in get_order_state().get_summary()["items"]] if resumed else None
+        language_rules = _langs.prompt_section(lang, resumed, so_far)
     return (
         SYSTEM_PROMPT_TEMPLATE
         .replace("{menu_reference}", _fetch_menu_reference())
-        .replace("{greeting}", _greeting(settings))
+        .replace("{greeting}", greeting)
         .replace("{upsell}", _one_line(settings.get("upsell"), 300) or "Do not upsell.")
         .replace("{base_price}", str(int(burger.get("basePrice", 899))))
         .replace("{burger_reference}", _burger_reference(burger))
-    )
+    ) + language_rules
 
 
 def _make_model(settings: dict) -> BidiNovaSonicModel:
@@ -484,10 +524,13 @@ async def ping():
 async def voice_chat(websocket: WebSocket) -> None:
     import asyncio
     import json as _json
+    global _call_lang, _call_over
 
     agent = None
     session_started = False
     session_error = ""
+    lang = "en"
+    call_over = None
 
     # --- Per-session rate limiter ---
     message_timestamps: list[float] = []
@@ -519,32 +562,61 @@ async def voice_chat(websocket: WebSocket) -> None:
         if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,39}", location):
             location = DEFAULT_LOCATION
 
+        # A language switch reconnects straight away. Let the call before this one finish tidying up first,
+        # so its clean-up cannot wipe this call's link to the customer's screen.
+        previous, call_over = _call_over, asyncio.Event()
+        _call_over = call_over
+        if previous is not None and not previous.is_set():
+            try:
+                await asyncio.wait_for(previous.wait(), timeout=3)
+            except asyncio.TimeoutError:
+                logger.warning("The previous call is still closing; starting this one anyway")
+
+        resumed = False   # True when this is the same customer coming back after switching language
+        if _langs:
+            lang = _langs.pick(websocket.query_params.get("lang", ""))
+            resumed = _langs.take_resume(websocket.query_params.get("resume", ""))
+
         if is_open_now(settings):
-            system_prompt = _build_system_prompt(settings)
+            system_prompt = _build_system_prompt(settings, lang, resumed)
             tools = [
                 show_products, load_menu,
                 get_categories, get_items_by_category, get_recommendations,
                 add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order,
                 update_ui, get_ui_context, stop_conversation,
             ]
+            if _langs and len(_langs.available()) > 1:
+                tools.append(switch_language)
         else:
             closed = _one_line(settings.get("closedMessage"), 200) or "Sorry, we're closed right now."
-            system_prompt = CLOSED_PROMPT_TEMPLATE.replace("{closed_message}", closed)
+            system_prompt = CLOSED_PROMPT_TEMPLATE.replace("{closed_message}", closed) + (_langs.closed_note(lang) if _langs else "")
             tools = [stop_conversation]
 
-        agent = BidiAgent(model=_make_model(settings), tools=tools, system_prompt=system_prompt)
+        # English stays on Nova Sonic. Arabic and Malayalam, which Nova Sonic cannot speak, use Gemini Live.
+        model = _make_model(settings) if lang == "en" else _langs.make_model(lang)
+        agent = BidiAgent(model=model, tools=tools, system_prompt=system_prompt)
+        pieces = bool(_langs and _langs.sends_pieces(lang))
 
         set_websocket(websocket, asyncio.get_running_loop())
         reset_ui_state()
-        get_order_state().cancel()  # a new call never inherits the previous caller's unplaced items
+        if not resumed:
+            get_order_state().cancel()  # a new call never inherits the previous caller's unplaced items
+        _call_lang = lang
         if len(tools) > 1:
             try:
                 logger.info("menu preloaded: %s categories", len(_push_menu()))  # menu goes on screen straight away, so the attendant greets once and has no tool call to make first
             except Exception as menu_err:
                 logger.warning("Could not preload the menu: %s", menu_err)
+        if _langs:
+            # Tell the app which language this call is really in, and put a carried-over order back on screen.
+            voice = {"voiceLanguage": lang, "voiceLanguages": _langs.available(), "voiceResumed": resumed}
+            if resumed:
+                summary = get_order_state().get_summary()
+                voice.update(orderItems=summary["items"], orderTotal=summary["total"])
+            set_ui_state(voice)
         start_session(location)
         session_started = True
-        logger.info("WebSocket session started (location=%s)", location)
+        logger.info("WebSocket session started (location=%s, language=%s, resumed=%s)", location, lang, resumed)
 
         async def safe_send_json(data):
             try:
@@ -557,6 +629,8 @@ async def voice_chat(websocket: WebSocket) -> None:
                     _cards_for_speech(data.get("text") or data.get("current_transcript") or data.get("delta") or "")
             except Exception as show_err:
                 logger.warning("Could not show cards from speech: %s", show_err)
+            if pieces and data.get("type") == "bidi_transcript_stream":
+                data = {**data, "piece": True}  # a few words at a time: the app joins them into one line
             try:
                 await websocket.send_json(data)
             except (TypeError, ValueError):
@@ -577,6 +651,9 @@ async def voice_chat(websocket: WebSocket) -> None:
                 if not check_rate_limit():
                     logger.warning("Rate limit exceeded for WebSocket session")
                     continue  # silently drop and wait for next message
+                if _langs and data.get("type") == "voice_language":
+                    _request_language(str(data.get("lang", "")))  # the customer tapped a language in the app
+                    continue
                 return data
 
         await agent.run(
@@ -588,10 +665,16 @@ async def voice_chat(websocket: WebSocket) -> None:
     except Exception as e:
         session_error = str(e)
         logger.error("WebSocket error: %s", e, exc_info=True)
+        if lang != "en":
+            try:  # the app then carries on in English instead of leaving the customer with a dead call
+                await websocket.send_json({"type": "voice_language_failed", "lang": lang})
+            except Exception:
+                pass
     finally:
-        clear_websocket()
-        if session_started:
-            end_session(session_error)
+        if call_over is None or _call_over is call_over:   # skipped if a newer call has already taken over the line
+            clear_websocket()
+            if session_started:
+                end_session(session_error)
         logger.info("WebSocket session ended, cleaning up")
         try:
             if websocket.client_state == WebSocketState.CONNECTED:
@@ -600,6 +683,8 @@ async def voice_chat(websocket: WebSocket) -> None:
                 await agent.stop()
         except Exception as cleanup_err:
             logger.warning("Cleanup error: %s", cleanup_err)
+        if call_over is not None:
+            call_over.set()
 
 
 if __name__ == "__main__":
