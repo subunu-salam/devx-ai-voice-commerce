@@ -344,6 +344,13 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 .georow .dot{width:8px; height:8px; border-radius:50%; background:var(--ok); flex:none}
 .georow span{flex:1}
 
+/* voice language: English, Arabic or Malayalam, picked here or by asking the attendant */
+.vlang{display:flex; gap:4px; padding:3px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18)}
+.vlang button{flex:1; border:0; background:transparent; color:#D7E6DD; border-radius:999px; padding:9px 6px; font-weight:500; font-size:.92rem; line-height:1.3; transition:background .25s, color .25s}
+.vlang button[aria-pressed="true"]{background:var(--citron); color:var(--text)}
+.setting.wrap{flex-wrap:wrap}
+.seg.three button{padding:7px 12px}
+
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
 </head>
@@ -408,6 +415,8 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
       <div class="group">
         <div class="setting"><div><b data-t="language"></b></div>
           <div class="seg" id="langSeg"><button data-lang="en">English</button><button data-lang="ar">العربية</button></div></div>
+        <div class="setting wrap"><div><b data-t="voiceLang"></b><span data-t="voiceLangHint"></span></div>
+          <div class="seg three"><button data-vlang="en" lang="en">English</button><button data-vlang="ar" lang="ar">العربية</button><button data-vlang="ml" lang="ml">മലയാളം</button></div></div>
         <div class="setting" id="installRow"><div><b data-t="installTitle"></b><span data-t="installText"></span></div><button class="solid" data-install data-t="install"></button></div>
       </div>
       <div class="group">
@@ -447,6 +456,7 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
         <ul class="caps" id="caps" aria-live="polite"></ul>
       </div>
       <div class="vbot in">
+        <div class="vlang" id="vLang" role="group"><button data-vlang="en" lang="en">English</button><button data-vlang="ar" lang="ar">العربية</button><button data-vlang="ml" lang="ml">മലയാളം</button></div>
         <button class="glass vsum" id="vSum" hidden></button>
         <button class="endbtn" id="vEnd"></button>
       </div>
@@ -515,13 +525,15 @@ const T = {
     arrivingMsg: "Got it. The kitchen knows you're about 5 minutes away.", arrivedMsg: "The kitchen knows you're here. We'll bring your order out to your car.",
     geoStart: "Update the kitchen automatically with my location", geoStop: "Stop", geoWait: "Finding your location…", geoOn: "Sharing your location with the kitchen", away: "away", about: "about", min: "min",
     geoBlocked: "Location is blocked. Use the buttons instead.", noReach: "Couldn't reach the kitchen. Please try again.", cancelled: "This order was cancelled. Please speak to the staff.",
+    voiceLang: "Voice language", voiceLangHint: "Or just ask the attendant, for example “Arabic please”.", switching: "Switching language…",
+    voiceOff: "{lang} voice isn't switched on for this kitchen yet. Continuing in English.", voiceFailed: "{lang} voice isn't working right now. Continuing in English.",
     iosHow: "Tap the Share button, then Add to Home Screen.", otherHow: "Open your browser menu and choose Install app or Add to Home screen.", installed: "VoiceBite is installed." },
   ar: { by: "مدعوم من", switchTo: "English", open: "مفتوح الآن", title: "اطلب بصوتك", lead: "تحدث مع الموظف أو اختر من القائمة.", start: "ابدأ التحدث", end: "إنهاء المحادثة",
     idle: "اضغط «إنهاء المحادثة» عند الانتهاء.", mic: "جارٍ طلب إذن الميكروفون…", calling: "جارٍ الاتصال بالموظف. قد يستغرق ذلك دقيقة.",
     listening: "أسمعك، تفضل.", ended: "انتهت المحادثة.", micBlocked: "الميكروفون محظور. اسمح به من شريط العنوان ثم ابدأ من جديد.",
     unreachable: "تعذر الوصول إلى الموظف الآن. اطلب من القائمة أو حاول بعد دقيقة.", hungUp: "تعذر على الموظف استقبال المحادثة. اطلب من القائمة أو حاول بعد دقيقة.",
     needCode: "هذه الصفحة تحتاج إلى رمز دخول. ابدأ من جديد لإدخاله.", codeSaved: "تم حفظ الرمز. ابدأ من جديد للتحدث.", codePrompt: "أدخل رمز الدخول لصفحة الطلب",
-    voiceNote: "الموظف الصوتي يتحدث الإنجليزية حالياً. الطلب من القائمة متاح بالعربية.", search: "ابحث في القائمة", popular: "الأكثر طلباً", popularNow: "الأكثر طلباً الآن", seeAll: "عرض القائمة كاملة", browse: "تصفح القائمة", add: "أضف", nothing: "لا يوجد صنف مطابق. جرّب كلمة أخرى.",
+    voiceNote: "", search: "ابحث في القائمة", popular: "الأكثر طلباً", popularNow: "الأكثر طلباً الآن", seeAll: "عرض القائمة كاملة", browse: "تصفح القائمة", add: "أضف", nothing: "لا يوجد صنف مطابق. جرّب كلمة أخرى.",
     navHome: "الرئيسية", navMenu: "القائمة", navOrder: "الطلب", navMore: "المزيد", backToMenu: "القائمة", close: "إغلاق", livePill: "المحادثة جارية. اضغط للعودة.",
     empty: "طلبك فارغ", emptyHint: "قل ما تريد أو أضف صنفاً من القائمة.", total: "الإجمالي", vat: "يشمل ضريبة القيمة المضافة 5% بقيمة", place: "أرسل الطلب وادفع عند النافذة",
     item1: "صنف", itemN: "أصناف", asked: "طلبنا من الموظف إضافة", askedPlace: "طلبنا من الموظف إرسال طلبك.", building: "جارٍ تحضير برجرك", onOrder: "في طلبك",
@@ -533,6 +545,8 @@ const T = {
     arrivingMsg: "تم. المطبخ يعلم أنك على بعد 5 دقائق تقريباً.", arrivedMsg: "المطبخ يعلم أنك وصلت. سنحضر طلبك إلى سيارتك.",
     geoStart: "حدّث المطبخ تلقائياً باستخدام موقعي", geoStop: "إيقاف", geoWait: "جارٍ تحديد موقعك…", geoOn: "تتم مشاركة موقعك مع المطبخ", away: "", about: "حوالي", min: "دقيقة",
     geoBlocked: "الموقع محظور. استخدم الأزرار بدلاً من ذلك.", noReach: "تعذر الوصول إلى المطبخ. حاول مرة أخرى.", cancelled: "تم إلغاء هذا الطلب. يرجى التحدث مع الموظفين.",
+    voiceLang: "لغة المحادثة الصوتية", voiceLangHint: "أو اطلب من الموظف تغيير اللغة أثناء المحادثة.", switching: "جارٍ تغيير اللغة…",
+    voiceOff: "المحادثة الصوتية باللغة {lang} غير مفعّلة لهذا المطبخ حالياً. سنكمل بالإنجليزية.", voiceFailed: "المحادثة الصوتية باللغة {lang} لا تعمل الآن. سنكمل بالإنجليزية.",
     iosHow: "اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية».", otherHow: "افتح قائمة المتصفح واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».", installed: "تم تثبيت VoiceBite." }
 };
 
@@ -546,6 +560,11 @@ const VIEWS = ["home", "menu", "order", "more"];
 
 let lang = params.get("lang") || store.get("lang") || ((navigator.language || "").startsWith("ar") ? "ar" : "en");
 if (!T[lang]) lang = "en";
+/* The language the attendant speaks: English, Arabic or Malayalam. The text on screen keeps its own language setting. */
+const VOICE_NAMES = { en: { en: "English", ar: "Arabic", ml: "Malayalam" }, ar: { en: "الإنجليزية", ar: "العربية", ml: "المالايالامية" } };
+let voiceLang = params.get("voice") || store.get("voiceLang") || (lang === "ar" ? "ar" : "en");
+if (!VOICE_NAMES.en[voiceLang]) voiceLang = "en";
+let voiceOk = null;   // the languages the kitchen can speak, once a call has told us
 let view = "home", menu = BUILT_IN, activeCat = "popular", query = "", lit = null;
 let cart = [], agentCart = null, agentTotal = 0, builder = null, order = null;
 let touched = null, spotKey = "", shown = [];   // shown: products the attendant has put on screen during the call
@@ -588,6 +607,7 @@ function renderChrome() {
   $("talk").setAttribute("aria-label", t("start"));
   $("vnote").textContent = t("voiceNote"); $("vnote").hidden = !t("voiceNote");
   document.querySelectorAll("#langSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === lang));
+  $("vLang").setAttribute("aria-label", t("voiceLang")); renderVoiceLang();
   setState(stateKey, stateBad);
 }
 function renderHome() {
@@ -781,7 +801,12 @@ function placeOrder() {
   previewTimer = setInterval(() => { if (!order || !order.preview || order.status >= 3) return clearInterval(previewTimer); order.status++; renderOrder(); }, 6000);
 }
 function newOrder() { clearInterval(previewTimer); stopTracking(); order = null; saveOrder(); agentCart = null; agentTotal = 0; builder = null; renderCart(); go("menu"); }
-function setLang(l) { lang = l; store.set("lang", l); render(); }
+function renderVoiceLang() { document.querySelectorAll("[data-vlang]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vlang === voiceLang)); }
+function setLang(l) {
+  lang = l; store.set("lang", l);
+  if (!live && !store.get("voiceLang")) voiceLang = l === "ar" && !(voiceOk && !voiceOk.includes("ar")) ? "ar" : "en";   // the voice follows the screen language until the customer picks one
+  render();
+}
 
 $("app").addEventListener("click", e => {
   const add = e.target.closest("[data-add]"); if (add) return addItem(add.dataset.add, add);
@@ -791,6 +816,7 @@ $("app").addEventListener("click", e => {
   const nav = e.target.closest("[data-go]"); if (nav) return go(nav.dataset.go);
   const act = e.target.closest("[data-act]"); if (act) return act.dataset.act === "place" ? placeOrder() : newOrder();
   const lg = e.target.closest("[data-lang]"); if (lg) return setLang(lg.dataset.lang);
+  const vl = e.target.closest("[data-vlang]"); if (vl) return setVoiceLang(vl.dataset.vlang);
   if (e.target.closest("[data-install]")) return install();
 });
 $("q").addEventListener("input", e => { query = e.target.value; lit = null; renderMenu(); });
@@ -819,8 +845,9 @@ if ("serviceWorker" in navigator && location.protocol === "https:") navigator.se
 let wsUrl = params.get("ws") || store.get("wsUrl") || DEFAULT_WS;
 const STORE_LOCATION = params.get("location") || "";
 let accessCode = params.get("code") || store.get("accessCode") || "";
-function lineAddress() {
+function lineAddress(resume) {
   const q = new URLSearchParams(); if (STORE_LOCATION) q.set("location", STORE_LOCATION); if (accessCode) q.set("code", accessCode);
+  if (voiceLang !== "en") q.set("lang", voiceLang); if (resume) q.set("resume", resume);
   const extra = q.toString(); return wsUrl + (extra ? (wsUrl.includes("?") ? "&" : "?") + extra : "");
 }
 // Free hosting sleeps when idle; wake the kitchen while the customer reads the menu.
@@ -865,6 +892,19 @@ function caption(role, text, final) {
   cap.last = now;
   if (calm) { cap.el.textContent = cap.text; cap.shown = cap.text.length; }
 }
+function captionPiece(role, raw) {   // Arabic and Malayalam arrive a few words at a time: join them into the line being spoken
+  raw = String(raw || ""); if (!raw) return;
+  if (role === "user") {
+    if (!(lastLine && lastLine.role === "user" && lastLine.raw != null)) { finishCaption(); lastLine = { role: "user", el: addLine("user", ""), raw: "", final: false }; }
+    lastLine.raw += raw; lastLine.el.textContent = lastLine.raw.trim(); return;
+  }
+  const now = performance.now();
+  if (!(cap && lastLine && lastLine.role === "assistant" && !(cap.shown >= cap.text.length && now - cap.last > 5000))) {
+    finishCaption(); const el = addLine("assistant", ""); cap = { el, text: "", shown: 0, acc: 0, since: now }; lastLine = { role: "assistant", el, final: true };
+  }
+  cap.text = (cap.text + raw).trimStart(); cap.last = now;
+  if (calm) { cap.el.textContent = cap.text; cap.shown = cap.text.length; }
+}
 function paceCaption(now, dt) {
   if (!cap || cap.shown >= cap.text.length) return;
   const audioLeft = ctx ? Math.max(0, playHead - ctx.currentTime) : 0, speaking = audioLeft > 0.05;
@@ -878,6 +918,7 @@ function paceCaption(now, dt) {
 const STATE_KEYS = ["categories", "menuItems", "highlightedCategory", "highlightedItem", "orderItems", "orderTotal", "orderConfirmed", "orderNumber", "burgerBuilder", "vehicleNumber", "shownItems", "trackToken"];
 function applyState(s) {
   if (!s || typeof s !== "object" || !STATE_KEYS.some(k => k in s)) return false;
+  if (applyVoice(s)) return true;
   if (Array.isArray(s.categories) && s.categories.length && s.menuItems) menu = { categories: s.categories, menuItems: s.menuItems };
   if ("highlightedCategory" in s && s.highlightedCategory) { activeCat = s.highlightedCategory; query = ""; $("q").value = ""; lit = null; }
   if ("highlightedItem" in s) { lit = s.highlightedItem || null; const it = lit && findItem(lit); if (it) { activeCat = it.cat; query = ""; $("q").value = ""; } }
@@ -895,7 +936,8 @@ function onMessage(m) {
   gotAnything = true; const p = m.payload || {};
   switch (m.type) {
     case "bidi_audio_stream": return playChunk(m.audio, m.sample_rate || RATE);
-    case "bidi_transcript_stream": return caption(m.role, m.text || m.current_transcript || m.delta, m.is_final);
+    case "bidi_transcript_stream": return m.piece ? captionPiece(m.role, m.text) : caption(m.role, m.text || m.current_transcript || m.delta, m.is_final);
+    case "voice_language_failed": toast(voiceMsg("voiceFailed", m.lang)); store.set("voiceLang", ""); return moveCall("en", "");
     case "bidi_interruption": stopPlayback(); if (cap) { cap.text = cap.el.textContent; cap = null; } return;
     case "order_update": return applyState({ orderItems: p.items || [], orderTotal: p.total || 0 });
     case "order_confirmed": return applyState({ orderItems: p.items || agentCart || [], orderTotal: p.total ?? agentTotal, orderConfirmed: true, orderNumber: p.orderNumber });
@@ -938,22 +980,62 @@ async function startCall() {
       if (fill === CHUNK) { ws.send(JSON.stringify({ type: "bidi_audio_input", audio: b64FromI16(acc), format: "pcm", sample_rate: RATE, channels: 1 })); fill = 0; } }
   };
   live = true; $("talk").classList.add("live"); setState("calling"); renderNav();
-  try { ws = new WebSocket(lineAddress()); } catch (e) { return endCall("unreachable", true); }
-  ws.onopen = () => {
+  connect("");
+}
+/* ---- the line to the attendant, and changing its language ---- */
+let helloTimer = null;
+function keepCart() { if (agentCart && !order) cart = agentCart.map(l => ({ itemId: l.itemId, name: l.name, quantity: l.quantity || 1, unitPrice: l.unitPrice ?? l.price ?? 0, specialInstructions: l.specialInstructions })); }
+function sayHello() {
+  clearTimeout(helloTimer); helloTimer = null;
+  const picked = cart.map(l => `${l.quantity} x ${l.name}`).join(", ");   // hand over anything already tapped into the cart
+  sendText(picked ? `Hello. I have already picked these from the menu: ${picked}. Please add them to my order.` : "Hello");
+}
+function connect(resume) {   // the microphone and speaker are already running; `resume` is the kitchen's key for keeping the order after a language switch
+  let sock;
+  try { sock = ws = new WebSocket(lineAddress(resume)); } catch (e) { return endCall("unreachable", true); }
+  sock.onopen = () => {
+    if (sock !== ws) return;
     openedAt = Date.now(); setState("listening");
-    const picked = cart.map(l => `${l.quantity} x ${l.name}`).join(", ");   // hand over anything already tapped into the cart
-    sendText(picked ? `Hello. I have already picked these from the menu: ${picked}. Please add them to my order.` : "Hello");
+    if (resume) helloTimer = setTimeout(sayHello, 6000);   // the kitchen says first whether it kept the order (see applyVoice)
+    else sayHello();
     renderCart();
   };
-  ws.onmessage = ev => { try { onMessage(JSON.parse(ev.data)); } catch (e) { console.warn("Unreadable message", ev.data); } };
-  ws.onclose = ev => {
-    if (!live) return;
+  sock.onmessage = ev => { if (sock !== ws) return; try { onMessage(JSON.parse(ev.data)); } catch (e) { console.warn("Unreadable message", ev.data); } };
+  sock.onclose = ev => {
+    if (!live || sock !== ws) return;
     if (ev.code === 4401) { const entered = (prompt(t("codePrompt")) || "").trim(); accessCode = entered; store.set("accessCode", entered); return endCall(entered ? "codeSaved" : "needCode", !entered); }
     if (!openedAt) endCall("unreachable", true); else if (!gotAnything) endCall("hungUp", true); else { endCall("ended"); closeVoice(); }
   };
 }
+function voiceMsg(key, l) { return t(key).replace("{lang}", VOICE_NAMES[lang][l] || l); }
+function moveCall(l, token) {   // carry the live call over to another language: same microphone, a new line to the attendant
+  if (!live) return;
+  voiceLang = l; if (token) store.set("voiceLang", l); renderVoiceLang();
+  if (agentCart && agentCart.length) keepCart();   // a copy of the order, in case the kitchen cannot carry it over itself
+  const old = ws; ws = null; try { old && old.close(); } catch (e) {}
+  clearTimeout(helloTimer); helloTimer = null; stopPlayback(); finishCaption(); lastLine = null; lit = null; shown = []; builder = null; renderSpot();
+  openedAt = 0; gotAnything = false; setState("switching"); connect(token);
+}
+function setVoiceLang(l) {   // a tap on a language button
+  if (!VOICE_NAMES.en[l] || l === voiceLang) return;
+  if (voiceOk && !voiceOk.includes(l)) return toast(voiceMsg("voiceOff", l));
+  store.set("voiceLang", l);
+  if (live && voiceOk && ws && ws.readyState === 1) return ws.send(JSON.stringify({ type: "voice_language", lang: l }));   // the kitchen answers with the switch, so the order carries over
+  voiceLang = l; renderVoiceLang();
+  if (live) moveCall(l, "");   // still connecting: start the line again in the new language
+}
+function applyVoice(s) {   // what the kitchen says about this call's language; true if the call moved to another language
+  if (!live) return false;
+  if (Array.isArray(s.voiceLanguages)) voiceOk = s.voiceLanguages;
+  else if (Array.isArray(s.categories) && s.categories.length) voiceOk = ["en"];   // an older kitchen speaks English only
+  const actual = s.voiceLanguage || (voiceOk && voiceOk.length === 1 ? voiceOk[0] : "");
+  if (actual && actual !== voiceLang && !s.switchLanguage) { toast(voiceMsg("voiceOff", voiceLang)); voiceLang = actual; store.set("voiceLang", ""); renderVoiceLang(); }
+  if (helloTimer && "voiceResumed" in s) { clearTimeout(helloTimer); helloTimer = null; if (s.voiceResumed) { cart = []; sendText("Please continue."); } else sayHello(); }   // kept: the kitchen holds the order, so the copy is dropped
+  if (s.switchLanguage && s.switchLanguage !== voiceLang) { moveCall(s.switchLanguage, s.resumeToken || ""); return true; }
+  return false;
+}
 function endCall(key, bad) {
-  if (agentCart && !order) cart = agentCart.map(l => ({ itemId: l.itemId, name: l.name, quantity: l.quantity || 1, unitPrice: l.unitPrice ?? l.price ?? 0, specialInstructions: l.specialInstructions }));
+  keepCart(); clearTimeout(helloTimer); helloTimer = null;
   finishCaption(); live = false; openedAt = 0; agentCart = null; builder = null; lit = null; shown = [];
   try { ws && ws.close(); } catch (e) {} ws = null; stopPlayback();
   try { proc && proc.disconnect(); } catch (e) {} proc = null;
