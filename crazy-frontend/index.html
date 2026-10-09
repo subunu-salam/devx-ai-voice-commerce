@@ -964,7 +964,12 @@ $("vSum").onclick = () => { closeVoice(); go("order"); };
 addEventListener("keydown", e => { if (e.key === "Escape" && $("voice").classList.contains("open")) closeVoice(); });
 
 function sendText(text) { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "bidi_text_input", text, role: "user" })); }
-let cap = null;   // the attendant's line being spoken: its words appear as the audio plays
+/* ---- captions locked to the audio clock ----
+   The attendant's reply arrives as pieces of text and pieces of audio. Each piece of text is paired with the audio
+   that follows it (a "segment"), and its words appear only as that audio is actually heard, so the screen never runs
+   ahead of the voice or lags behind it. */
+const CPS = 14;   // a typical speaking pace in characters per second, used while a segment's audio is still arriving
+let turn = null;  // the reply being spoken: { el, segs: [{ text, start, dur, closed, born }], heard, last }
 function addLine(role, text) {
   const li = document.createElement("li"); li.className = role; li.dir = "auto"; li.textContent = text; $("caps").appendChild(li);
   while ($("caps").children.length > 3) $("caps").firstChild.remove();
@@ -972,8 +977,71 @@ function addLine(role, text) {
 }
 const sameWords = t => String(t || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 function overlap(a, b) { const A = new Set(a.split(" ")), B = new Set(b.split(" ")); if (!A.size || !B.size) return 0; let n = 0; B.forEach(w => A.has(w) && n++); return n / Math.min(A.size, B.size); }
-const audioLeft = () => ctx ? Math.max(0, playHead - ctx.currentTime) : 0;
-function finishCaption() { if (cap) { cap.el.textContent = cap.text; cap = null; } }
+const heardAt = () => ctx ? ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0) : 0;   // what has reached the speaker
+const turnText = tr => tr.segs.map(x => x.text).join("").trim();
+function turnOver(tr) { return !tr || (ctx ? heardAt() >= tr.end : true) && performance.now() - tr.last > 900; }
+function startTurn() { turn = { el: null, segs: [], heard: false, end: 0, last: performance.now() }; return turn; }
+function showTurn(tr) {   // give the reply its bubble: a reworded repeat of the last reply refreshes that bubble instead of stacking
+  if (tr.el) return;
+  const prev = lastLine && lastLine.role === "assistant" ? lastLine : null, words = sameWords(turnText(tr));
+  if (prev && performance.now() - (prev.at || 0) < 15000 && words && overlap(sameWords(prev.el.textContent), words) > 0.7) { tr.el = prev.el; prev.el.textContent = ""; }
+  else { tr.el = addLine("assistant", ""); lastLine = { role: "assistant", el: tr.el, final: true }; }
+  lastLine.at = performance.now();
+}
+function finishCaption() { if (turn && turn.el) turn.el.textContent = turnText(turn); turn = null; }
+function assistantText(text, piece) {
+  if (!text) return;
+  if (turnOver(turn)) startTurn();
+  const segs = turn.segs, cur = segs[segs.length - 1];
+  if (!piece && sameWords(turnText(turn)).includes(sameWords(text))) return;   // already part of this reply
+  if (!piece && segs.length) text = " " + text;
+  if (piece) {   // Gemini: each piece of text describes the audio that came just before it
+    if (cur && !cur.closed && cur.start !== null) { cur.text += text; cur.closed = true; }
+    else if (cur && !cur.closed) cur.text += text;                            // no audio yet: wait for it
+    else segs.push({ text, start: null, dur: 0, closed: false, born: performance.now() });
+  } else if (cur && !cur.text && !cur.closed) cur.text = text;                // Nova: its audio came first: this is what it said
+  else { if (cur) cur.closed = true; segs.push({ text, start: null, dur: 0, closed: false, born: performance.now() }); }
+  turn.last = performance.now(); showTurn(turn);
+  if (calm || !ctx) turn.el.textContent = turnText(turn);
+}
+function assistantAudio(start, dur) {   // called for every chunk of the attendant's voice as it is scheduled
+  if (turnOver(turn)) startTurn();
+  let cur = turn.segs[turn.segs.length - 1];
+  if (!cur || cur.closed) {
+    if (cur) cur.closed = true; cur = { text: "", start: null, dur: 0, closed: false, born: performance.now() }; turn.segs.push(cur);
+  }
+  if (cur.start === null) cur.start = start;
+  cur.dur = start + dur - cur.start; turn.end = Math.max(turn.end, start + dur); turn.heard = true; turn.last = performance.now();
+}
+function heardChars(tr) {   // how many characters of the reply the customer has heard by now
+  const t = heardAt(), now = performance.now(), quiet = now - tr.last > 400;
+  let n = 0;
+  for (const x of tr.segs) {
+    const L = x.text.length;
+    if (x.start === null) {                                     // text whose audio has not arrived
+      if (!L) continue;
+      if ((tr.heard && t >= tr.end && quiet) || (!tr.heard && now - x.born > 1200) || now - x.born > 5000) { n += L; continue; }
+      break;                                                    // wait for its voice
+    }
+    if (!L) { if (t < x.start + x.dur) break; continue; }      // audio with no words yet: hold the text behind it
+    const span = (x.closed || quiet) ? Math.max(0.05, x.dur) : Math.max(x.dur, L / CPS);
+    const f = (t - x.start) / span;
+    if (f >= 1) { n += L; continue; }
+    n += Math.max(0, Math.floor(L * f)); break;
+  }
+  return n;
+}
+function paceCaption() {
+  if (!turn || !turn.el || calm) return;
+  const full = turnText(turn), raw = turn.segs.map(x => x.text).join(""), lead = raw.length - raw.trimStart().length;
+  let end = Math.max(0, Math.min(full.length, heardChars(turn) - lead));
+  if (end > 0 && end < full.length && !/\s/.test(full[end])) {   // whole words only: a word appears once it is about 40% spoken
+    let a = end, z = end; while (a > 0 && !/\s/.test(full[a - 1])) a--; while (z < full.length && !/\s/.test(full[z])) z++;
+    end = (end - a) >= (z - a) * 0.4 ? z : a;
+  }
+  const show = full.slice(0, end);
+  if (turn.el.textContent !== show) turn.el.textContent = show;
+}
 function caption(role, text, final) {
   text = String(text || "").trim(); if (!text) return;
   if (role === "user") {
@@ -982,46 +1050,17 @@ function caption(role, text, final) {
     lastLine.final = final !== false; return;
   }
   // Nova Sonic sends each spoken line twice: first as the voice starts, then again (is_final) once it has finished.
-  // The first copy is in time with the audio; the late copy only ever caused a second bubble.
+  // The first copy belongs with the audio; the late copy only ever caused a second bubble.
   if (final === true) return;
-  const now = performance.now(), words = sameWords(text);
-  const turnOn = cap && lastLine && lastLine.role === "assistant" && (cap.shown < cap.text.length || audioLeft() > 0.05 || now - cap.last < 1200);
-  if (turnOn) {
-    if (sameWords(cap.text).includes(words)) return;                       // already on screen
-    cap.text = text.startsWith(cap.text) ? text : cap.text + " " + text;   // the same turn carries on in the same bubble
-  } else {
-    const prev = lastLine && lastLine.role === "assistant" ? lastLine : null;
-    if (prev && now - (prev.at || 0) < 15000 && overlap(sameWords(prev.el.textContent), words) > 0.7) {   // the same reply reworded: refresh it, do not stack it
-      finishCaption(); cap = { el: prev.el, text, shown: 0, acc: 0, since: now }; prev.el.textContent = "";
-    } else { finishCaption(); const el = addLine("assistant", ""); cap = { el, text, shown: 0, acc: 0, since: now }; lastLine = { role: "assistant", el, final: true }; }
-  }
-  lastLine.at = now;
-  cap.last = now;
-  if (calm) { cap.el.textContent = cap.text; cap.shown = cap.text.length; }
+  assistantText(text, false);
 }
-function captionPiece(role, raw) {   // Arabic and Malayalam arrive a few words at a time: join them into the line being spoken
+function captionPiece(role, raw) {   // Arabic and Malayalam arrive a few words at a time
   raw = String(raw || ""); if (!raw) return;
   if (role === "user") {
     if (!(lastLine && lastLine.role === "user" && lastLine.raw != null)) { finishCaption(); lastLine = { role: "user", el: addLine("user", ""), raw: "", final: false }; }
     lastLine.raw += raw; lastLine.el.textContent = lastLine.raw.trim(); return;
   }
-  const now = performance.now();
-  if (!(cap && lastLine && lastLine.role === "assistant" && !(cap.shown >= cap.text.length && now - cap.last > 5000))) {
-    finishCaption(); const el = addLine("assistant", ""); cap = { el, text: "", shown: 0, acc: 0, since: now }; lastLine = { role: "assistant", el, final: true };
-  }
-  cap.text = (cap.text + raw).trimStart(); cap.last = now;
-  if (calm) { cap.el.textContent = cap.text; cap.shown = cap.text.length; }
-}
-function paceCaption(now, dt) {
-  if (!cap || cap.shown >= cap.text.length) return;
-  const aLeft = audioLeft(), speaking = aLeft > 0.05;
-  if (!speaking && now - cap.since < 250) return;                          // the voice is a moment behind the words
-  // keep pace with the audio still queued, finishing a touch before it does; with no audio left, catch up at once
-  const left = cap.text.length - cap.shown, rate = speaking ? Math.min(90, Math.max(16, left / Math.max(0.3, aLeft - 0.25))) : 400;
-  cap.acc += rate * dt; const step = Math.floor(cap.acc); if (!step) return;
-  cap.acc -= step; cap.shown = Math.min(cap.text.length, cap.shown + step);
-  let end = cap.shown; while (end < cap.text.length && cap.text[end] !== " ") end++;   // whole words only
-  cap.el.textContent = cap.text.slice(0, end);
+  assistantText(raw, true);
 }
 const STATE_KEYS = ["categories", "menuItems", "highlightedCategory", "highlightedItem", "orderItems", "orderTotal", "orderConfirmed", "orderNumber", "burgerBuilder", "vehicleNumber", "shownItems", "trackToken"];
 function applyState(s) {
@@ -1046,7 +1085,7 @@ function onMessage(m) {
     case "bidi_audio_stream": return playChunk(m.audio, m.sample_rate || RATE);
     case "bidi_transcript_stream": return m.piece ? captionPiece(m.role, m.text) : caption(m.role, m.text || m.current_transcript || m.delta, m.is_final);
     case "voice_language_failed": toast(voiceMsg("voiceFailed", m.lang)); store.set("voiceLang", ""); return moveCall("en", "");
-    case "bidi_interruption": stopPlayback(); if (cap) { cap.text = cap.el.textContent; cap = null; } return;
+    case "bidi_interruption": stopPlayback(); turn = null; return;   // keep only the words that were heard
     case "order_update": return applyState({ orderItems: p.items || [], orderTotal: p.total || 0 });
     case "order_confirmed": return applyState({ orderItems: p.items || agentCart || [], orderTotal: p.total ?? agentTotal, orderConfirmed: true, orderNumber: p.orderNumber });
     case "highlight_category": case "browse_category": return applyState({ highlightedCategory: p.categoryId });
@@ -1064,14 +1103,26 @@ function playChunk(b64, rate) {
   if (!ctx || !b64) return; const f = f32FromB64(b64); if (!f.length) return;
   const buf = ctx.createBuffer(1, f.length, rate); buf.copyToChannel(f, 0);
   const src = ctx.createBufferSource(); src.buffer = buf; src.connect(outGain);
-  playHead = Math.max(playHead, ctx.currentTime + 0.06); src.start(playHead); playHead += buf.duration;
+  playHead = Math.max(playHead, ctx.currentTime + 0.06); src.start(playHead); assistantAudio(playHead, buf.duration); playHead += buf.duration;
   playing.add(src); src.onended = () => playing.delete(src);
+}
+/* Echo guard. While the attendant is speaking (and for a moment after), the microphone also picks up the speaker.
+   The model would hear its own voice, take it for the customer, and answer itself: the echo and repeats.
+   So during playback the microphone sends silence, unless the customer is clearly louder than the echo,
+   two blocks in a row (about half a second), which still lets them cut in. */
+let gateHot = 0;
+function rms(f) { let s = 0; for (let i = 0; i < f.length; i++) s += f[i] * f[i]; return Math.sqrt(s / Math.max(1, f.length)); }
+function echoGate(f) {
+  if (!ctx || playHead - ctx.currentTime < -0.4) { gateHot = 0; return false; }   // the attendant is quiet: pass everything
+  const mine = rms(f), theirs = level(outAn) / 4, bar = Math.max(0.03, theirs * 0.3);   // the echo that reaches the mic is far quieter than what the speaker plays
+  if (mine < bar) { gateHot = 0; return true; }
+  return ++gateHot < 2;
 }
 function stopPlayback() { playing.forEach(s => { try { s.stop(); } catch (e) {} }); playing.clear(); playHead = 0; }
 
 async function startCall() {
   if (live) return;
-  $("caps").innerHTML = ""; lastLine = null; cap = null; gotAnything = false; openedAt = 0; agentCart = null; agentTotal = 0; builder = null; lit = null; shown = []; renderSpot();
+  $("caps").innerHTML = ""; lastLine = null; turn = null; gotAnything = false; openedAt = 0; agentCart = null; agentTotal = 0; builder = null; lit = null; shown = []; renderSpot();
   setState("mic");
   try { micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } }); }
   catch (e) { return setState("micBlocked", true); }
@@ -1080,11 +1131,12 @@ async function startCall() {
   outGain = ctx.createGain(); outAn = ctx.createAnalyser(); outAn.fftSize = 512; outGain.connect(outAn); outAn.connect(ctx.destination);
   const mic = ctx.createMediaStreamSource(micStream); micAn = ctx.createAnalyser(); micAn.fftSize = 512; mic.connect(micAn);
   proc = ctx.createScriptProcessor(4096, 1, 1); const silent = ctx.createGain(); silent.gain.value = 0; mic.connect(proc); proc.connect(silent); silent.connect(ctx.destination);
-  const acc = new Int16Array(CHUNK); let fill = 0;
+  const acc = new Int16Array(CHUNK); let fill = 0, loud = 0;
   proc.onaudioprocess = ev => {
     if (!ws || ws.readyState !== 1) return;
     const f = to16k(ev.inputBuffer.getChannelData(0), ctx.sampleRate);
-    for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); acc[fill++] = v < 0 ? v * 32768 : v * 32767;
+    const gain = echoGate(f) ? 0 : 1;
+    for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i] * gain)); acc[fill++] = v < 0 ? v * 32768 : v * 32767;
       if (fill === CHUNK) { ws.send(JSON.stringify({ type: "bidi_audio_input", audio: b64FromI16(acc), format: "pcm", sample_rate: RATE, channels: 1 })); fill = 0; } }
   };
   live = true; $("talk").classList.add("live"); setState("calling"); renderNav();
@@ -1157,7 +1209,7 @@ const tmp = new Uint8Array(512), barSets = [...document.querySelectorAll(".bars"
 function level(an) { if (!an) return 0; an.getByteTimeDomainData(tmp); let s = 0; for (let i = 0; i < tmp.length; i++) { const v = (tmp[i] - 128) / 128; s += v * v; } return Math.min(1, Math.sqrt(s / tmp.length) * 4); }
 let smooth = 0, lastTick = 0;
 (function tick(now) {
-  paceCaption(now, Math.min(0.1, (now - lastTick) / 1000)); lastTick = now;
+  paceCaption(); lastTick = now;
   if (live && !calm) { smooth += (Math.max(level(micAn), level(outAn)) - smooth) * 0.35; $("orb").style.setProperty("--lvl", smooth.toFixed(3));
     barSets.forEach(set => { const max = set[0].parentElement.clientHeight || 28; set.forEach((b, n) => b.style.height = (max * (0.2 + smooth * 0.8 * (0.55 + 0.45 * Math.sin(now / 130 + n * 1.3)))).toFixed(0) + "px"); }); }
   requestAnimationFrame(tick);
