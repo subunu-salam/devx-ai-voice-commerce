@@ -197,7 +197,9 @@ def show_products(category_id: str = "", item_ids: list = None) -> dict:
     set_ui_state(current)
     logger.info("show_products: category=%s cards=%s", category_id or "-", len(shown))
     return {"status": "shown", "cards": len(shown),
-            "next": "Say one short sentence such as 'Here you go, which one would you like?'. Do not read the items or prices out."}
+            "next": "The cards are on screen now. If you have NOT spoken yet this turn, say one short sentence such as "
+                    "'Here you go, which one would you like?'. If you already said something like that, say nothing more. "
+                    "Never read the items or prices out."}
 
 
 def _request_language(language: str) -> dict:
@@ -365,6 +367,8 @@ RULES:
 - All prices are in UAE dirhams. Say them like "8.99 dirhams". Never say dollars or use the $ sign
 - Never add up prices yourself. Tools return "totalText" (for example "11.48 dirhams"): say that exact amount, because it is what the customer sees on screen
 - Keep each reply to one or two short sentences so the words on screen keep pace with your voice
+- Speak ONCE per turn. When a turn needs a tool, call the tool first and speak after its result. Never say a sentence, call a tool, and then say the same thing again in different words
+- Never repeat or rephrase something you have just said
 - Never say the words "screen", "card", "button" or "app". Just say "here are our burgers" or "take a look"
 - Never fabricate items. Only use the menu above
 - If add_to_order says an item is sold out, apologise and suggest something similar
@@ -618,12 +622,24 @@ async def voice_chat(websocket: WebSocket) -> None:
         session_started = True
         logger.info("WebSocket session started (location=%s, language=%s, resumed=%s)", location, lang, resumed)
 
+        last_line = {"text": "", "at": 0.0}   # the attendant's last caption, to drop exact repeats
+
         async def safe_send_json(data):
             try:
                 if data.get("type") == "bidi_usage":
                     note_usage(data.get("inputTokens", 0), data.get("outputTokens", 0))
             except Exception:
                 pass  # usage tracking must never interrupt a call
+            if data.get("type") == "bidi_transcript_stream" and data.get("role") == "assistant" and not pieces:
+                # Nova Sonic sends every spoken line twice: a SPECULATIVE copy as the audio starts (is_final False)
+                # and a FINAL copy once it has finished. The first is the one in time with the voice, so the late
+                # copy is dropped here; forwarding it showed each reply twice, seconds after it was spoken.
+                if data.get("is_final"):
+                    return
+                line = re.sub(r"\W+", " ", str(data.get("text") or "")).strip().lower()
+                if line and line == last_line["text"] and time.monotonic() - last_line["at"] < 10:
+                    return   # the very same sentence again: show it once
+                last_line.update(text=line, at=time.monotonic())
             try:
                 if data.get("type") == "bidi_transcript_stream" and data.get("role") == "assistant":
                     _cards_for_speech(data.get("text") or data.get("current_transcript") or data.get("delta") or "")

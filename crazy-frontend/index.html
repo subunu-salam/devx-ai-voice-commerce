@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#FFF6E0">
+<meta name="theme-color" content="#0E3B2E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="VoiceBite">
@@ -14,7 +14,7 @@
 <title>VoiceBite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --palm:#0E3B2E; --palm-2:#185740; --deep:#071E17; --tomato:#F0462B; --citron:#D7F25A; --bg:#F5F8F1; --sheet:#FFFFFF;
@@ -352,162 +352,69 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 .seg.three button{padding:7px 12px}
 
 
-/* ================= Snack · Neo-Playful ================= */
-/* cream paper, 2px ink outlines, hard offset shadows, chunky grotesque type */
-:root{
-  --ink:#141210; --muted:#5A5248; --paper:#FFF6E0; --card:#FFFFFF; --paper2:#FFEBC2; --paper3:#FFD98A;
-  --accent:#FF5A36; --accent-hi:#FF7A5C; --grape:#7B61FF; --mint:#21C07A; --sun:#FFC21A; --cherry:#E8343B;
-  --palm:var(--ink); --palm-2:#2A2622; --deep:#1C1915; --tomato:var(--accent); --citron:var(--sun);
-  --bg:var(--paper); --canvas:var(--paper); --sheet:var(--card); --text:var(--ink); --soft:var(--muted); --line:#EADBB8; --ok:var(--mint);
-  --font:"DM Sans","Segoe UI",Tahoma,system-ui,sans-serif;
-  --display:"Bricolage Grotesque","DM Sans",system-ui,sans-serif;
-  --mono:"Space Mono",ui-monospace,monospace;
-  --r:20px; --gap:14px; --bw:2px;
-  --e1:3px 3px 0 var(--ink); --e2:5px 5px 0 var(--ink);
-}
-:focus-visible{outline:3px solid var(--grape); outline-offset:3px}
-body{background:var(--deep)}
-.stage{background:radial-gradient(circle at 1px 1px, rgba(255,246,224,.09) 1px, transparent 0) 0 0/22px 22px, var(--deep)}
-@media (min-width:560px){ .app{border:var(--bw) solid var(--ink); box-shadow:10px 10px 0 #000} }
-.app{background:var(--paper)}
-.view{padding:calc(14px + var(--top)) 16px calc(116px + var(--bottom))}
-
-/* type */
-.title{font-family:var(--display); font-weight:800; font-size:2.15rem; letter-spacing:-.035em; line-height:1}
-.h2 h2,.arrive h2{font-family:var(--display); font-weight:800; font-size:1.3rem; letter-spacing:-.02em}
-.b-label{margin:18px 2px 0 !important}
-.b-label h2::before,.b-pop .h2 h2::before{content:"— "; color:var(--accent)}
-
-/* shared surfaces: everything that was a soft bento block gets an outline and a hard shadow */
-.b,.cat,.rowitem,.sheet,.group,.emptybox,.install,.arrive,.outline,.builder,.totalblock,.search input,.card .pic,.pillbtn,.chip,.solid,.stepper{border:var(--bw) solid var(--ink)}
-.b,.cat,.rowitem,.sheet,.group,.emptybox,.install,.builder,.totalblock{border-radius:var(--r); box-shadow:var(--e1)}
-button.b,.cat,.rowitem,.cta,.outline,.startbtn,.abtn,.endbtn,.plus{transition:transform .14s var(--ease), box-shadow .14s var(--ease)}
-button.b:active,.cat:active,.rowitem:active,.cta:active,.outline:active,.startbtn:active,.abtn:active:not(:disabled),.endbtn:active{transform:translate(3px,3px); box-shadow:0 0 0 var(--ink)}
-@media (hover:hover){ button.b:hover,.cat:hover,.cta:hover,.startbtn:hover{transform:translate(-1px,-1px); box-shadow:var(--e2)} }
-
-/* header */
-.b-brand{padding:2px 2px 6px}
-.name{font-family:var(--display); font-weight:800; font-size:1.4rem; letter-spacing:-.03em}
-.name .wv{color:var(--ink)}
-.by{font-family:var(--mono); font-size:.66rem; text-transform:uppercase; letter-spacing:.06em}
-.pillbtn{background:var(--paper3); font-weight:700; padding:7px 14px; box-shadow:var(--e1)}
-
-/* hero: sun-yellow panel with a grape disc, no glow rings */
-.hero{background:var(--sun); color:var(--ink); border:var(--bw) solid var(--ink); box-shadow:var(--e2); padding:22px 20px 20px; min-height:250px}
-.hero::after{inset-inline-end:-46px; bottom:auto; top:-40px; width:150px; height:150px; border-radius:50%; background:var(--grape); border:var(--bw) solid var(--ink); -webkit-mask:none; mask:none}
-.hero::before{content:""; position:absolute; inset-inline-end:24px; bottom:26px; width:34px; height:34px; background:var(--accent); border:var(--bw) solid var(--ink); border-radius:8px; transform:rotate(14deg)}
-.hero h1{position:relative; z-index:1; font-family:var(--display); font-weight:800; font-size:clamp(2.4rem,11vw,3.05rem); letter-spacing:-.045em; line-height:.95; max-width:8ch}
-.hero p{position:relative; z-index:1; color:#3A3128; margin:12px 0 18px; max-width:27ch}
-.startbtn{background:var(--accent); color:var(--ink); border:var(--bw) solid var(--ink); border-radius:14px; box-shadow:var(--e1); font-family:var(--display); font-weight:700; font-size:1.05rem; padding:12px 20px 12px 14px}
-.startbtn svg{stroke:var(--ink)}
-
-/* store + see menu */
-.b-store{background:var(--card)}
-.b-store b{font-family:var(--display); font-weight:800; font-size:1.15rem}
-.opennow{font-family:var(--mono); font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#0E7A4A}
-.opennow::before{border:1.5px solid var(--ink); width:9px; height:9px; vertical-align:0}
-.b-menu{background:var(--grape); color:#fff; font-family:var(--display); font-weight:800; font-size:1.2rem; letter-spacing:-.02em}
-.b-menu svg{width:38px; height:38px; background:var(--card); color:var(--ink); border:var(--bw) solid var(--ink); border-radius:12px; padding:6px; stroke-width:2.5}
-
-/* popular rail */
-.b-pop{background:var(--paper2)}
-.card .pic{border-radius:14px; background:var(--card)}
-.card h3{font-weight:700}
-.price{font-family:var(--display); font-weight:800; letter-spacing:-.01em}
-.plus{background:var(--accent); color:var(--ink); border:var(--bw) solid var(--ink); border-radius:12px; box-shadow:2px 2px 0 var(--ink); font-weight:700}
-.plus:active{transform:translate(2px,2px); box-shadow:none}
-
-/* browse the menu — each category its own colour, drawn icons in a tile */
-.cats{gap:var(--gap)}
-.cat{min-height:112px; padding:14px; background:var(--card); color:var(--ink)}
-.cat b{font-family:var(--display); font-weight:800; font-size:1.18rem; letter-spacing:-.02em}
-.cat span span,.cat:first-child span span{font-family:var(--mono); font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:inherit; opacity:.75}
-.cat i{width:46px; height:46px; display:grid; place-items:center; background:var(--card); color:var(--ink); border:var(--bw) solid var(--ink); border-radius:12px; font-size:1.4rem}
-.cat i svg{width:26px; height:26px}
-.cat:hover i{transform:rotate(-8deg)}
+/* ================= wow layer, in the VoiceBite palette ================= */
+.ticker{overflow:hidden; background:#141210; color:#FFF6E0; border:2px solid #141210; border-radius:14px; box-shadow:3px 3px 0 rgba(20,18,16,.35); transform:rotate(-1.2deg); margin:4px 2px}
+.track{display:flex; align-items:center; gap:14px; width:max-content; padding:10px 0; animation:tick 22s linear infinite; font-weight:700; font-size:1.02rem; letter-spacing:-.01em; text-transform:uppercase; white-space:nowrap}
+.track i{font-style:normal; color:#FFC21A; font-size:.8rem}
+.track span:nth-of-type(5n+1),.track span:nth-of-type(5n+5){color:#FF5A36}
+[dir="rtl"] .track{animation-direction:reverse}
+@keyframes tick{to{transform:translateX(-50%)}}
+.boing{animation:boing .5s var(--spring)}
+@keyframes boing{30%{transform:scale(1.08,.9)} 60%{transform:scale(.96,1.05)}}
+.vbot{display:flex; flex-direction:column} .vbot .vsum{order:-1}
+.voice .vsum{display:block; background:#fff; color:var(--text); border:0; border-radius:18px 18px 4px 4px; padding:12px 16px 16px; text-align:start;
+  -webkit-mask:radial-gradient(circle 5px at 50% 100%,#0000 98%,#000) 0 0/14px 100% repeat-x; mask:radial-gradient(circle 5px at 50% 100%,#0000 98%,#000) 0 0/14px 100% repeat-x}
+.rhead{display:flex; justify-content:space-between; align-items:baseline; border-bottom:1.5px dashed var(--line); padding-bottom:6px; margin-bottom:6px}
+.rhead b{font-weight:600; font-size:1rem}
+.rhead i{font-style:normal; font-size:.78rem; color:var(--soft)}
+.rlines li{display:grid; grid-template-columns:28px 1fr auto; gap:6px; padding:3px 0; font-size:.92rem; align-items:baseline}
+.rlines li span:first-child{font-weight:600; color:var(--soft)}
+.rlines li b{font-weight:600; font-variant-numeric:tabular-nums}
+.rlines .rmore{display:block; font-size:.78rem; color:var(--soft)}
+.rlines li.new{animation:stampin .55s var(--spring) both; background:linear-gradient(var(--citron),var(--citron)) 0 60%/100% 60% no-repeat; border-radius:6px}
+@keyframes stampin{from{opacity:0; transform:translateY(-10px) scale(1.12)}}
+.rtot{display:flex; justify-content:space-between; align-items:baseline; border-top:1.5px solid var(--text); margin-top:6px; padding-top:6px}
+.rtot span{font-size:.85rem; color:var(--soft)}
+.rtot b{font-weight:600; font-size:1.35rem; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.party{position:absolute; inset:0; z-index:70; display:grid; place-items:center; pointer-events:none; background:rgba(7,30,23,.4); animation:fadeout 2.6s ease forwards}
+.stamp{display:grid; justify-items:center; gap:2px; background:var(--citron); color:var(--palm); border:3px solid var(--palm); border-radius:22px; padding:16px 28px; transform:rotate(-6deg); box-shadow:0 20px 50px rgba(0,0,0,.35); animation:stamp .6s cubic-bezier(.2,1.6,.4,1) both}
+.stamp b{font-weight:600; font-size:2.5rem; letter-spacing:-.04em; line-height:1}
+.stamp small{font-weight:500; font-size:.8rem; text-transform:uppercase; letter-spacing:.08em}
+.party i{position:absolute; left:50%; top:50%; width:11px; height:11px; border-radius:3px; opacity:0; animation:burst 1.3s cubic-bezier(.15,.7,.3,1) var(--d) forwards}
+@keyframes stamp{from{transform:rotate(-6deg) scale(2.4); opacity:0} 60%{transform:rotate(-6deg) scale(.92); opacity:1}}
+@keyframes burst{0%{opacity:1; transform:translate(-50%,-50%) scale(.4)} 100%{opacity:0; transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y) + 140px)) rotate(var(--r)) scale(1)}}
+@keyframes fadeout{0%,75%{opacity:1} 100%{opacity:0}}
 .cat > span{color:inherit}
-.cat:first-child{background:var(--accent); color:var(--ink); min-height:96px}
-.cat:first-child b{font-size:1.4rem}
-.cat:nth-child(2){background:var(--paper3)}
-.cat:nth-child(3){background:var(--grape); color:#fff}
-.cat:nth-child(4){background:var(--mint)}
-.cat:nth-child(5){background:var(--card)}
-.cat:nth-child(6){background:var(--sun)}
+.shelf .cardrow{gap:4px} .shelf .stepper{padding:1px; gap:0} .shelf .stepper button{width:24px; height:26px} .shelf .stepper span{min-width:14px; font-size:.85rem}
 
-/* menu */
-.stick{background:var(--paper)}
-.search input{border-radius:14px; padding:13px 16px; box-shadow:var(--e1)}
-.search input:focus{outline:none; box-shadow:0 0 0 3px var(--grape)}
-.chips{padding:2px 16px 6px}
-.chip{font-weight:700; padding:7px 15px; background:var(--card)}
-.chip[aria-pressed="true"]{background:var(--sun); color:var(--ink); border-color:var(--ink); box-shadow:2px 2px 0 var(--ink)}
-.rowitem{padding:8px 8px 12px}
-.rowitem .pic{border:var(--bw) solid var(--ink); border-radius:14px}
-.rowitem h3{font-weight:700}
-.rowitem.lit{background:var(--sun)}
-.pop{font-family:var(--mono); font-size:.62rem; text-transform:uppercase; letter-spacing:.05em; background:var(--accent); color:var(--ink); border:1.5px solid var(--ink); border-radius:999px; padding:1px 7px}
-.stepper{background:var(--ink); border-color:var(--ink); border-radius:12px}
-.stepper button{border-radius:10px}
-
-/* order */
-.lines .stepper{background:var(--paper)}
-.totalblock{background:var(--ink); color:var(--paper)}
-.totalblock .sum{font-family:var(--display); font-weight:800}
-.bigno{font-family:var(--display); font-weight:800; font-size:3.4rem}
-.tag{background:var(--sun); color:var(--ink); border:1.5px solid var(--ink); font-family:var(--mono); font-size:.68rem; text-transform:uppercase; border-radius:999px}
-.plate{border:var(--bw) solid var(--ink); font-family:var(--mono)}
-.cta{background:var(--accent); color:var(--ink); border:var(--bw) solid var(--ink); border-radius:14px; box-shadow:var(--e2); font-family:var(--display); font-weight:700; font-size:1.12rem}
-.outline{background:var(--card); border-radius:14px; box-shadow:var(--e1); font-weight:700}
-.builder{background:var(--paper3)}
-.steps li::before{border:var(--bw) solid var(--ink); font-family:var(--mono)}
-.steps li::after{background:var(--ink); width:2px; opacity:.25}
-.steps li.done::before{border-color:var(--ink)} .steps li.done::after{opacity:1; background:var(--ink)}
-.steps li.now::before{background:var(--sun); border-color:var(--ink)}
-.abtn{border:var(--bw) solid var(--ink); border-radius:14px; box-shadow:var(--e1); font-weight:700; background:var(--sun)}
-.abtn:disabled{box-shadow:none; border-color:var(--line)}
-.abtn.done:disabled{border-color:var(--ink)}
-
-/* more */
-.setting b{font-weight:700}
-.seg{background:var(--paper); border:var(--bw) solid var(--ink); border-radius:12px; padding:2px}
-.seg button{border-radius:9px; font-weight:700}
-.seg button[aria-pressed="true"]{background:var(--ink); color:var(--paper)}
-.solid{background:var(--ink); color:var(--paper); border-radius:12px; font-weight:700}
-
-/* bottom nav: outlined bar, orange pill under the active icon */
-.nav{background:var(--card); border:var(--bw) solid var(--ink); border-radius:22px; box-shadow:var(--e2); height:72px}
-.blob{top:12px; width:54px; height:34px; border-radius:999px; background:var(--accent); border:var(--bw) solid var(--ink)}
-.tab{color:var(--muted); font-weight:500}
-.tab[aria-current="page"]{color:var(--ink); font-weight:700}
-.tab[aria-current="page"] .ico{transform:none}
-.tab[aria-current="page"] .lbl{transform:translateY(5px)}
-.lbl{transform:translateY(5px)}
-.ico svg{stroke-width:2.25}
-.badge{background:var(--ink); color:var(--sun); border:1.5px solid var(--card)}
-.talk::before{background:var(--paper); border:var(--bw) solid var(--ink)}
-.bite{background:var(--accent)}
-.talk svg{stroke:var(--ink)}
-.talk .bars i{background:var(--ink)}
-.talk.live::after{border-color:var(--ink)}
-.livepill{background:var(--ink); border-radius:14px; box-shadow:var(--e1); font-weight:700}
-.toast{background:var(--ink); border-radius:14px; border:var(--bw) solid var(--ink); box-shadow:4px 4px 0 var(--accent)}
-
-/* voice mode: ink screen, paper cards */
-.voice{background:var(--ink)}
-.glass{border:1.5px solid rgba(255,246,224,.35); background:transparent; border-radius:12px}
-.orb::before,.orb::after{border-color:var(--sun)}
-.orb .bars i{background:var(--ink)}
-.vstate{font-family:var(--display); font-weight:700; font-size:1.25rem}
-.caps li{border-radius:14px}
-.caps .assistant{background:#2A2622; border:1.5px solid #3A342D}
-.caps .user{background:var(--sun); border:var(--bw) solid var(--ink)}
-.spot,.shelf .card{border:var(--bw) solid var(--paper); border-radius:16px}
-.shelf .card.lit{background:var(--sun)}
-.vlang{background:transparent; border:1.5px solid rgba(255,246,224,.35); border-radius:14px}
-.vlang button{border-radius:10px; color:var(--paper)}
-.vlang button[aria-pressed="true"]{background:var(--sun); color:var(--ink)}
-.endbtn{background:var(--accent); color:var(--ink); border:var(--bw) solid var(--paper); border-radius:14px; box-shadow:4px 4px 0 var(--paper); font-family:var(--display); font-weight:700; font-size:1.1rem}
-
+/* ================= browse the menu: drawn icons, one grid, a tone per tile ================= */
+.cats{gap:var(--gap)}
+.cat,.cat:first-child,.cat:last-child:nth-child(even){position:relative; height:132px; min-height:0; padding:16px; display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between; gap:0; overflow:hidden; text-align:start}
+.cat > span{display:block; color:inherit}
+.cat b,.cat:first-child b{font-size:1.08rem; font-weight:600; letter-spacing:-.015em; line-height:1.2}
+.cat > span > span,.cat:first-child span span{font-size:.8rem; color:inherit; opacity:.7}
+.cat i,.cat:first-child i,.cat:last-child:nth-child(even) i{order:0; align-self:flex-start; width:42px; height:42px; border-radius:14px; display:grid; place-items:center; font-size:0; background:var(--canvas); color:var(--palm); transition:transform .35s var(--spring)}
+.cat i svg{width:24px; height:24px}
+.cat:hover i{transform:rotate(-6deg) scale(1.06)}
+.cat .go{position:absolute; top:16px; inset-inline-end:16px; width:30px; height:30px; border-radius:50%; display:grid; place-items:center; border:1.5px solid currentColor; opacity:.55; transition:transform .3s var(--spring), opacity .2s}
+.cat .go svg{width:14px; height:14px}
+.cat:hover .go{opacity:1; transform:translate(2px,-2px)}
+[dir="rtl"] .cat .go svg{transform:scaleX(-1)}
+/* a different tone for each tile, all from the VoiceBite palette */
+.cat{background:var(--sheet); color:var(--text)}
+.cat:nth-child(1){background:var(--tomato); color:#fff}
+.cat:nth-child(1) i{background:rgba(255,255,255,.18); color:#fff}
+.cat:nth-child(2){background:var(--palm); color:#fff}
+.cat:nth-child(2) i{background:rgba(215,242,90,.16); color:var(--citron)}
+.cat:nth-child(3){background:var(--citron); color:var(--palm)}
+.cat:nth-child(3) i{background:rgba(14,59,46,.1)}
+.cat:nth-child(6){background:#F6E7D3}
+.cat:nth-child(6) i{background:#fff}
+/* full-width tiles lie flat: icon, name, arrow on one line */
+.cat:first-child,.cat:last-child:nth-child(even){height:88px; flex-direction:row; align-items:center; justify-content:flex-start; gap:14px; padding-inline-end:60px}
+.cat:first-child i,.cat:last-child:nth-child(even) i{align-self:center}
+.cat:first-child .go,.cat:last-child:nth-child(even) .go{top:50%; margin-top:-15px}
+.cat:first-child b{font-size:1.2rem}
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
 </head>
@@ -521,9 +428,9 @@ button.b:active,.cat:active,.rowitem:active,.cta:active,.outline:active,.startbt
       <circle cx="110" cy="15" r="15"/><circle cx="93" cy="8" r="9"/><circle cx="123" cy="33" r="9"/>
     </mask>
   </defs>
-  <rect x="48" y="12" width="72" height="88" rx="27" fill="#FF5A36" mask="url(#vb-cut)"/>
+  <rect x="48" y="12" width="72" height="88" rx="27" fill="#F0462B" mask="url(#vb-cut)"/>
   <g fill="#fff"><rect x="82" y="50" width="5.5" height="16" rx="2.75"/><rect x="91.5" y="42" width="5.5" height="32" rx="2.75"/><rect x="101" y="47" width="5.5" height="22" rx="2.75"/><rect x="110.5" y="53" width="5.5" height="10" rx="2.75"/></g>
-  <g clip-path="url(#vb-top)"><path d="M6 -8 L41 90 L76 -8" fill="none" style="stroke:var(--logo-v,#141210)" stroke-width="23" stroke-linejoin="round"/></g>
+  <g clip-path="url(#vb-top)"><path d="M6 -8 L41 90 L76 -8" fill="none" style="stroke:var(--logo-v,#0E3B2E)" stroke-width="23" stroke-linejoin="round"/></g>
 </symbol></svg>
 <div class="stage">
 
@@ -540,6 +447,7 @@ button.b:active,.cat:active,.rowitem:active,.cta:active,.outline:active,.startbt
           <p class="rise" data-t="lead"></p>
           <button class="startbtn rise" id="heroTalk"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span data-t="start"></span></button>
         </div>
+        <div class="ticker span2" aria-hidden="true"><div class="track"><span>Say it</span><i>✦</i><span lang="ar">قُلها</span><i>✦</i><span lang="ml">പറയൂ</span><i>✦</i><span>We cook it</span><i>✦</i><span>Hot at your window</span><i>✦</i><span>Say it</span><i>✦</i><span lang="ar">قُلها</span><i>✦</i><span lang="ml">പറയൂ</span><i>✦</i><span>We cook it</span><i>✦</i><span>Hot at your window</span><i>✦</i><span>Say it</span><i>✦</i><span lang="ar">قُلها</span><i>✦</i><span lang="ml">പറയൂ</span><i>✦</i><span>We cook it</span><i>✦</i><span>Hot at your window</span><i>✦</i><span>Say it</span><i>✦</i><span lang="ar">قُلها</span><i>✦</i><span lang="ml">പറയൂ</span><i>✦</i><span>We cook it</span><i>✦</i><span>Hot at your window</span><i>✦</i></div></div>
         <div class="b b-store"><span class="opennow" data-t="open"></span><b id="storeName"></b><span id="storeBranch"></span></div>
         <button class="b b-menu" data-go="menu"><span data-t="seeAll"></span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></button>
@@ -656,8 +564,8 @@ const BUILT_IN = {
 const ICON = { "custom-burger": "🍔", "classic-burger": "🍔", cheeseburger: "🍔", "double-burger": "🍔", "veggie-burger": "🥬", "chicken-sandwich": "🥪", "spicy-chicken": "🌶️",
   "chicken-nuggets-6": "🍗", "chicken-nuggets-10": "🍗", fries: "🍟", "onion-rings": "🧅", "mozzarella-sticks": "🧀", "side-salad": "🥗", cola: "🥤", lemonade: "🍋", "iced-tea": "🧋",
   "milkshake-chocolate": "🍫", "milkshake-vanilla": "🍦", "apple-pie": "🥧", sundae: "🍨", cookie: "🍪" };
+const CAT_SVG = {custom: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16M5 15h14M6 19h12a2 2 0 0 0 2-2v-2M4 15v2a2 2 0 0 0 2 2M4 11a8 6 0 0 1 16 0"/><path d="M18 3v4M16 5h4"/></svg>`, burgers: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a8 6 0 0 1 16 0z"/><path d="M3.5 14.5h17"/><path d="M5 18h14a1 1 0 0 0 1-1v-.5H4v.5a1 1 0 0 0 1 1z"/></svg>`, chicken: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5a5 5 0 0 1 0 7.1l-2.9 2.9-4.2-4.2 2.9-2.9a5 5 0 0 1 4.2-2.9z"/><path d="M9.5 12.5 6 16"/><circle cx="4.8" cy="17.2" r="1.6"/><circle cx="6.8" cy="19.2" r="1.6"/></svg>`, sides: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10h12l-1.5 10h-9z"/><path d="M8 10 7 3M11 10V2.5M14 10l1-7M17 10l1.5-5"/></svg>`, drinks: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1.5 13h-9z"/><path d="M5 8h14M12 8l2-6h3"/><path d="M7 13h10"/></svg>`, desserts: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11a5 5 0 0 1 10 0"/><path d="M6 11h12l-6 11z"/><path d="M12 6V3"/></svg>`};
 const CAT_ICON = { custom: "🍔", burgers: "🍔", chicken: "🍗", sides: "🍟", drinks: "🥤", desserts: "🍨" };
-const CAT_SVG = {custom: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16M5 15h14M6 19h12a2 2 0 0 0 2-2v-2M4 15v2a2 2 0 0 0 2 2M4 11a8 6 0 0 1 16 0"/><path d="M18 3v4M16 5h4"/></svg>`, burgers: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a8 6 0 0 1 16 0z"/><path d="M3.5 14.5h17"/><path d="M5 18h14a1 1 0 0 0 1-1v-.5H4v.5a1 1 0 0 0 1 1z"/></svg>`, chicken: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5a5 5 0 0 1 0 7.1l-2.9 2.9-4.2-4.2 2.9-2.9a5 5 0 0 1 4.2-2.9z"/><path d="M9.5 12.5 6 16"/><circle cx="4.8" cy="17.2" r="1.6"/><circle cx="6.8" cy="19.2" r="1.6"/></svg>`, sides: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10h12l-1.5 10h-9z"/><path d="M8 10 7 3M11 10V2.5M14 10l1-7M17 10l1.5-5"/></svg>`, drinks: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1.5 13h-9z"/><path d="M5 8h14M12 8l2-6h3"/><path d="M7 13h10"/></svg>`, desserts: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11a5 5 0 0 1 10 0"/><path d="M6 11h12l-6 11z"/><path d="M12 6V3"/></svg>`};
 const AR = {
   cat: { custom: "اصنع برجرك", burgers: "برجر", chicken: "دجاج", sides: "أطباق جانبية", drinks: "مشروبات", desserts: "حلويات" },
   item: { "custom-burger": "اصنع برجرك", "classic-burger": "برجر كلاسيك", cheeseburger: "تشيز برجر", "double-burger": "دبل برجر", "veggie-burger": "برجر نباتي",
@@ -773,7 +681,7 @@ function renderHome() {
   $("rail").innerHTML = allItems().filter(i => i.featured).map(i => `<article class="card" data-item="${esc(i.itemId)}"><div class="pic">${photo(i)}</div>
     <h3>${esc(itemName(i))}</h3><div class="cardrow"><span class="price">${money(i.price)}</span>${buyControl(i)}</div></article>`).join("");
   $("cats").innerHTML = cats.map(c => { const n = (menu.menuItems[c.categoryId] || []).length;
-    return `<button class="cat" data-cat="${esc(c.categoryId)}"><i aria-hidden="true">${CAT_SVG[c.categoryId] || CAT_SVG.burgers}</i><span><b>${esc(catName(c))}</b><span>${n} ${esc(n === 1 ? t("item1") : t("itemN"))}</span></span></button>`; }).join("");
+    return `<button class="cat" data-cat="${esc(c.categoryId)}"><i aria-hidden="true">${CAT_SVG[c.categoryId] || CAT_SVG.burgers}</i><span><b>${esc(catName(c))}</b><span>${n} ${esc(n === 1 ? t("item1") : t("itemN"))}</span></span><em class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></em></button>`; }).join("");
 }
 function renderMenu() {
   const cats = [...(menu.categories || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
@@ -821,7 +729,33 @@ function renderNav() {
   $("livePill").hidden = !live || $("voice").classList.contains("open");
   $("vEnd").textContent = live ? t("end") : t("close");
   const sum = $("vSum"); sum.hidden = !count();
-  sum.innerHTML = `<span>${esc(t("onOrder"))}: ${count()} ${esc(count() === 1 ? t("item1") : t("itemN"))}</span><b>${money(total())}</b>`;
+  renderReceipt(sum);
+}
+/* the order in voice mode, printed like a till receipt: each new line stamps in, the total counts up */
+let receiptSeen = {}, receiptTotal = 0, totalAnim = 0;
+function renderReceipt(sum) {
+  const ls = lines(), n = count(), ar = lang === "ar";
+  const seen = {}; ls.forEach(l => seen[l.itemId] = l.quantity || 1);
+  const shown = ls.slice(-3), more = ls.length - shown.length;
+  sum.innerHTML = `<span class="rhead"><b>${ar ? "طلبك" : "Your order"}</b><i>${n} ${esc(n === 1 ? t("item1") : t("itemN"))}</i></span>
+    <ul class="rlines">${more > 0 ? `<li class="rmore">+ ${more} ${ar ? "أخرى" : "more"}</li>` : ""}${shown.map(l => { const q = l.quantity || 1, fresh = (receiptSeen[l.itemId] || 0) < q;
+      return `<li class="${fresh ? "new" : ""}"><span>${q}×</span><span>${esc(itemName(findItem(l.itemId) || l))}</span><b>${money(q * (l.unitPrice ?? l.price ?? 0))}</b></li>`; }).join("")}</ul>
+    <span class="rtot"><span>${ar ? "المجموع" : "Total"}</span><b id="rTotal">${money(receiptTotal)}</b></span>`;
+  receiptSeen = seen;
+  const to = total(), from = receiptTotal; receiptTotal = to; cancelAnimationFrame(totalAnim);
+  if (calm || from === to) { $("rTotal").textContent = money(to); return; }
+  const t0 = performance.now(), step = now => { const k = Math.min(1, (now - t0) / 600), e = 1 - Math.pow(1 - k, 3), el = $("rTotal");
+    if (el) el.textContent = money(Math.round(from + (to - from) * e)); if (k < 1) totalAnim = requestAnimationFrame(step); };
+  totalAnim = requestAnimationFrame(step);
+}
+/* the order goes in: a stamp lands and confetti bursts in the brand colours */
+function celebrate(number) {
+  if (navigator.vibrate) try { navigator.vibrate([18, 40, 28]); } catch (e) {}
+  const ar = lang === "ar", box = document.createElement("div"); box.className = "party"; box.setAttribute("aria-hidden", "true");
+  const colours = ["#F0462B", "#D7F25A", "#FFFFFF", "#1B8A4B", "#F0462B"];
+  box.innerHTML = `<div class="stamp"><small>${ar ? "رقم الطلب" : "Order"} ${esc(number || "")}</small><b>${ar ? "تم الطلب!" : "Order in!"}</b></div>` +
+    (calm ? "" : Array.from({ length: 28 }, (_, i) => `<i style="--x:${Math.round(Math.cos(i * 2.39) * (120 + (i * 37) % 90))}px; --y:${Math.round(Math.sin(i * 2.39) * (120 + (i * 53) % 110) - 60)}px; --r:${(i * 97) % 360}deg; --d:${(i % 5) * 40}ms; background:${colours[i % 5]}; ${i % 3 ? "" : "border-radius:50%;"}"></i>`).join(""));
+  $("app").appendChild(box); setTimeout(() => box.remove(), 2600);
 }
 function centerChip() { const chip = view === "menu" && document.querySelector('.chip[aria-pressed="true"]'); if (chip) chip.scrollIntoView({ block: "nearest", inline: "center" }); }
 function renderSpot() {
@@ -944,6 +878,8 @@ function addItem(id, fromEl) {
   const line = cart.find(l => l.itemId === id);
   if (line) line.quantity++; else cart.push({ itemId: id, name: i.name, quantity: 1, unitPrice: i.price });
   touched = id; flyToOrder(fromEl); renderCart(); touched = null;
+  if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) {}
+  const host = fromEl && document.querySelector(`[data-item="${CSS.escape(id)}"] .pic`); if (host && !calm) { host.classList.remove("boing"); void host.offsetWidth; host.classList.add("boing"); }
 }
 function changeQty(id, delta) {
   const line = lines().find(l => l.itemId === id); if (!line) return;
@@ -955,7 +891,7 @@ function placeOrder() {
   if (live) { sendText("That's everything. Please place my order."); return toast(t("askedPlace")); }
   // Without the attendant there is no order service to send to yet, so this shows the tracking flow as a preview.
   order = { number: "P-" + Math.floor(1000 + Math.random() * 9000), status: 0, total: total(), preview: true };
-  cart = []; renderCart(); clearInterval(previewTimer);
+  cart = []; renderCart(); celebrate(order.number); clearInterval(previewTimer);
   previewTimer = setInterval(() => { if (!order || !order.preview || order.status >= 3) return clearInterval(previewTimer); order.status++; renderOrder(); }, 6000);
 }
 function newOrder() { clearInterval(previewTimer); stopTracking(); order = null; saveOrder(); agentCart = null; agentTotal = 0; builder = null; renderCart(); go("menu"); }
@@ -1034,6 +970,9 @@ function addLine(role, text) {
   while ($("caps").children.length > 3) $("caps").firstChild.remove();
   return li;
 }
+const sameWords = t => String(t || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+function overlap(a, b) { const A = new Set(a.split(" ")), B = new Set(b.split(" ")); if (!A.size || !B.size) return 0; let n = 0; B.forEach(w => A.has(w) && n++); return n / Math.min(A.size, B.size); }
+const audioLeft = () => ctx ? Math.max(0, playHead - ctx.currentTime) : 0;
 function finishCaption() { if (cap) { cap.el.textContent = cap.text; cap = null; } }
 function caption(role, text, final) {
   text = String(text || "").trim(); if (!text) return;
@@ -1042,11 +981,21 @@ function caption(role, text, final) {
     else { if (lastLine && lastLine.role === "user" && lastLine.el.textContent === text) return; finishCaption(); lastLine = { role: "user", el: addLine("user", text) }; }
     lastLine.final = final !== false; return;
   }
-  const now = performance.now();
-  if (cap && lastLine && lastLine.role === "assistant" && !(cap.shown >= cap.text.length && now - cap.last > 5000)) {
-    if (cap.text.includes(text)) return;                                   // the model repeats a line once it has been spoken
+  // Nova Sonic sends each spoken line twice: first as the voice starts, then again (is_final) once it has finished.
+  // The first copy is in time with the audio; the late copy only ever caused a second bubble.
+  if (final === true) return;
+  const now = performance.now(), words = sameWords(text);
+  const turnOn = cap && lastLine && lastLine.role === "assistant" && (cap.shown < cap.text.length || audioLeft() > 0.05 || now - cap.last < 1200);
+  if (turnOn) {
+    if (sameWords(cap.text).includes(words)) return;                       // already on screen
     cap.text = text.startsWith(cap.text) ? text : cap.text + " " + text;   // the same turn carries on in the same bubble
-  } else { finishCaption(); const el = addLine("assistant", ""); cap = { el, text, shown: 0, acc: 0, since: now }; lastLine = { role: "assistant", el, final: true }; }
+  } else {
+    const prev = lastLine && lastLine.role === "assistant" ? lastLine : null;
+    if (prev && now - (prev.at || 0) < 15000 && overlap(sameWords(prev.el.textContent), words) > 0.7) {   // the same reply reworded: refresh it, do not stack it
+      finishCaption(); cap = { el: prev.el, text, shown: 0, acc: 0, since: now }; prev.el.textContent = "";
+    } else { finishCaption(); const el = addLine("assistant", ""); cap = { el, text, shown: 0, acc: 0, since: now }; lastLine = { role: "assistant", el, final: true }; }
+  }
+  lastLine.at = now;
   cap.last = now;
   if (calm) { cap.el.textContent = cap.text; cap.shown = cap.text.length; }
 }
@@ -1065,9 +1014,10 @@ function captionPiece(role, raw) {   // Arabic and Malayalam arrive a few words 
 }
 function paceCaption(now, dt) {
   if (!cap || cap.shown >= cap.text.length) return;
-  const audioLeft = ctx ? Math.max(0, playHead - ctx.currentTime) : 0, speaking = audioLeft > 0.05;
-  if (!speaking && now - cap.since < 1500) return;                         // wait for the voice to start
-  const left = cap.text.length - cap.shown, rate = speaking ? Math.min(34, Math.max(11, left / Math.max(0.35, audioLeft))) : 34;   // characters per second
+  const aLeft = audioLeft(), speaking = aLeft > 0.05;
+  if (!speaking && now - cap.since < 250) return;                          // the voice is a moment behind the words
+  // keep pace with the audio still queued, finishing a touch before it does; with no audio left, catch up at once
+  const left = cap.text.length - cap.shown, rate = speaking ? Math.min(90, Math.max(16, left / Math.max(0.3, aLeft - 0.25))) : 400;
   cap.acc += rate * dt; const step = Math.floor(cap.acc); if (!step) return;
   cap.acc -= step; cap.shown = Math.min(cap.text.length, cap.shown + step);
   let end = cap.shown; while (end < cap.text.length && cap.text[end] !== " ") end++;   // whole words only
@@ -1087,7 +1037,7 @@ function applyState(s) {
   let placed = false;
   if (s.orderConfirmed && s.orderNumber && !(order && order.number === s.orderNumber)) { order = { number: s.orderNumber, status: 0, total: agentTotal || total(), preview: false, vehicle: s.vehicleNumber || "", token: s.trackToken || "", placedAt: Date.now() }; cart = []; lit = null; shown = []; placed = true; saveOrder(); startTracking(); }
   renderCart(); centerChip();
-  if (placed) { closeVoice(); go("order"); }
+  if (placed) { celebrate(s.orderNumber); closeVoice(); go("order"); }
   return true;
 }
 function onMessage(m) {
