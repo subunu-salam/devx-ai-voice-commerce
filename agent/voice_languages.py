@@ -11,7 +11,9 @@ Arabic and Malayalam switch on when a Gemini API key is set on the server:
 Optional settings:
 
     GEMINI_VOICE_MODEL_ID   the Gemini Live model, default "gemini-3.8-live"
-    GEMINI_VOICE            the voice, default "Kore"
+    GEMINI_VOICE            the voice, default "Kore" (GEMINI_VOICE_AR / GEMINI_VOICE_ML pick one per language)
+    GEMINI_VAD_START, GEMINI_VAD_END, GEMINI_VAD_SILENCE_MS, GEMINI_VAD_PREFIX_MS   turn-taking (see _live_tuning)
+    GEMINI_AFFECTIVE        "1" lets the voice match the customer's tone
     GEMINI_API_VERSION      default "v1beta"
 
 Without a key only English is offered, and calls run exactly as they did before this file existed.
@@ -139,11 +141,44 @@ def name(code: str) -> str:
     return LANGUAGES.get(code, LANGUAGES[DEFAULT])["name"]
 
 
+def _int_env(name: str, default: int, low: int, high: int) -> int:
+    try:
+        return max(low, min(high, int(os.getenv(name, default))))
+    except ValueError:
+        return default
+
+
+def _live_tuning() -> dict:
+    """How Gemini Live decides the customer has started and finished speaking.
+
+    The defaults suit a car at a drive-thru window: engine, indicator and road noise should not
+    cut the attendant off mid-sentence (low start sensitivity), while a customer who stops talking
+    gets an answer quickly (high end sensitivity, about half a second of silence).
+    """
+    tuning = {
+        "realtime_input_config": {
+            "automatic_activity_detection": {
+                "disabled": False,
+                "start_of_speech_sensitivity": os.getenv("GEMINI_VAD_START", "START_SENSITIVITY_LOW"),
+                "end_of_speech_sensitivity": os.getenv("GEMINI_VAD_END", "END_SENSITIVITY_HIGH"),
+                "prefix_padding_ms": _int_env("GEMINI_VAD_PREFIX_MS", 300, 0, 2000),
+                "silence_duration_ms": _int_env("GEMINI_VAD_SILENCE_MS", 550, 200, 2000),
+            },
+        },
+        # long calls stay inside the context window instead of ending abruptly
+        "context_window_compression": {"sliding_window": {}},
+    }
+    if os.getenv("GEMINI_AFFECTIVE", "").lower() in ("1", "true", "yes"):
+        tuning["enable_affective_dialog"] = True   # tone follows the customer's mood; switch off if the model rejects it
+    return tuning
+
+
 def make_model(lang: str):
     """The voice model for an Arabic or Malayalam call. English keeps its own model in main.py."""
+    voice = os.getenv(f"GEMINI_VOICE_{lang.upper()}", VOICE)   # e.g. GEMINI_VOICE_ML=Aoede, GEMINI_VOICE_AR=Kore
     return _gemini_model_class()(
         model_id=MODEL_ID,
-        provider_config={"audio": {"voice": VOICE}},
+        provider_config={"audio": {"voice": voice}, "inference": _live_tuning()},
         client_config={"api_key": _api_key(), "http_options": {"api_version": API_VERSION}},
     )
 
@@ -190,6 +225,8 @@ def prompt_section(lang: str, resumed: bool = False, order_lines: list = None) -
             f"- Everything you say is in {spoken}, including the fixed phrases quoted in these instructions: "
             f"say their natural {spoken} equivalent, never the English wording",
             f"- {info['style']}",
+            "- Reply in one or two short sentences, then stop and let the customer talk. Speak once per turn and never repeat yourself",
+            "- When a tool is needed, call it first and speak after its result",
             f"- Tool results come back in English. Say prices and totals in {spoken}, with exactly the same numbers "
             f"and the word {info['dirhams']} for dirhams",
             f"- You may say menu item names the way {spoken} speakers naturally say them. The itemId and categoryId you pass "
