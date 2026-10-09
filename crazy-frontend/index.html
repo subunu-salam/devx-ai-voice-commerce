@@ -415,6 +415,20 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 .cat:first-child i,.cat:last-child:nth-child(even) i{align-self:center}
 .cat:first-child .go,.cat:last-child:nth-child(even) .go{top:50%; margin-top:-15px}
 .cat:first-child b{font-size:1.2rem}
+
+/* voice screen: the conversation scrolls on its own, pinned to the newest line, so nothing hides behind the receipt */
+.vmid{display:flex; flex-direction:column; align-items:center; justify-content:flex-start; overflow:hidden; min-height:0}
+.vmid > *{flex:none}
+.voice:not(.shelf-on) .orb{margin-top:auto}
+.caps{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; display:flex; flex-direction:column; gap:8px; padding:4px 2px 6px; scrollbar-width:none;
+  -webkit-mask:linear-gradient(transparent 0, #000 18px); mask:linear-gradient(transparent 0, #000 18px)}
+.caps::-webkit-scrollbar{display:none}
+.caps li:first-child{margin-top:auto}
+.caps .user{align-self:flex-end} .caps .assistant{align-self:flex-start}
+.voice.shelf-on .caps li:nth-last-child(n+3){display:block}
+.voice:has(.vsum:not([hidden])) .shelf .card .pic{height:76px} .shelf .card .pic{display:block} .shelf .card .pic img{width:100%; height:100%; object-fit:contain}
+.voice:has(.vsum:not([hidden])) .shelf .card h3{min-height:0; margin-top:4px}
+.voice:has(.vsum:not([hidden])) .orb{margin-top:4px; margin-bottom:4px}
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
 </head>
@@ -736,7 +750,7 @@ let receiptSeen = {}, receiptTotal = 0, totalAnim = 0;
 function renderReceipt(sum) {
   const ls = lines(), n = count(), ar = lang === "ar";
   const seen = {}; ls.forEach(l => seen[l.itemId] = l.quantity || 1);
-  const shown = ls.slice(-3), more = ls.length - shown.length;
+  const shown = ls.slice(-2), more = ls.length - shown.length;
   sum.innerHTML = `<span class="rhead"><b>${ar ? "طلبك" : "Your order"}</b><i>${n} ${esc(n === 1 ? t("item1") : t("itemN"))}</i></span>
     <ul class="rlines">${more > 0 ? `<li class="rmore">+ ${more} ${ar ? "أخرى" : "more"}</li>` : ""}${shown.map(l => { const q = l.quantity || 1, fresh = (receiptSeen[l.itemId] || 0) < q;
       return `<li class="${fresh ? "new" : ""}"><span>${q}×</span><span>${esc(itemName(findItem(l.itemId) || l))}</span><b>${money(q * (l.unitPrice ?? l.price ?? 0))}</b></li>`; }).join("")}</ul>
@@ -973,9 +987,10 @@ const CPS = 14;   // a typical speaking pace in characters per second, used whil
 let turn = null;  // the reply being spoken: { el, segs: [{ text, start, dur, closed, born }], heard, last }
 function addLine(role, text) {
   const li = document.createElement("li"); li.className = role; li.dir = "auto"; li.textContent = text; $("caps").appendChild(li);
-  while ($("caps").children.length > 3) $("caps").firstChild.remove();
-  return li;
+  while ($("caps").children.length > 6) $("caps").firstChild.remove();
+  pinCaps(); return li;
 }
+function pinCaps() { const c = $("caps"); if (c.scrollHeight - c.scrollTop - c.clientHeight < 80 || c.dataset.pin !== "off") c.scrollTop = c.scrollHeight; }
 const sameWords = t => String(t || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 function overlap(a, b) { const A = new Set(a.split(" ")), B = new Set(b.split(" ")); if (!A.size || !B.size) return 0; let n = 0; B.forEach(w => A.has(w) && n++); return n / Math.min(A.size, B.size); }
 const heardAt = () => ctx ? ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0) : 0;   // what has reached the speaker
@@ -1041,7 +1056,7 @@ function paceCaption() {
     end = (end - a) >= (z - a) * 0.4 ? z : a;
   }
   const show = full.slice(0, end);
-  if (turn.el.textContent !== show) turn.el.textContent = show;
+  if (turn.el.textContent !== show) { turn.el.textContent = show; pinCaps(); }
 }
 function caption(role, text, final) {
   text = String(text || "").trim(); if (!text) return;
@@ -1059,7 +1074,7 @@ function captionPiece(role, raw) {   // Arabic and Malayalam arrive a few words 
   raw = String(raw || ""); if (!raw) return;
   if (role === "user") {
     if (!(lastLine && lastLine.role === "user" && lastLine.raw != null)) { finishCaption(); lastLine = { role: "user", el: addLine("user", ""), raw: "", final: false }; }
-    lastLine.raw += raw; lastLine.el.textContent = lastLine.raw.trim(); return;
+    lastLine.raw += raw; lastLine.el.textContent = lastLine.raw.trim(); pinCaps(); return;
   }
   assistantText(raw, true);
 }
