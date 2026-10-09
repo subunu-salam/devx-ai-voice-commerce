@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0E3B2E">
+<meta name="theme-color" content="#FFF6E0">
 <link rel="icon" href="icon-192.png">
 <title>VoiceBite console</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{ --palm:#0E3B2E; --palm-2:#185740; --deep:#071E17; --tomato:#F0462B; --citron:#D7F25A; --bg:#F5F8F1; --sheet:#FFFFFF;
   --text:#12241D; --soft:#637169; --line:#E2E8DC; --ok:#1B8A4B; --warn:#B25E00; --bad:#C22E17;
@@ -259,6 +259,127 @@ tr.click:hover td{background:#F3F7EE}
 .ticket.here{box-shadow:0 0 0 3px var(--ok)}
 @media (max-width:900px){ .side{position:fixed; height:auto; max-height:none} .side nav{flex:1 1 auto} }
 @media print{ body *{visibility:hidden} .receipt,.receipt *{visibility:visible} .receipt{position:absolute; inset:0 auto auto 0; width:80mm; border-radius:0} }
+
+/* ================= Snack · Neo-Playful (merchant console) ================= */
+:root{
+  --ink:#141210; --muted:#5A5248; --paper:#FFF6E0; --card:#FFFFFF; --paper2:#FFEBC2; --paper3:#FFD98A;
+  --accent:#FF5A36; --grape:#7B61FF; --mint:#21C07A; --sun:#FFC21A; --cherry:#E8343B;
+  --palm:var(--ink); --palm-2:#2A2622; --deep:var(--ink); --tomato:var(--accent); --citron:var(--sun);
+  --bg:var(--paper); --canvas:var(--paper); --sheet:var(--card); --text:var(--ink); --soft:var(--muted); --line:#EADBB8;
+  --ok:#14965C; --warn:#9A5B00; --bad:var(--cherry);
+  --font:"DM Sans","Segoe UI",Tahoma,system-ui,sans-serif;
+  --display:"Bricolage Grotesque","DM Sans",system-ui,sans-serif;
+  --mono:"Space Mono",ui-monospace,monospace;
+  --r:20px; --gap:16px; --bw:2px; --e1:3px 3px 0 var(--ink); --e2:5px 5px 0 var(--ink);
+}
+body{background:var(--paper)}
+:focus-visible{outline:3px solid var(--grape); outline-offset:3px}
+.name{font-family:var(--display); font-weight:800; letter-spacing:-.03em}
+
+/* outlines + hard shadows on every surface */
+.card,.panel,.kpi,.tile,.ticket,.bar,.tools,.side,.lb-brand,.lb-form,.receipt{border:var(--bw) solid var(--ink); box-shadow:var(--e1)}
+.kpi:hover,.tile:hover,.panel:hover,.ticket:hover{transform:translate(-1px,-1px); box-shadow:var(--e2)}
+
+/* sign in */
+.login{background:radial-gradient(circle at 1px 1px, rgba(20,18,16,.12) 1px, transparent 0) 0 0/22px 22px, var(--paper)}
+.lb-brand{background:var(--sun); color:var(--ink); box-shadow:var(--e2); --logo-v:var(--ink)}
+.lb-brand .name .wv{color:var(--ink)}
+.lb-brand::after{right:-50px; bottom:-50px; width:200px; height:200px; border-radius:50%; background:var(--grape); border:var(--bw) solid var(--ink); -webkit-mask:none; mask:none}
+.lb-brand::before{content:""; position:absolute; right:150px; bottom:38px; width:44px; height:44px; background:var(--accent); border:var(--bw) solid var(--ink); border-radius:10px; transform:rotate(-12deg)}
+.lb-brand h1{position:relative; z-index:1; font-family:var(--display); font-weight:800; font-size:clamp(2.3rem,5.4vw,3.3rem); letter-spacing:-.045em; line-height:.95; max-width:9ch}
+.lb-brand p{position:relative; z-index:1; color:#3A3128}
+.lb-brand .by{position:relative; z-index:1; color:var(--ink); font-family:var(--mono); font-size:.68rem; text-transform:uppercase}
+.lb-brand .by img{border:1.5px solid var(--ink)}
+.lb-form{box-shadow:var(--e2)}
+
+/* form controls */
+label{font-family:var(--mono); font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted)}
+input[type=text],input[type=password],input[type=number],input[type=time],input[type=datetime-local],input[type=search],input[type=tel],select,textarea{border:var(--bw) solid var(--ink); border-radius:12px; background:var(--card)}
+.sheet input,.sheet select,.sheet textarea{border-color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:none; box-shadow:0 0 0 3px var(--grape)}
+.btn{background:var(--ink); color:var(--paper); border:var(--bw) solid var(--ink); border-radius:12px; font-weight:700; box-shadow:2px 2px 0 var(--ink); transition:transform .12s var(--ease), box-shadow .12s var(--ease)}
+.btn:hover{filter:none; transform:translate(-1px,-1px); box-shadow:3px 3px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px); box-shadow:0 0 0 var(--ink)}
+.btn.hot{background:var(--accent); color:var(--ink); font-family:var(--display); font-size:1.02rem}
+.btn.ghost{background:var(--card); color:var(--ink); border:var(--bw) solid var(--ink)}
+.btn.warn{background:var(--card); color:var(--cherry); border-color:var(--cherry); box-shadow:2px 2px 0 var(--cherry)}
+.btn.sm{border-radius:10px}
+.tabs{background:var(--paper); border:var(--bw) solid var(--ink); border-radius:12px; padding:2px}
+.tabs button{border-radius:9px; font-weight:700}
+.tabs button[aria-pressed="true"]{background:var(--ink); color:var(--paper)}
+.check input{accent-color:var(--accent)}
+
+/* shell */
+.side{background:var(--ink); color:var(--paper); border-color:var(--ink); box-shadow:none}
+.side small{font-family:var(--mono); font-size:.64rem; text-transform:uppercase; letter-spacing:.08em; color:#A89C88}
+.navlink{color:#E8DEC9; border-radius:10px; border:var(--bw) solid transparent}
+.navlink:hover{background:#2A2622}
+.navlink[aria-current="page"]{background:var(--sun); color:var(--ink); font-weight:700; border-color:var(--paper)}
+.navlink i{background:var(--accent); color:var(--ink); border:1.5px solid var(--ink); font-weight:700}
+.who{color:#A89C88; border-top-color:#3A342D}
+.bar{background:var(--card)}
+.bar h1{font-family:var(--display); font-weight:800; letter-spacing:-.04em; font-size:clamp(1.4rem,5vw,1.95rem)}
+.menubtn{border:var(--bw) solid var(--ink); border-radius:10px}
+.msg:not(:empty){background:var(--ink); color:var(--paper); border:var(--bw) solid var(--ink); border-radius:14px; box-shadow:4px 4px 0 var(--accent)}
+.msg.bad:not(:empty){background:var(--cherry); color:#fff}
+.tools{background:var(--paper2)}
+
+/* content */
+.card h2,.panel h2,.lane h2{font-family:var(--display); font-weight:800; font-size:1.15rem; letter-spacing:-.02em}
+.panel h2 small{font-family:var(--mono); font-size:.68rem; text-transform:uppercase; letter-spacing:.04em}
+th{font-family:var(--mono); font-size:.66rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-bottom:var(--bw) solid var(--ink)}
+td{border-top:1px solid var(--line)}
+tr.click:hover td{background:var(--paper)}
+.pill{border:1.5px solid var(--ink); font-weight:700; background:var(--card)}
+.pill.ok{background:#BDF0D6; color:var(--ink)} .pill.warn{background:var(--paper3); color:var(--ink)} .pill.bad{background:#FFC2B5; color:var(--ink)} .pill.hi{background:var(--sun)}
+.tile b,.kpi b{font-family:var(--display); font-weight:800; letter-spacing:-.04em}
+.tile span,.kpi span{font-family:var(--mono); font-size:.68rem; text-transform:uppercase; letter-spacing:.05em}
+.tiles .tile:first-child{background:var(--ink); color:var(--paper)} .tiles .tile:first-child span{color:#A89C88}
+.tiles .tile:nth-child(3){background:var(--sun)} .tiles .tile:nth-child(3) span{color:var(--ink)}
+.tiles .tile:nth-child(4){background:var(--grape); color:#fff} .tiles .tile:nth-child(4) span{color:#E6DFFF}
+.kpi.lead{background:var(--accent); color:var(--ink)} .kpi.lead span{color:var(--ink)}
+.kpi:nth-child(3){background:var(--sun)} .kpi:nth-child(3) span{color:var(--ink)}
+.kpi.lead .delta,.kpi.lead .delta.up{background:var(--card); color:var(--ink)}
+.delta{border:1.5px solid var(--ink); font-weight:700; background:var(--card); color:var(--ink)}
+.delta.up{background:#BDF0D6; color:var(--ink)} .delta.down{background:#FFC2B5; color:var(--ink)}
+.spark{border-top:var(--bw) solid var(--ink)}
+.chart text{font-family:var(--mono); font-size:10px; fill:var(--muted)}
+.chart .grid{stroke:#EADBB8}
+.chart .line{stroke:var(--ink); stroke-width:3}
+.chart .col{fill:var(--grape); stroke:var(--ink); stroke-width:1.5}
+.chart .col:hover,.chart .col.peak{fill:var(--accent)}
+.legend i{border:1.5px solid var(--ink); border-radius:4px; width:12px; height:12px}
+.meter{background:var(--paper); border:1.5px solid var(--ink); height:12px; border-radius:6px}
+.meter i{background:var(--grape); border-radius:0}
+.bars div{background:var(--grape); border:1.5px solid var(--ink); border-bottom:0}
+.funnel div{border:var(--bw) solid var(--ink); font-weight:700}
+.funnel div:nth-child(1){background:var(--ink)} .funnel div:nth-child(2){background:var(--grape)} .funnel div:nth-child(3){background:var(--sun); color:var(--ink)}
+.dotc{border:1.5px solid var(--ink); width:12px; height:12px}
+#tip{background:var(--ink); border-radius:8px; font-family:var(--mono); font-size:.74rem; box-shadow:3px 3px 0 var(--accent)}
+.skel{background:linear-gradient(90deg,#FFEBC2 25%,#FFF6E0 37%,#FFEBC2 63%); background-size:400% 100%; border:var(--bw) solid #EADBB8}
+.empty{font-family:var(--mono); font-size:.8rem}
+
+/* kitchen display: tickets as outlined dockets with a colour header strip */
+.ticket{border-inline-start-width:var(--bw); position:relative; padding-top:20px; overflow:hidden}
+.ticket::before{content:""; position:absolute; inset:0 0 auto 0; height:8px; background:var(--line); border-bottom:var(--bw) solid var(--ink)}
+.ticket.received::before{background:var(--accent)} .ticket.preparing::before{background:var(--sun)} .ticket.ready::before{background:var(--mint)}
+.ticket.received,.ticket.preparing,.ticket.ready{border-color:var(--ink)}
+.ticket.late{box-shadow:5px 5px 0 var(--cherry)}
+.ticket.here{box-shadow:5px 5px 0 var(--mint)}
+.ticket h3{font-family:var(--display); font-weight:800; font-size:1.7rem}
+.age{font-family:var(--mono); font-weight:700}
+.ticket li small{background:var(--paper3); border:1.5px solid var(--ink)}
+.plate{background:var(--card); color:var(--ink); border:var(--bw) solid var(--ink); font-family:var(--mono)}
+.arr{border:1.5px solid var(--ink); background:var(--paper)} .arr.arriving{background:var(--sun)} .arr.arrived{background:var(--mint); color:var(--ink)}
+
+/* side sheet */
+.scrim{background:rgba(20,18,16,.55)}
+.sheet{background:var(--paper); border-inline-start:var(--bw) solid var(--ink)}
+.sheet h2{font-family:var(--display); font-weight:800; letter-spacing:-.03em; font-size:1.6rem}
+.receipt{box-shadow:var(--e1)}
+.receipt .tot td{border-top:var(--bw) solid var(--ink)}
+@media print{ .receipt{border:0; box-shadow:none} }
+
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
 </head>
@@ -272,9 +393,9 @@ tr.click:hover td{background:#F3F7EE}
       <circle cx="110" cy="15" r="15"/><circle cx="93" cy="8" r="9"/><circle cx="123" cy="33" r="9"/>
     </mask>
   </defs>
-  <rect x="48" y="12" width="72" height="88" rx="27" fill="#F0462B" mask="url(#vb-cut)"/>
+  <rect x="48" y="12" width="72" height="88" rx="27" fill="#FF5A36" mask="url(#vb-cut)"/>
   <g fill="#fff"><rect x="82" y="50" width="5.5" height="16" rx="2.75"/><rect x="91.5" y="42" width="5.5" height="32" rx="2.75"/><rect x="101" y="47" width="5.5" height="22" rx="2.75"/><rect x="110.5" y="53" width="5.5" height="10" rx="2.75"/></g>
-  <g clip-path="url(#vb-top)"><path d="M6 -8 L41 90 L76 -8" fill="none" style="stroke:var(--logo-v,#0E3B2E)" stroke-width="23" stroke-linejoin="round"/></g>
+  <g clip-path="url(#vb-top)"><path d="M6 -8 L41 90 L76 -8" fill="none" style="stroke:var(--logo-v,#141210)" stroke-width="23" stroke-linejoin="round"/></g>
 </symbol></svg>
 
 <section class="login" id="login">
@@ -458,7 +579,7 @@ const sla = () => num(me.business.prepSlaMinutes) || 8;
 const active = o => !["completed", "cancelled"].includes(o.status);
 
 /* ================= charts ================= */
-const COLORS = { received: "#F0462B", preparing: "#E3A400", ready: "#1B8A4B", completed: "#0E3B2E", cancelled: "#C9D2C5", cash: "#0E3B2E", card: "#3F8468", unpaid: "#E3A400" };
+const COLORS = { received: "#FF5A36", preparing: "#FFC21A", ready: "#21C07A", completed: "#141210", cancelled: "#E6D9BC", cash: "#141210", card: "#7B61FF", unpaid: "#FFC21A" };
 let chartId = 0;
 const tip = t => `data-tip="${esc(t)}"`;
 document.addEventListener("mousemove", e => { const el = e.target.closest && e.target.closest("[data-tip]"), t = $("tip"); if (!el) return t.classList.remove("on"); t.textContent = el.dataset.tip; t.style.left = e.clientX + "px"; t.style.top = e.clientY + "px"; t.classList.add("on"); });
@@ -473,11 +594,11 @@ function areaChart(points, fmt, axis) {   // points: [{label, value, tip}]
   const W = 720, H = 240, L = 50, R = 14, T = 14, B = 28, max = niceMax(Math.max(...points.map(p => p.value))), id = "g" + (++chartId), floor = H - B;
   const x = i => L + (points.length === 1 ? (W - L - R) / 2 : i * (W - L - R) / (points.length - 1)), y = v => T + (1 - v / max) * (H - T - B), pts = points.map((p, i) => [x(i), y(p.value)]);
   const line = points.length > 1 ? curve(pts, floor) : `M${L},${pts[0][1]} L${W - R},${pts[0][1]}`, step = Math.ceil(points.length / 8), band = (W - L - R) / Math.max(1, points.length - 1);
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Trend chart"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0E3B2E" stop-opacity=".28"/><stop offset="1" stop-color="#0E3B2E" stop-opacity="0"/></linearGradient></defs>
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Trend chart"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#141210" stop-opacity=".28"/><stop offset="1" stop-color="#141210" stop-opacity="0"/></linearGradient></defs>
     ${[0, .25, .5, .75, 1].map(f => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(max * f)}" y2="${y(max * f)}"/><text x="${L - 8}" y="${y(max * f) + 4}" text-anchor="end">${axis(max * f)}</text>`).join("")}
     <path class="area" d="${line} L${pts[pts.length - 1][0]},${floor} L${pts[0][0]},${floor} Z" fill="url(#${id})"/><path class="line" d="${line}" pathLength="1"/>
     ${points.map((p, i) => `${i % step === 0 ? `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(p.label)}</text>` : ""}<g class="pt" ${tip(p.tip || p.label + ": " + fmt(p.value))}><rect class="hit" x="${x(i) - band / 2}" y="${T}" width="${band}" height="${H - T - B}"/>
-      <line class="guide" x1="${x(i)}" x2="${x(i)}" y1="${T}" y2="${floor}" stroke="#0E3B2E" stroke-dasharray="3 4"/><circle cx="${x(i)}" cy="${pts[i][1]}" r="5" fill="#F0462B" stroke="#fff" stroke-width="2"/></g>`).join("")}</svg>`;
+      <line class="guide" x1="${x(i)}" x2="${x(i)}" y1="${T}" y2="${floor}" stroke="#141210" stroke-dasharray="3 4"/><circle cx="${x(i)}" cy="${pts[i][1]}" r="5" fill="#FF5A36" stroke="#fff" stroke-width="2"/></g>`).join("")}</svg>`;
 }
 function barChart(points, fmt) {
   const W = 720, H = 220, L = 34, R = 8, T = 12, B = 26, max = niceMax(Math.max(...points.map(p => p.value))), slot = (W - L - R) / points.length, bw = Math.min(34, slot * .62), peak = Math.max(...points.map(p => p.value)), step = Math.ceil(points.length / 12);
@@ -489,8 +610,8 @@ function barChart(points, fmt) {
 function donut(segs, big, small) {
   const total = segs.reduce((s, x) => s + x.value, 0), r = 56, c = 2 * Math.PI * r; let acc = 0;
   return `<div class="donut"><svg class="chart" viewBox="0 0 150 150" role="img" aria-label="Breakdown">${total ? segs.filter(x => x.value).map((x, i) => { const len = c * x.value / total, el = `<circle class="seg" style="animation-delay:${i * 90}ms" cx="75" cy="75" r="${r}" stroke="${x.color}" stroke-dasharray="${Math.max(0, len - 2)} ${c - len + 2}" stroke-dashoffset="${-acc}" transform="rotate(-90 75 75)" ${tip(x.label + ": " + (x.fmt || x.value) + " (" + Math.round(100 * x.value / total) + "%)")}/>`; acc += len; return el; }).join("")
-      : `<circle cx="75" cy="75" r="${r}" fill="none" stroke="#E2E8DC" stroke-width="20"/>`}
-    <text x="75" y="73" text-anchor="middle" style="font-size:24px; font-weight:500; fill:#12241D">${esc(big)}</text><text x="75" y="91" text-anchor="middle">${esc(small)}</text></svg>
+      : `<circle cx="75" cy="75" r="${r}" fill="none" stroke="#FFEBC2" stroke-width="20"/>`}
+    <text x="75" y="73" text-anchor="middle" style="font-size:24px; font-weight:500; fill:#141210">${esc(big)}</text><text x="75" y="91" text-anchor="middle">${esc(small)}</text></svg>
     <ul class="legend">${segs.map(x => `<li><i style="background:${x.color}"></i>${esc(x.label)}<b>${esc(x.fmt || x.value)}</b></li>`).join("")}</ul></div>`;
 }
 function spark(values, color) {
@@ -523,21 +644,21 @@ RENDER.today = async () => {
   const wasteP = waste.filter(x => ts(x.at) >= start), wasteBy = {}; wasteP.forEach(x => wasteBy[x.reason] = (wasteBy[x.reason] || 0) + num(x.cost));
   S.stale = stale.map(x => x.orderId);
   const alerts = [
-    late.length && [`${late.length} ${late.length === 1 ? "order is" : "orders are"} past the ${sla()}-minute target`, "Oldest: order " + late.sort((a, b) => a.t - b.t)[0].orderId + ", waiting " + Math.round((Date.now() - late[0].t) / 60000) + " min", "#F0462B", `<button class="btn ghost sm" data-goto="kitchen">Kitchen display</button>`],
-    stale.length && [`${stale.length} old ${stale.length === 1 ? "order was" : "orders were"} never closed`, "Open for more than 12 hours, usually test orders", "#E3A400", can("orders.status") ? `<button class="btn ghost sm" data-act="closeStale">Cancel them</button>` : ""],
-    unpaid.length && [`${unpaid.length} ready ${unpaid.length === 1 ? "order is" : "orders are"} unpaid`, money(unpaid.reduce((s, x) => s + num(x.total), 0)) + " to collect at the window", "#E3A400", `<button class="btn ghost sm" data-goto="orders">Orders</button>`],
-    low.length && [`${low.length} stock ${low.length === 1 ? "item is" : "items are"} low`, low.slice(0, 3).map(i => i.name).join(", "), "#E3A400", `<button class="btn ghost sm" data-goto="inventory">Inventory</button>`],
-    overdue.length && [`${overdue.length} ${overdue.length === 1 ? "asset is" : "assets are"} overdue`, overdue.slice(0, 3).map(a => a.name).join(", "), "#E3A400", `<button class="btn ghost sm" data-goto="assets">Assets</button>`]].filter(Boolean);
+    late.length && [`${late.length} ${late.length === 1 ? "order is" : "orders are"} past the ${sla()}-minute target`, "Oldest: order " + late.sort((a, b) => a.t - b.t)[0].orderId + ", waiting " + Math.round((Date.now() - late[0].t) / 60000) + " min", "#FF5A36", `<button class="btn ghost sm" data-goto="kitchen">Kitchen display</button>`],
+    stale.length && [`${stale.length} old ${stale.length === 1 ? "order was" : "orders were"} never closed`, "Open for more than 12 hours, usually test orders", "#FFC21A", can("orders.status") ? `<button class="btn ghost sm" data-act="closeStale">Cancel them</button>` : ""],
+    unpaid.length && [`${unpaid.length} ready ${unpaid.length === 1 ? "order is" : "orders are"} unpaid`, money(unpaid.reduce((s, x) => s + num(x.total), 0)) + " to collect at the window", "#FFC21A", `<button class="btn ghost sm" data-goto="orders">Orders</button>`],
+    low.length && [`${low.length} stock ${low.length === 1 ? "item is" : "items are"} low`, low.slice(0, 3).map(i => i.name).join(", "), "#FFC21A", `<button class="btn ghost sm" data-goto="inventory">Inventory</button>`],
+    overdue.length && [`${overdue.length} ${overdue.length === 1 ? "asset is" : "assets are"} overdue`, overdue.slice(0, 3).map(a => a.name).join(", "), "#FFC21A", `<button class="btn ghost sm" data-goto="assets">Assets</button>`]].filter(Boolean);
   const kpi = (cls, name, value, d, series, color) => `<div class="kpi s3 ${cls}"><span>${name}</span><b>${value}</b>${d}${spark(series, color)}</div>`;
   const pName = period === "today" ? "today" : "last " + days + " days", count = kept(inP).length, pc = kept(prev).length;
   timers.push(setInterval(() => { if (page === "today" && $("scrim").hidden) show("today", true); }, 30000));
   return `<div class="tools"><div class="tabs">${[["today", "Today"], ["7", "7 days"], ["30", "30 days"]].map(([k, l]) => `<button data-act="dashPeriod" data-p="${k}" aria-pressed="${k === period}">${l}</button>`).join("")}</div>
       <span class="grow"></span><span class="soft small">Updated ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}, refreshes every 30 seconds</span></div>
     <div class="dash">
-      ${kpi("lead", "Sales " + pName, money(sales(inP)), delta(sales(inP), sales(prev)), buckets.map(b => b.sales), "#D7F25A")}
-      ${kpi("", "Orders " + pName, count, delta(count, pc), buckets.map(b => b.orders), "#0E3B2E")}
-      ${kpi("", "Average order", money(count ? sales(inP) / count : 0), delta(count ? sales(inP) / count : 0, pc ? sales(prev) / pc : 0), buckets.map(b => b.orders ? b.sales / b.orders : 0), "#0E3B2E")}
-      ${kpi("", "Average time to ready", prep(inP) ? span(prep(inP)) : "No data", prep(inP) ? delta(prep(inP), prep(prev), true) : `<em class="delta" style="font-style:normal">Mark orders ready to measure</em>`, buckets.map(b => b.orders), "#F0462B")}
+      ${kpi("lead", "Sales " + pName, money(sales(inP)), delta(sales(inP), sales(prev)), buckets.map(b => b.sales), "#141210")}
+      ${kpi("", "Orders " + pName, count, delta(count, pc), buckets.map(b => b.orders), "#141210")}
+      ${kpi("", "Average order", money(count ? sales(inP) / count : 0), delta(count ? sales(inP) / count : 0, pc ? sales(prev) / pc : 0), buckets.map(b => b.orders ? b.sales / b.orders : 0), "#141210")}
+      ${kpi("", "Average time to ready", prep(inP) ? span(prep(inP)) : "No data", prep(inP) ? delta(prep(inP), prep(prev), true) : `<em class="delta" style="font-style:normal">Mark orders ready to measure</em>`, buckets.map(b => b.orders), "#FF5A36")}
       <div class="panel s8"><h2>Sales ${period === "today" ? "by hour" : "by day"}<small>${money(sales(inP))} from ${count} ${count === 1 ? "order" : "orders"}</small></h2>${areaChart(buckets.map(b => ({ label: label(b), value: b.sales, tip: label(b) + ": " + money(b.sales) + ", " + b.orders + (b.orders === 1 ? " order" : " orders") })), money, v => (v / 100 >= 1000 ? (v / 100000).toFixed(1) + "k" : Math.round(v / 100)))}</div>
       <div class="panel s4"><h2>Order status<small>${pName}</small></h2>${donut(me.statuses.map(s => ({ label: s[0].toUpperCase() + s.slice(1), value: byStatus(s), color: COLORS[s] })), inP.length, inP.length === 1 ? "order" : "orders")}</div>
       <div class="panel s7"><h2>Busiest hours<small>orders by hour of day, ${pName}</small></h2>${barChart(hours, v => v + (v === 1 ? " order" : " orders"))}</div>
@@ -545,8 +666,8 @@ RENDER.today = async () => {
       <div class="panel s4"><h2>Payments<small>${pName}</small></h2>${donut([{ label: "Cash", value: pay.cash, color: COLORS.cash, fmt: money(pay.cash) }, { label: "Card", value: pay.card, color: COLORS.card, fmt: money(pay.card) }, { label: "Not yet paid", value: pay.unpaid, color: COLORS.unpaid, fmt: money(pay.unpaid) }], Math.round(100 * (pay.cash + pay.card) / Math.max(1, pay.cash + pay.card + pay.unpaid)) + "%", "collected")}</div>
       ${ins ? `<div class="panel s4"><h2>Voice ordering<small>${pName}</small></h2>${ins.calls ? `<div class="funnel"><div style="width:100%"><span>Calls</span><b>${ins.calls}</b></div><div style="width:${Math.max(38, 100 * (ins.withOrder + ins.abandoned) / ins.calls)}%"><span>Added items</span><b>${ins.withOrder + ins.abandoned}</b></div>
         <div style="width:${Math.max(30, 100 * ins.withOrder / ins.calls)}%"><span>Ordered</span><b>${ins.withOrder}</b></div></div><p class="soft small" style="margin-top:10px">${ins.conversion}% of calls ended with an order. Average call ${span(ins.averageSeconds)}.</p>` : `<p class="empty">No voice calls recorded in this period.</p>`}</div>` : ""}
-      ${stock ? `<div class="panel s4"><h2>Stock and waste<small>${money(wasteP.reduce((s, x) => s + num(x.cost), 0))} wasted</small></h2>${low.length ? hbars(low.slice(0, 4).map(i => ({ label: i.name, text: num(i.onHand) + " " + i.unit + " left", value: Math.max(0, num(i.onHand)), max: num(i.parLevel) || num(i.reorderPoint) * 2, color: "#F0462B" })), "")
-        : Object.keys(wasteBy).length ? hbars(Object.entries(wasteBy).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([r, c], i, l) => ({ label: r, text: money(c), value: c, max: l[0][1], color: "#F0462B" })), "") : `<p class="empty">${ing.length ? "Stock levels are healthy and no waste is logged." : "Add ingredients to track stock here."}</p>`}</div>` : ""}
+      ${stock ? `<div class="panel s4"><h2>Stock and waste<small>${money(wasteP.reduce((s, x) => s + num(x.cost), 0))} wasted</small></h2>${low.length ? hbars(low.slice(0, 4).map(i => ({ label: i.name, text: num(i.onHand) + " " + i.unit + " left", value: Math.max(0, num(i.onHand)), max: num(i.parLevel) || num(i.reorderPoint) * 2, color: "#FF5A36" })), "")
+        : Object.keys(wasteBy).length ? hbars(Object.entries(wasteBy).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([r, c], i, l) => ({ label: r, text: money(c), value: c, max: l[0][1], color: "#FF5A36" })), "") : `<p class="empty">${ing.length ? "Stock levels are healthy and no waste is logged." : "Add ingredients to track stock here."}</p>`}</div>` : ""}
       <div class="panel s6"><h2>Needs attention</h2>${alerts.length ? `<ul class="feed">${alerts.map(a => `<li><i class="dotc" style="background:${a[2]}"></i><div><b style="font-weight:500">${esc(a[0])}</b><span class="soft small">${esc(a[1])}</span></div>${a[3]}</li>`).join("")}</ul>` : `<p class="empty">Nothing needs attention right now.</p>`}</div>
       <div class="panel s6"><h2>Latest orders<small><button class="link" data-goto="orders" style="border:0; background:none; text-decoration:underline; color:var(--palm); padding:0">See all</button></small></h2>
         ${all.length ? `<ul class="feed">${all.slice(0, 6).map(x => `<li><i class="dotc" style="background:${COLORS[x.status]}" ${tip(x.status)}></i><div><b style="font-weight:500">Order ${esc(x.orderId)}</b> ${x.vehicleNumber ? `<span class="plate">${esc(x.vehicleNumber)}</span> ` : ""}<span class="soft small" style="display:inline">${esc(when(x.createdAt))}</span>
