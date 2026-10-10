@@ -258,6 +258,38 @@ tr.click:hover td{background:#F3F7EE}
 .ticket .arr{display:block; width:fit-content; margin:6px 0 2px; font-size:1rem; padding:5px 12px}
 .ticket.here{box-shadow:0 0 0 3px var(--ok)}
 @media (max-width:900px){ .side{position:fixed; height:auto; max-height:none} .side nav{flex:1 1 auto} }
+
+/* stock health bars */
+.sbars{display:grid; gap:7px}
+.sbar{display:grid; grid-template-columns:minmax(90px,170px) 1fr 48px; gap:12px; align-items:center; font-size:.9rem}
+.sbar .sname{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.sbar b{text-align:end; font-weight:600; font-variant-numeric:tabular-nums}
+.strack{position:relative; height:14px; border-radius:7px; background:var(--canvas)}
+.strack i{position:absolute; inset:0 auto 0 0; border-radius:7px; background:var(--ok); animation:growx .8s var(--ease) both; transform-origin:left}
+.strack em{position:absolute; top:-3px; bottom:-3px; width:2px; background:#E3A400; border-radius:1px} .strack em.c{background:var(--bad)}
+.sbar.low .strack i{background:#E3A400} .sbar.critical .strack i,.sbar.out .strack i{background:var(--bad)} .sbar.out b,.sbar.critical b{color:var(--bad)}
+.saxis{display:grid; grid-template-columns:minmax(90px,170px) 1fr 48px; gap:12px; font-size:.7rem; color:var(--soft)}
+.saxis > span:nth-child(2){position:relative; height:14px} .saxis i{position:absolute; transform:translateX(-50%); font-style:normal; white-space:nowrap}
+.buylist{display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.buylist div{background:var(--canvas); border-radius:16px; padding:12px 14px; display:grid; gap:2px}
+.buylist b{font-weight:600} .buylist span{font-size:1.15rem; font-weight:500; font-variant-numeric:tabular-nums} .buylist small{color:var(--soft)}
+.link{border:0; background:none; padding:0; color:inherit; text-decoration:underline; text-underline-offset:3px; font-weight:500}
+/* production: made vs sold vs lost */
+.stacks{display:grid; gap:10px}
+.stack{display:grid; grid-template-columns:minmax(100px,170px) 1fr 92px; gap:12px; align-items:center}
+.stack .sname{display:grid; font-weight:500; line-height:1.2} .stack .sname small{font-weight:400; color:var(--soft); font-size:.78rem}
+.sbarw{display:flex; height:18px; border-radius:9px; overflow:hidden; background:var(--canvas)}
+.sbarw i{height:100%; animation:growx .8s var(--ease) both; transform-origin:left}
+.sbarw .sold{background:var(--palm)} .sbarw .wasted{background:var(--tomato)}
+.sbarw .missing,.legend i.hatch{background:repeating-linear-gradient(45deg,#E3A400 0 5px,#F5C64A 5px 10px)}
+.stack > b{text-align:end; font-weight:600; font-variant-numeric:tabular-nums} .stack > b.neg{color:var(--bad)}
+.legend.inline{display:flex; flex-wrap:wrap; gap:4px 16px; margin-top:6px} .legend.inline li{padding:0; font-size:.82rem}
+/* loyalty steps */
+.panel ol.steps{list-style:none; counter-reset:s; display:grid; gap:12px; margin:4px 0 0; padding:0}
+.panel ol.steps li{counter-increment:s; position:relative; padding-inline-start:38px; color:var(--soft); font-size:.92rem}
+.panel ol.steps li b{color:var(--text); font-weight:600}
+.panel ol.steps li::before{content:counter(s); position:absolute; inset-inline-start:0; top:-2px; width:26px; height:26px; border-radius:50%; background:var(--citron); color:var(--text); display:grid; place-items:center; font-weight:600; font-size:.82rem}
+@media (max-width:640px){ .sbar,.saxis,.stack{grid-template-columns:90px 1fr 60px; gap:8px} }
 @media print{ body *{visibility:hidden} .receipt,.receipt *{visibility:visible} .receipt{position:absolute; inset:0 auto auto 0; width:80mm; border-radius:0} }
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
@@ -331,8 +363,8 @@ const ROLE_NAMES = { platform_admin: "Platform admin", merchant_admin: "Merchant
 const NAV = [
   ["Operations", [["today", "Dashboard", "orders.view"], ["kitchen", "Kitchen display", "orders.view"], ["orders", "Orders", "orders.view"]]],
   ["Catalogue", [["menu", "Menu", "orders.view"]]],
-  ["Stock", [["inventory", "Inventory", "inventory.view"], ["recipes", "Recipes", "inventory.view"], ["waste", "Waste", "inventory.view"], ["purchasing", "Purchasing", "inventory.view"], ["assets", "Assets", "inventory.view"]]],
-  ["Customers", [["customers", "Customers", "crm.view"], ["offers", "Offers and campaigns", "crm.view"]]],
+  ["Stock", [["inventory", "Inventory", "inventory.view"], ["production", "Production and waste", "inventory.view"], ["recipes", "Recipes", "inventory.view"], ["waste", "Ingredient waste", "inventory.view"], ["purchasing", "Purchasing", "inventory.view"], ["assets", "Assets", "inventory.view"]]],
+  ["Customers", [["customers", "Customers", "crm.view"], ["loyalty", "Loyalty and rewards", "crm.view"], ["offers", "Offers and campaigns", "crm.view"]]],
   ["Insights", [["reports", "Reports", "analytics.view"]]],
   ["Admin", [["team", "Team", "team.manage"], ["settings", "Settings", "settings.manage"], ["audit", "Audit log", "audit.view"], ["launch", "Launch check", "settings.manage"]]]
 ];
@@ -424,6 +456,7 @@ async function start() {
   $("nav").innerHTML = NAV.map(([group, pages]) => { const mine = pages.filter(p => can(p[2])); return mine.length ? `<small>${group}</small>` + mine.map(p => `<button class="navlink" data-page="${p[0]}">${p[1]}</button>`).join("") : ""; }).join("");
   const many = me.location === "all" && me.locations.length > 1;
   $("branch").hidden = !many; $("branch").innerHTML = `<option value="all">All branches</option>` + me.locations.map(l => `<option value="${esc(l.locationId)}">${esc(l.name)}</option>`).join("");
+  alertBadge(); clearInterval(S.badgeTimer); S.badgeTimer = setInterval(alertBadge, 60000);
   const first = NAV.flatMap(g => g[1]).find(p => can(p[2])); show(can((NAV.flatMap(g => g[1]).find(p => p[0] === page) || [])[2]) ? page : first[0]);
 }
 function signOut() { token = null; me = null; try { sessionStorage.removeItem("consoleToken"); } catch (e) {} start(); }
@@ -663,8 +696,8 @@ ACT.burgerEdit = () => form("Burger prices", [{ key: "basePrice", label: "Base p
 
 /* ================= inventory ================= */
 const ING_FIELDS = [{ key: "name", label: "Ingredient or packaging", req: true }, { key: "unit", label: "Unit", type: "select", options: UNITS }, { key: "unitCost", label: "Cost per unit", type: "money" },
-  { key: "parLevel", label: "Par level", type: "number", hint: "How much you want on the shelf" }, { key: "reorderPoint", label: "Reorder point", type: "number", hint: "Low-stock alert at or below this" },
-  { key: "yieldPct", label: "Yield %", type: "number", def: 100, hint: "Usable share after trimming or prep" }, { key: "trackBatch", label: "Track batch and expiry", type: "checkbox" }, { key: "batch", label: "Current batch or lot" }, { key: "expiry", label: "Expiry date", placeholder: "2026-12-31" }];
+  { key: "parLevel", label: "Par level", type: "number", hint: "How much you want on the shelf when fully stocked. Alerts are a share of this" }, { key: "reorderPoint", label: "Reorder point (optional)", type: "number", hint: "Only used for items with no par level" },
+  { key: "yieldPct", label: "Yield %", type: "number", def: 100, hint: "Usable share after trimming or prep" }, { key: "perishable", label: "Perishable, bought daily (milk, bread, fresh meat)", type: "checkbox" }, { key: "trackBatch", label: "Track batch and expiry", type: "checkbox" }, { key: "batch", label: "Current batch or lot" }, { key: "expiry", label: "Expiry date", placeholder: "2026-12-31" }];
 RENDER.inventory = async () => {
   const tab = S.invTab || "stock", edit = can("inventory.edit"); S.ing = await records("ingredients");
   const head = `<div class="tools"><div class="tabs"><button data-act="invTab" data-t="stock" aria-pressed="${tab === "stock"}">Stock on hand</button><button data-act="invTab" data-t="ledger" aria-pressed="${tab === "ledger"}">Stock ledger</button></div><span class="grow"></span>
@@ -672,11 +705,12 @@ RENDER.inventory = async () => {
   if (tab === "ledger") { S.moves = await records("stock_moves"); const names = Object.fromEntries(S.ing.map(i => [i.id, i]));
     return head + table([{ label: "When", cell: m => esc(when(m.at)) }, { label: "Ingredient", cell: m => esc((names[m.ingredientId] || {}).name || m.ingredientId) }, { label: "Type", cell: m => pill(m.type, m.type === "waste" ? "bad" : m.type === "purchase" ? "ok" : "") },
       { label: "Change", cls: "r", cell: m => (num(m.qty) > 0 ? "+" : "") + num(m.qty) + " " + esc((names[m.ingredientId] || {}).unit || "") }, { label: "Reference", cell: m => esc(m.ref || m.note || "") }, { label: "By", cell: m => esc(m.by) }], S.moves, "No stock movements yet. Purchases, completed orders, waste and counts appear here."); }
-  const value = S.ing.reduce((s, i) => s + num(i.onHand) * num(i.unitCost), 0), low = S.ing.filter(i => num(i.reorderPoint) > 0 && num(i.onHand) <= num(i.reorderPoint)).length;
-  return head + `<div class="tiles">${tile(S.ing.length, "Stock items")}${tile(money(value), "Stock value")}${tile(low, "At or below reorder point")}</div>` +
+  const value = S.ing.reduce((s, i) => s + num(i.onHand) * num(i.unitCost), 0); S.stock = await api("/ops/stock"); const lv = Object.fromEntries(S.stock.items.map(x => [x.id, x]));
+  return head + stockHealth(S.stock, value) +
     table([{ label: "Item", cell: i => `<b style="font-weight:500">${esc(i.name)}</b>${i.trackBatch && i.expiry ? `<br><span class="soft small">Batch ${esc(i.batch || "none")}, expires ${esc(i.expiry)}</span>` : ""}` }, { label: "On hand", cls: "r", cell: i => num(i.onHand) + " " + esc(i.unit) },
       { label: "Par", cls: "r", cell: i => num(i.parLevel) || "" }, { label: "Reorder at", cls: "r", cell: i => num(i.reorderPoint) || "" }, { label: "Unit cost", cls: "r", cell: i => money(i.unitCost) },
-      { label: "Status", cell: i => num(i.onHand) < 0 ? pill("Negative, count it", "bad") : num(i.reorderPoint) > 0 && num(i.onHand) <= num(i.reorderPoint) ? pill("Low", "warn") : pill("OK", "ok") },
+      { label: "Level", cls: "r", cell: i => lv[i.id] && lv[i.id].pct != null ? lv[i.id].pct + "%" : "" },
+      { label: "Status", cell: i => num(i.onHand) < 0 ? pill("Negative, count it", "bad") : stockPill((lv[i.id] || {}).status) },
       { label: "", cls: "a", cell: i => edit ? `<button class="btn ghost sm" data-act="ingAdjust" data-id="${esc(i.id)}">Adjust</button> <button class="btn ghost sm" data-act="ingEdit" data-id="${esc(i.id)}">Edit</button>` : "" }],
       S.ing, "No ingredients yet. Add the ingredients and packaging your recipes use.");
 };
@@ -686,6 +720,123 @@ ACT.ingEdit = d => { const i = S.ing.find(x => x.id === d.id); form("Edit " + i.
 ACT.ingAdjust = d => { const i = S.ing.find(x => x.id === d.id); form("Adjust " + i.name, [{ key: "type", label: "What happened", type: "select", options: [["count", "Stock count (enter what is on the shelf)"], ["adjustment", "Adjustment (enter the change, + or −)"], ["purchase", "Purchase received without a PO (+)"], ["transfer", "Transfer to or from another branch (+ or −)"], ["return", "Return to supplier (−)"]] },
   { key: "qty", label: "Quantity in " + i.unit, type: "number", req: true }, { key: "note", label: "Note" }], {}, v => api("/inventory/adjust", "POST", { ingredientId: d.id, ...v }), { before: `<p class="soft">On hand now: ${num(i.onHand)} ${esc(i.unit)}</p>`, save: "Record" }); };
 ACT.stockCsv = () => download("stock.csv", [["Item", "Unit", "On hand", "Par", "Reorder point", "Unit cost", "Value"], ...S.ing.map(i => [i.name, i.unit, num(i.onHand), num(i.parLevel), num(i.reorderPoint), (num(i.unitCost) / 100).toFixed(2), (num(i.onHand) * num(i.unitCost) / 100).toFixed(2)])]);
+
+
+/* ================= stock health, alerts and daily purchasing ================= */
+const STOCK_TONE = { out: ["Out of stock", "bad"], critical: ["Critical", "bad"], low: ["Low", "warn"], ok: ["OK", "ok"], untracked: ["No par level", ""] };
+const stockPill = st => pill(...(STOCK_TONE[st] || STOCK_TONE.untracked));
+async function alertBadge() {
+  if (!can("inventory.view")) return;
+  try { const ov = await api("/ops/stock"), n = ov.alerts.filter(a => !a.ackAt).length, b = document.querySelector('.navlink[data-page="inventory"]');
+    if (b) { b.querySelector("i") && b.querySelector("i").remove(); if (n) b.insertAdjacentHTML("beforeend", `<i title="${n} stock alerts">${n}</i>`); } } catch (e) {}
+}
+function stockBars(items, cfg) {
+  const rows = items.filter(x => x.status !== "untracked");
+  if (!rows.length) return `<p class="empty">Give your items a par level (how much you want on the shelf) to see them here.</p>`;
+  return `<div class="sbars">${rows.map(x => { const w = Math.max(0, Math.min(120, x.pct)); return `<div class="sbar ${x.status}" ${tip(`${x.name}: ${x.onHand} of ${x.par} ${x.unit} (${x.pct}%)`)}>
+    <span class="sname">${esc(x.name)}</span><span class="strack"><i style="width:${w / 1.2}%"></i><em style="left:${cfg.lowStockPct / 1.2}%"></em><em class="c" style="left:${cfg.criticalStockPct / 1.2}%"></em></span>
+    <b>${x.pct}%</b></div>`; }).join("")}<div class="saxis"><span></span><span><i style="left:0">0%</i><i style="left:${cfg.criticalStockPct / 1.2}%">${cfg.criticalStockPct}%</i><i style="left:${cfg.lowStockPct / 1.2}%">${cfg.lowStockPct}%</i><i style="left:${100 / 1.2}%">par</i></span><span></span></div></div>`;
+}
+function stockHealth(ov, value) {
+  const c = ov.counts, cfg = ov.config, open = ov.alerts.filter(a => !a.ackAt), edit = can("settings.manage");
+  return `<div class="dash" style="margin-bottom:var(--gap)">
+    <div class="kpi lead s3"><span>Need attention</span><b>${(c.out || 0) + (c.critical || 0) + (c.low || 0)}</b><em class="delta" style="font-style:normal">${c.out || 0} out · ${c.critical || 0} critical · ${c.low || 0} low</em><span style="margin:10px 0 16px">&nbsp;</span></div>
+    <div class="kpi s3"><span>Cost to refill what is low</span><b>${money(ov.missingValue)}</b><span style="margin:10px 0 16px">back to par level</span></div>
+    <div class="kpi s3"><span>Stock value on hand</span><b>${money(value)}</b><span style="margin:10px 0 16px">${ov.items.length} items</span></div>
+    <div class="kpi s3"><span>Alert level</span><b>${cfg.lowStockPct}%</b><span style="margin:10px 0 16px">critical at ${cfg.criticalStockPct}% ${edit ? `· <button class="link" data-act="alertCfg">change</button>` : ""}</span></div>
+    <div class="panel s8"><h2>Stock level against par<small>bars past the line are healthy</small></h2>${stockBars(ov.items, cfg)}</div>
+    <div class="panel s4"><h2>Alerts<small>${open.length} new</small></h2>${ov.alerts.length ? `<ul class="feed">${ov.alerts.sort((a, b) => String(b.openedAt).localeCompare(String(a.openedAt))).map(a => `<li><span class="dotc" style="background:${a.status === "low" ? "#E3A400" : "#C22E17"}"></span>
+      <div><b style="font-weight:500">${esc(a.name)}</b> ${stockPill(a.status)}<span class="small soft">${num(a.onHand)} ${esc(a.unit)} left (${num(a.pct)}%) · ${esc(when(a.openedAt))}</span></div>
+      ${a.ackAt ? `<span class="soft small">Seen</span>` : `<button class="btn ghost sm" data-act="alertAck" data-id="${esc(a.id)}">Got it</button>`}</li>`).join("")}</ul>` : `<p class="empty">No alerts. Everything is above ${cfg.lowStockPct}% of par.</p>`}</div>
+    <div class="panel s12"><h2>Today's purchase list<small>perishables and anything low, topped up to par · ${money(ov.purchaseValue)}</small></h2>
+      ${ov.purchaseList.length ? `<div class="buylist">${ov.purchaseList.map(x => `<div><b>${esc(x.name)}</b><span>${+x.shortfall.toFixed(2)} ${esc(x.unit)}</span><small>${x.perishable ? "Daily · " : ""}${money(x.refillCost)}</small></div>`).join("")}</div>
+      <div class="row" style="margin-top:12px"><button class="btn ghost sm" data-act="buyCsv">Export list</button>${can("purchasing.edit") ? `<button class="btn sm" data-act="buyPo">Turn into a purchase order</button>` : ""}</div>` : `<p class="empty">Nothing to buy today.</p>`}</div></div>`;
+}
+ACT.alertAck = d => attempt(async () => { await api("/ops/alerts/" + encodeURIComponent(d.id) + "/ack", "POST"); await show("inventory", true); alertBadge(); });
+ACT.alertCfg = async () => { const cfg = await api("/ops/config");
+  form("Stock alert levels", [{ key: "lowStockPct", label: "Alert when stock falls to (% of par)", type: "number", req: true, hint: "20 to 30% gives time to reorder before running out" },
+    { key: "criticalStockPct", label: "Critical below (% of par)", type: "number", req: true }, { key: "posApiKey", label: "POS key", hint: "Keep as is. Set it under Production and waste" }],
+    cfg, v => api("/ops/config", "PUT", { ...v, lowStockPct: Math.round(v.lowStockPct), criticalStockPct: Math.round(v.criticalStockPct) })); };
+ACT.buyCsv = () => download("purchase-list.csv", [["Item", "Buy", "Unit", "Estimated cost", "Perishable"], ...S.stock.purchaseList.map(x => [x.name, x.shortfall, x.unit, (x.refillCost / 100).toFixed(2), x.perishable ? "yes" : "no"])]);
+ACT.buyPo = async () => { const [sup, ing] = await Promise.all([records("suppliers"), records("ingredients")]); S.sup = sup; S.ing = ing;
+  poSheet({ id: "", supplierId: (sup[0] || {}).id, lines: S.stock.purchaseList.map(x => ({ ingredientId: x.id, qty: +x.shortfall.toFixed(2), unitCost: x.unitCost })) });
+  const h = $("sheet").querySelector("h2"); if (h) h.textContent = "Purchase order from today's list"; const del = $("sheet").querySelector('[data-act="poDelete"]'); if (del) del.remove(); };
+
+/* ================= daily production and waste ================= */
+const today = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+function lossBars(items) {
+  const rows = items.filter(x => x.tracked || x.wasted);
+  if (!rows.length) return `<p class="empty">Log what the kitchen prepared today (biryani, cutlets, snacks) to compare it with sales.</p>`;
+  const max = Math.max(...rows.map(x => Math.max(x.produced, x.sold + x.wasted + x.missing)), 1);
+  return `<div class="stacks">${rows.map(x => `<div class="stack"><span class="sname">${esc(x.name)}<small>${x.produced ? "made " + x.produced : "not logged"}</small></span><span class="sbarw">
+    <i class="sold" style="width:${100 * x.sold / max}%" ${tip(`Sold ${x.sold} (voice ${x.soldVoice}, POS ${x.soldPos})`)}></i><i class="wasted" style="width:${100 * x.wasted / max}%" ${tip(`Wasted ${x.wasted}: ` + Object.entries(x.reasons).map(([r, q]) => q + " " + r).join(", "))}></i><i class="missing" style="width:${100 * x.missing / max}%" ${tip(`Not sold and not logged as waste: ${x.missing}`)}></i></span>
+    <b class="${x.lostCost ? "neg" : ""}">${x.lostCost ? "−" + money(x.lostCost) : "OK"}</b></div>`).join("")}
+    <ul class="legend inline"><li><i style="background:#0E3B2E"></i>Sold</li><li><i style="background:#F0462B"></i>Wasted</li><li><i class="hatch"></i>Missing (made, not sold, not logged)</li></ul></div>`;
+}
+RENDER.production = async () => {
+  S.day = S.day || today(); const [r, tr] = await Promise.all([api("/ops/daily" + bq("day=" + S.day)), api("/ops/trend" + bq("days=14"))]); S.daily = r; const t = r.totals, log = can("waste.log");
+  return `<div class="tools"><input type="date" value="${esc(S.day)}" data-change="dayPick" style="width:auto"><span class="grow soft small">Production vs sales vs waste for the day. Money lost = wasted portions + portions made but not sold or logged.</span>
+      ${log ? `<button class="btn" data-act="prodNew">Log production</button><button class="btn hot" data-act="itemWaste">Log unsold or broken</button>` : ""}${can("inventory.edit") ? `<button class="btn ghost sm" data-act="posImport">Import POS sales</button>` : ""}</div>
+    <div class="dash" style="margin-bottom:var(--gap)">
+      <div class="kpi lead s3"><span>Money lost this day</span><b>${money(t.totalLost || 0)}</b><span style="margin:10px 0 16px">${money(t.sales || 0)} sold</span></div>
+      <div class="kpi s3"><span>Wasted portions</span><b>${+(t.wasted || 0).toFixed(1)}</b><span style="margin:10px 0 16px">${money(t.wasteCost || 0)}</span></div>
+      <div class="kpi s3"><span>Missing portions</span><b>${+(t.missing || 0).toFixed(1)}</b><span style="margin:10px 0 16px">${money(t.missingCost || 0)} unaccounted</span></div>
+      <div class="kpi s3"><span>Stock count gaps</span><b>${money(t.stockGapCost || 0)}</b><span style="margin:10px 0 16px">shelf vs records</span></div>
+      <div class="panel s7"><h2>Made, sold and lost per item<small>${esc(S.day)}</small></h2>${lossBars(r.items)}</div>
+      <div class="panel s5"><h2>Losses, last 14 days<small>waste and missing</small></h2>${tr.days.some(d => d.wasteCost + d.missingCost) ? barChart(tr.days.map(d => ({ label: d.day.slice(5), value: (d.wasteCost + d.missingCost) / 100 })), v => cur() + " " + v.toFixed(2)) : `<p class="empty">No losses recorded yet.</p>`}</div></div>` +
+    table([{ label: "Item", cell: x => `<b style="font-weight:500">${esc(x.name)}</b>` }, { label: "Made", cls: "r", cell: x => x.produced || "" }, { label: "Sold (voice + POS)", cls: "r", cell: x => `${x.sold} <span class="soft small">(${x.soldVoice} + ${x.soldPos})</span>` },
+      { label: "Wasted", cls: "r", cell: x => x.wasted || "" }, { label: "Missing", cls: "r", cell: x => x.missing ? pill(String(x.missing), "warn") : x.oversold ? pill("+" + x.oversold + " oversold", "hi") : "" },
+      { label: "Cost per portion", cls: "r", cell: x => x.portionCost ? money(x.portionCost) : "" }, { label: "Lost", cls: "r", cell: x => x.lostCost ? `<b style="font-weight:600; color:var(--bad)">${money(x.lostCost)}</b>` : "" }], r.items, "Nothing made, sold or wasted on this day yet.") +
+    (r.stockGaps.length ? `<div class="card"><h2>Stock count gaps</h2><p class="soft small" style="margin:-4px 0 8px">Stock counts that found less on the shelf than the records said: losses no order or waste log explains.</p>${hbars(r.stockGaps.map(g => ({ label: g.name, text: `${g.qty} ${g.unit} · ${money(g.cost)}`, value: g.cost, max: r.stockGaps[0].cost, color: "#F0462B" })))}</div>` : "");
+};
+ACT.dayPick = (d, el) => { S.day = el.value || today(); show("production", true); };
+const menuOpts = () => S.daily.menu.map(m => [m.itemId, m.name + (m.portionCost ? " (" + money(m.portionCost) + " a portion)" : "")]);
+ACT.prodNew = () => form("Log production", [{ key: "itemId", label: "What was prepared", type: "select", options: menuOpts() }, { key: "qty", label: "Portions or pieces made", type: "number", req: true },
+  { key: "portionCost", label: "Cost per portion (leave empty to use the recipe)", type: "money" }, { key: "note", label: "Note", placeholder: "Morning batch" }], {},
+  v => api("/ops/production", "POST", { ...v, day: S.day, portionCost: v.portionCost || null }), { save: "Log production" });
+ACT.itemWaste = () => form("Log unsold or broken", [{ key: "itemId", label: "Item", type: "select", options: menuOpts() }, { key: "qty", label: "Portions or pieces", type: "number", req: true },
+  { key: "reason", label: "Why", type: "select", options: S.daily.reasons }, { key: "note", label: "Note", placeholder: "Tray dropped at 3 pm" }], {}, v => api("/ops/item-waste", "POST", { ...v, day: S.day }), { save: "Log waste" });
+ACT.posImport = () => form("Import POS sales", [{ key: "csv", label: "Paste item sales: one line each, item name or ID, quantity, amount", type: "textarea", req: true, hint: "Chicken Biryani, 28, 504.00" }, { key: "ref", label: "Reference", placeholder: "Z-report 1042" }],
+  {}, async v => { const sales = v.csv.split(/\n+/).map(l => l.split(",").map(x => x.trim())).filter(c => c[0]).map(([n, q, a]) => ({ name: n, itemId: n, qty: parseFloat(q) || 0, amount: Math.round((parseFloat(a) || 0) * 100) }));
+    const r = await api("/ops/pos/sales/manual", "POST", { day: S.day, ref: v.ref, sales }); if (r.unknown.length) setTimeout(() => say("Not on the menu, skipped: " + r.unknown.join(", "), true), 50); }, { save: "Import", after: `<p class="soft small">Your POS can also send this automatically: POST <code>/admin/api/ops/pos/sales</code> with the header <code>X-POS-Key</code>. ${can("settings.manage") ? `<button class="link" data-act="posKey">Set the POS key</button>` : ""}</p>` });
+ACT.posKey = async () => { const cfg = await api("/ops/config"); const key = cfg.posApiKey || Array.from(crypto.getRandomValues(new Uint8Array(18)), b => b.toString(16).padStart(2, "0")).join("");
+  form("POS connection", [{ key: "posApiKey", label: "POS key (give this to your POS provider)", hint: "Anyone with this key can send sales figures. Change it if it leaks" }], { posApiKey: key },
+    v => api("/ops/config", "PUT", { lowStockPct: cfg.lowStockPct, criticalStockPct: cfg.criticalStockPct, posApiKey: v.posApiKey }), { save: "Save key" }); };
+
+/* ================= loyalty and rewards ================= */
+const MOVE_LABEL = { earn: "Order", referral: "Referral", welcome: "Welcome", redeem: "Redeemed", adjust: "Adjustment" };
+RENDER.loyalty = async () => {
+  const r = await api("/ops/loyalty"); S.loy = r; const c = r.config, st = r.stats, edit = can("crm.edit");
+  const pointValue = (c.filsPerPoint / 100).toFixed(2);
+  return `<div class="tools"><span class="grow soft small">Customers join in the ordering app with their mobile number and a 4-digit PIN. They earn ${c.pointsPerAed} point per ${cur()} 1 when an order is completed; 1 point = ${cur()} ${pointValue}.</span>
+      ${can("orders.status") ? `<button class="btn" data-act="loyRedeem">Redeem at the window</button>` : ""}${can("settings.manage") ? `<button class="btn ghost sm" data-act="loyCfg">Programme settings</button>` : ""}</div>
+    <div class="dash" style="margin-bottom:var(--gap)">
+      <div class="kpi lead s3"><span>Members</span><b>${st.members}</b><span style="margin:10px 0 16px">${st.referred} joined through a friend</span></div>
+      <div class="kpi s3"><span>Points in wallets</span><b>${st.outstandingPoints.toLocaleString()}</b><span style="margin:10px 0 16px">worth ${money(st.outstandingValue)}</span></div>
+      <div class="kpi s3"><span>Points given</span><b>${st.issued.toLocaleString()}</b><span style="margin:10px 0 16px">orders, referrals, welcome</span></div>
+      <div class="kpi s3"><span>Points redeemed</span><b>${st.redeemed.toLocaleString()}</b><span style="margin:10px 0 16px">${money(st.redeemed * c.filsPerPoint)} in discounts</span></div>
+      <div class="panel s5"><h2>How it works</h2><ol class="steps">
+        <li><b>Join in seconds.</b> Mobile number and a 4-digit PIN in the app. No email.</li>
+        <li><b>Earn on every order.</b> ${c.pointsPerAed} point per ${cur()} 1 once the order is completed.</li>
+        <li><b>Refer a friend.</b> They get ${c.welcomePoints} points when they join with your code; you get ${c.referrerPoints} after their first order.</li>
+        <li><b>Spend at the window.</b> From ${c.minRedeem} points (${money(c.minRedeem * c.filsPerPoint)} off).</li></ol>${c.enabled ? "" : `<p>${pill("The programme is switched off", "warn")}</p>`}</div>
+      <div class="panel s7"><h2>Top members<small>by points</small></h2>${hbars(r.members.slice(0, 6).map(m => ({ label: (m.name || "Member") + " · " + (m.phone || m.id).slice(-4).padStart(8, "•"), text: num(m.points) + " pts", value: num(m.points), max: num((r.members[0] || {}).points) || 1 })), "No members yet.")}</div></div>` +
+    table([{ label: "Member", cell: m => `<b style="font-weight:500">${esc(m.name || "No name")}</b><br><span class="soft small">${esc(m.phone || m.id)}</span>` }, { label: "Points", cls: "r", cell: m => `<b style="font-weight:600">${num(m.points)}</b>` },
+      { label: "Wallet", cls: "r", cell: m => money(m.walletValue) }, { label: "Code", cell: m => esc(m.referralCode || "") }, { label: "Friends", cls: "r", cell: m => m.referrals || "" }, { label: "Joined", cell: m => m.joinedAt ? esc(when(m.joinedAt)) : "" },
+      { label: "", cell: m => m.locked ? pill("Locked: wrong PINs", "bad") : m.member ? pill("Member", "ok") : pill("Points only") },
+      { label: "", cls: "a", cell: m => edit ? `<button class="btn ghost sm" data-act="loyAdjust" data-id="${esc(m.id)}">Adjust</button>` : "" }], r.members, "No members yet. Customers join from the More tab in the ordering app.") +
+    `<div class="tools" style="margin-top:8px"><h2 class="grow" style="font-size:1.05rem; font-weight:600">Points history</h2></div>` +
+    table([{ label: "When", cell: x => esc(when(x.at)) }, { label: "Member", cell: x => esc(String(x.phone).slice(-4).padStart(8, "•")) }, { label: "What", cell: x => pill(MOVE_LABEL[x.kind] || x.kind, x.kind === "redeem" ? "warn" : x.kind === "adjust" ? "" : "ok") },
+      { label: "Points", cls: "r", cell: x => `<b style="font-weight:600; color:${num(x.points) < 0 ? "var(--bad)" : "var(--ok)"}">${num(x.points) > 0 ? "+" : ""}${num(x.points)}</b>` }, { label: "Order", cell: x => esc(x.orderId || "") }, { label: "Note", cell: x => `<span class="small">${esc(x.note || "")}</span>` }, { label: "By", cell: x => esc(x.by || "") }], r.moves, "No points moved yet.");
+};
+ACT.loyCfg = () => form("Loyalty programme", [{ key: "enabled", label: "Programme is on", type: "checkbox" }, { key: "pointsPerAed", label: "Points per " + cur() + " 1 spent", type: "number", req: true },
+  { key: "filsPerPoint", label: "Value of 1 point in fils (5 = " + cur() + " 0.05)", type: "number", req: true }, { key: "welcomePoints", label: "Welcome points for a friend who joins with a code", type: "number" },
+  { key: "referrerPoints", label: "Referral reward after the friend's first order", type: "number" }, { key: "minRedeem", label: "Smallest redemption (points)", type: "number", req: true }],
+  S.loy.config, v => api("/ops/loyalty/config", "PUT", Object.fromEntries(Object.entries(v).map(([k, x]) => [k, typeof x === "number" ? Math.round(x) : x]))));
+ACT.loyAdjust = d => { const m = S.loy.members.find(x => x.id === d.id); form("Adjust points for " + (m.name || m.phone), [{ key: "points", label: "Points to add (use − to remove)", type: "number", req: true }, { key: "note", label: "Reason", req: true, placeholder: "Goodwill for a late order" }],
+  {}, v => api("/ops/loyalty/adjust", "POST", { phone: m.phone || m.id, points: Math.round(v.points), note: v.note }), { before: `<p class="soft">Balance now: ${num(m.points)} points</p>` }); };
+ACT.loyRedeem = () => form("Redeem points at the window", [{ key: "phone", label: "Customer's mobile number", req: true, placeholder: "050 123 4567" }, { key: "points", label: "Points to redeem", type: "number", req: true }, { key: "orderId", label: "Order number" }],
+  {}, async v => { const r = await api("/ops/loyalty/redeem", "POST", { ...v, points: Math.round(v.points) }); setTimeout(() => say(`Take ${money(r.discount)} off the bill. ${r.points} points left.`), 50); }, { save: "Redeem" });
 
 /* ================= recipes (bill of materials) ================= */
 RENDER.recipes = async () => {

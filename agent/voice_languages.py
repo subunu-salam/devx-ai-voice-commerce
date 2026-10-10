@@ -227,8 +227,8 @@ def prompt_section(lang: str, resumed: bool = False, order_lines: list = None) -
             f"- {info['style']}",
             "- Reply in one or two short sentences, then stop and let the customer talk. Speak once per turn and never repeat yourself",
             "- When a tool is needed, call it first and speak after its result",
-            f"- Tool results come back in English. Say prices and totals in {spoken}, with exactly the same numbers "
-            f"and the word {info['dirhams']} for dirhams",
+            f"- Tool results come back in English. When you do say a price or the total (only at checkout, or when asked), say it in {spoken}, "
+            f"with exactly the same numbers and the word {info['dirhams']} for dirhams",
             f"- You may say menu item names the way {spoken} speakers naturally say them. The itemId and categoryId you pass "
             "to tools stay exactly as written in the menu",
             '- Tool arguments are always written in English letters: vehicle_number in Latin letters and the digits 0-9 '

@@ -8,6 +8,11 @@ Every visual change goes through update_ui — the frontend just renders what it
 
 Greeting, voice, upsell rule, opening hours, access code and burger prices are read
 from the admin panel's settings at the start of every call (see shop_config.py).
+
+Conversation length (environment variables on this server):
+    VOICE_PRICE_MODE        "checkout" (default): no prices while the customer chooses; the total is said
+                            only at the order summary. "always": also say each item price and running total.
+    VOICE_REPLY_SENTENCES   1 (default) to 3: the longest reply the attendant may give.
 """
 
 import hmac
@@ -364,15 +369,14 @@ SHOW, DON'T LIST:
 - Customers may tap a card instead of speaking. You then receive a message like "Please add one Cheeseburger to my order": treat it exactly like a spoken order
 
 RULES:
-- All prices are in UAE dirhams. Say them like "8.99 dirhams". Never say dollars or use the $ sign
-- Never add up prices yourself. Tools return "totalText" (for example "11.48 dirhams"): say that exact amount, because it is what the customer sees on screen
-- Keep each reply to one or two short sentences so the words on screen keep pace with your voice
+{price_rules}
+- Keep each reply to {reply_length}. Short replies keep the order moving and the words on screen in step with your voice
 - Speak ONCE per turn. When a turn needs a tool, call the tool first and speak after its result. Never say a sentence, call a tool, and then say the same thing again in different words
 - Never repeat or rephrase something you have just said
 - Never say the words "screen", "card", "button" or "app". Just say "here are our burgers" or "take a look"
 - Never fabricate items. Only use the menu above
 - If add_to_order says an item is sold out, apologise and suggest something similar
-- When the customer ORDERS an item (e.g. "I'll have the...", "I need that one"): call add_to_order straight away, then confirm in one short sentence
+- When the customer ORDERS an item (e.g. "I'll have the...", "I need that one"): call add_to_order straight away, then confirm in a few words ("Done, one Double Burger. Anything else?")
 - The order and total on screen update automatically from the order tools. Do not pass order_items or order_total to update_ui
 - PLACING THE ORDER: when the customer says that is everything, or asks to place the order, call get_order_summary, read back the items and the totalText, then ask ONE last question: "What is your vehicle plate number, so we can bring your order to your car?" Wait for the answer. Only then call place_order(vehicle_number="<the plate they said>"). Never call place_order without a vehicle plate number
 - After place_order succeeds, confirm with the order number, the vehicle plate number and the totalText, and add: "Let us know when you're five minutes away and we'll have it hot and ready."
@@ -381,7 +385,7 @@ RULES:
 TOOLS: show_products, update_ui, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, get_categories, get_items_by_category, get_recommendations, get_ui_context, load_menu
 
 BUILD YOUR OWN BURGER (itemId: custom-burger):
-Walk customer through: patty (beef/chicken), toppings, sauces. Use update_ui(burger_builder={"active":true,"patty":null,"toppings":[],"sauces":[],"price":{base_price}}) to open the builder. Update it as they choose, adding each extra's price in cents to "price" (e.g. burger_builder={"active":true,"patty":"beef patty","toppings":["bacon"],"sauces":[],"price":<running total>}). When done, recap the burger and ask "Sound good, or want to change anything?" and only call build_custom_burger AFTER they confirm.
+Walk customer through: patty (beef/chicken), toppings, sauces. Use update_ui(burger_builder={"active":true,"patty":null,"toppings":[],"sauces":[],"price":{base_price}}) to open the builder. Update it as they choose, adding each extra's price in cents to "price" (e.g. burger_builder={"active":true,"patty":"beef patty","toppings":["bacon"],"sauces":[],"price":<running total>}). When done, recap the burger (no prices) and ask "Sound good, or want to change anything?" and only call build_custom_burger AFTER they confirm.
 {burger_reference}
 """
 
@@ -477,6 +481,25 @@ def _greeting(settings: dict) -> str:
     return re.sub(r"\b(?:(?:our|the)\s+)?drive[\s-]?(?:thru|through)\b", "VoiceBite", text, flags=re.IGNORECASE)
 
 
+# VOICE_PRICE_MODE (see order_tools.py) and VOICE_REPLY_SENTENCES shape how long the conversation runs.
+PRICE_RULES = {
+    "checkout": """- PRICES: do NOT say prices while the customer is choosing: not when showing items, recommending, adding, removing or recapping. The prices are already in front of them, and reading them out makes ordering slow
+- Only if the customer asks directly ("how much is the Double Burger?") give that one price, briefly
+- The total is said only at checkout (after get_order_summary) and once more in the order confirmation. Tools return "totalText" (for example "11.48 dirhams"): say exactly that, never add prices up yourself
+- All prices are in UAE dirhams, said like "8.99 dirhams". Never say dollars or use the $ sign""",
+    "always": """- All prices are in UAE dirhams. Say them like "8.99 dirhams". Never say dollars or use the $ sign
+- Never add up prices yourself. Tools return "totalText" (for example "11.48 dirhams"): say that exact amount, because it is what the customer sees on screen""",
+}
+
+
+def _reply_length() -> str:
+    try:
+        n = max(1, min(3, int(os.getenv("VOICE_REPLY_SENTENCES", "1"))))
+    except ValueError:
+        n = 1
+    return "one short sentence" if n == 1 else f"at most {n} short sentences"
+
+
 def _build_system_prompt(settings: dict, lang: str = "en", resumed: bool = False) -> str:
     """Build the system prompt with the current menu, burger prices and attendant settings.
 
@@ -496,6 +519,8 @@ def _build_system_prompt(settings: dict, lang: str = "en", resumed: bool = False
         .replace("{upsell}", _one_line(settings.get("upsell"), 300) or "Do not upsell.")
         .replace("{base_price}", str(int(burger.get("basePrice", 899))))
         .replace("{burger_reference}", _burger_reference(burger))
+        .replace("{price_rules}", PRICE_RULES.get(os.getenv("VOICE_PRICE_MODE", "checkout").strip().lower(), PRICE_RULES["checkout"]))
+        .replace("{reply_length}", _reply_length())
     ) + language_rules
 
 
