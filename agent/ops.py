@@ -334,33 +334,43 @@ def pos_manual(body: PosIn, user: dict = Depends(A.need("inventory.edit"))):
 
 # ---------- the daily report: produced vs sold vs wasted vs missing ----------
 
-@router.get("/ops/daily")
-def daily_report(day: str = "", location: Optional[str] = None, user: dict = Depends(A.need("inventory.view"))):
-    day, scope = _day(day), A._scope(user, location)
-    items, costs = _menu_items(), portion_costs()
-    rows = defaultdict(lambda: {"produced": 0.0, "soldVoice": 0.0, "soldPos": 0.0, "wasted": 0.0, "sales": 0, "portionCost": 0, "reasons": defaultdict(float)})
+def _load(scope: str) -> dict:
+    """Everything the daily report needs, read once (the trend reuses it for every day)."""
+    return {"items": _menu_items(), "costs": portion_costs(), "scope": scope,
+            "production": [p for p in A._records("production") if A._in_scope(p, scope)],
+            "orders": [o for o in A._scan_all(orders_table) if o.get("status") != "cancelled" and A._in_scope(o, scope)],
+            "pos": [x for x in A._records("pos_sales") if A._in_scope(x, scope)],
+            "waste": [w for w in A._records("waste") if A._in_scope(w, scope)],
+            "ingredients": {i["id"]: i for i in A._records("ingredients")},
+            "counts": [m for m in A._records("stock_moves") if m.get("type") == "count" and _num(m.get("qty")) < 0 and A._in_scope(m, scope)]}
 
-    for p in A._records("production"):
-        if p.get("day") == day and A._in_scope(p, scope):
+
+def _compute(day: str, data: dict) -> dict:
+    items, costs = data["items"], data["costs"]
+    rows = defaultdict(lambda: {"produced": 0.0, "soldVoice": 0.0, "soldPos": 0.0, "wasted": 0.0, "sales": 0, "portionCost": 0, "reasons": defaultdict(float)})
+    for p in data["production"]:
+        if p.get("day") == day:
             r = rows[p["itemId"]]
             r["produced"] += _num(p.get("qty"))
             r["portionCost"] = round(_num(p.get("portionCost"))) or r["portionCost"]
-    for o in A._scan_all(orders_table):
-        if o.get("status") == "cancelled" or not A._in_scope(o, scope) or local_day(o.get("createdAt", "")) != day:
+    for o in data["orders"]:
+        if o.get("_day") is None:
+            o["_day"] = local_day(o.get("createdAt", ""))
+        if o["_day"] != day:
             continue
         for it in o.get("items") or []:
             item_id = "custom-burger" if str(it.get("itemId", "")).startswith("custom-burger") else str(it.get("itemId", ""))
             q = _num(it.get("quantity"), 1)
             rows[item_id]["soldVoice"] += q
             rows[item_id]["sales"] += round(q * _num(it.get("unitPrice") if it.get("unitPrice") is not None else it.get("price")))
-    for s in A._records("pos_sales"):
-        if s.get("day") == day and A._in_scope(s, scope):
-            for line in s.get("lines") or []:
+    for x in data["pos"]:
+        if x.get("day") == day:
+            for line in x.get("lines") or []:
                 rows[line["itemId"]]["soldPos"] += _num(line.get("qty"))
                 rows[line["itemId"]]["sales"] += round(_num(line.get("amount")))
     ingredient_waste = 0
-    for w in A._records("waste"):
-        if not A._in_scope(w, scope) or (w.get("day") or local_day(w.get("at", ""))) != day:
+    for w in data["waste"]:
+        if (w.get("day") or local_day(w.get("at", ""))) != day:
             continue
         if w.get("kind") == "item":
             r = rows[w["itemId"]]
@@ -370,46 +380,53 @@ def daily_report(day: str = "", location: Optional[str] = None, user: dict = Dep
             ingredient_waste += round(_num(w.get("cost")))
 
     out, totals = [], defaultdict(float)
+    still_open = day >= local_day()   # today: unsold portions are still on the shelf, not lost (yet)
     for item_id, r in rows.items():
         unit = r["portionCost"] or costs.get(item_id, 0)
         sold = r["soldVoice"] + r["soldPos"]
         missing = max(0.0, r["produced"] - sold - r["wasted"]) if r["produced"] > 0 else 0.0
+        leftover = missing if still_open else 0.0
+        if still_open:
+            missing = 0.0
         oversold = max(0.0, sold + r["wasted"] - r["produced"]) if r["produced"] > 0 else 0.0
         row = {"itemId": item_id, "name": items.get(item_id, {}).get("name", item_id), "produced": r["produced"], "sold": sold,
                "soldVoice": r["soldVoice"], "soldPos": r["soldPos"], "wasted": r["wasted"], "missing": missing, "oversold": oversold,
                "portionCost": unit, "wasteCost": round(r["wasted"] * unit), "missingCost": round(missing * unit), "sales": r["sales"],
-               "reasons": dict(r["reasons"]), "tracked": r["produced"] > 0}
+               "reasons": dict(r["reasons"]), "tracked": r["produced"] > 0, "leftover": leftover}
         row["lostCost"] = row["wasteCost"] + row["missingCost"]
         out.append(row)
-        for k in ("produced", "sold", "wasted", "missing", "wasteCost", "missingCost", "lostCost", "sales"):
+        for k in ("produced", "sold", "wasted", "missing", "wasteCost", "missingCost", "lostCost", "sales", "leftover"):
             totals[k] += row[k]
     out.sort(key=lambda x: (-x["lostCost"], -x["sold"]))
 
     # Physical stock against what the orders say should have been used: losses that only a stock count reveals.
-    ingredients = {i["id"]: i for i in A._records("ingredients")}
-    count_loss = defaultdict(float)
-    for m in A._records("stock_moves"):
-        if m.get("type") == "count" and _num(m.get("qty")) < 0 and local_day(m.get("at", "")) == day and A._in_scope(m, scope):
+    ingredients, count_loss = data["ingredients"], defaultdict(float)
+    for m in data["counts"]:
+        if local_day(m.get("at", "")) == day:
             count_loss[m["ingredientId"]] += -_num(m.get("qty"))
     stock_gaps = sorted(({"ingredientId": k, "name": ingredients.get(k, {}).get("name", k), "qty": round(v, 3), "unit": ingredients.get(k, {}).get("unit", ""),
                           "cost": round(v * _num(ingredients.get(k, {}).get("unitCost")))} for k, v in count_loss.items()), key=lambda g: -g["cost"])
     totals["stockGapCost"] = sum(g["cost"] for g in stock_gaps)
     totals["ingredientWasteCost"] = ingredient_waste
     totals["totalLost"] = totals["lostCost"] + totals["stockGapCost"] + ingredient_waste
-    return {"day": day, "items": out, "stockGaps": stock_gaps, "totals": {k: round(v, 2) for k, v in totals.items()},
+    return {"day": day, "open": still_open, "items": out, "stockGaps": stock_gaps, "totals": {k: round(v, 2) for k, v in totals.items()},
             "reasons": ITEM_WASTE_REASONS, "menu": [{"itemId": k, "name": v["name"], "portionCost": costs.get(k, 0)} for k, v in sorted(items.items(), key=lambda kv: kv[1]["name"])]}
+
+
+@router.get("/ops/daily")
+def daily_report(day: str = "", location: Optional[str] = None, user: dict = Depends(A.need("inventory.view"))):
+    return _compute(_day(day), _load(A._scope(user, location)))
 
 
 @router.get("/ops/trend")
 def loss_trend(days: int = 14, location: Optional[str] = None, user: dict = Depends(A.need("inventory.view"))):
-    """Money lost per day over the last few days (waste + unaccounted portions + stock-count gaps)."""
+    """Money lost per day over the last few days (waste + unaccounted portions + stock-count gaps). One read of the data."""
     days = max(1, min(days, 31))
-    today = datetime.fromisoformat(local_day()).date()
+    data, today = _load(A._scope(user, location)), datetime.fromisoformat(local_day()).date()
     out = []
     for n in range(days - 1, -1, -1):
         d = (today - timedelta(days=n)).isoformat()
-        rep = daily_report(day=d, location=location, user=user)
-        t = rep["totals"]
+        t = _compute(d, data)["totals"]
         out.append({"day": d, "wasteCost": t.get("wasteCost", 0) + t.get("ingredientWasteCost", 0), "missingCost": t.get("missingCost", 0) + t.get("stockGapCost", 0)})
     return {"days": out}
 
@@ -499,3 +516,145 @@ def redeem_points(body: RedeemIn, user: dict = Depends(A.need("orders.status")))
     discount = body.points * cfg["filsPerPoint"]
     A.audit(user, "points_redeemed", phone[-4:], f"{body.points} points = {discount} fils {body.orderId}")
     return {"phone": phone, "points": balance, "discount": discount}
+
+
+# ---------- starter stock: a realistic sample set for this menu, removable in one tap ----------
+
+STARTER_SUPPLIERS = {
+    "sample-fresh-foods": {"name": "Fresh Foods Trading (sample)", "contact": "Orders desk", "phone": "+971 4 000 0000", "terms": "7 days", "categories": "meat, dairy, produce"},
+    "sample-packaging": {"name": "Gulf Packaging (sample)", "contact": "Sales", "phone": "+971 6 000 0000", "terms": "30 days", "categories": "cups, boxes, bags"},
+}
+# id: (name, unit, cost in fils, par level, on hand now, perishable, supplier)
+STARTER_STOCK = {
+    "beef-patty": ("Beef patties 110 g (frozen)", "pc", 350, 200, 46, False, "sample-fresh-foods"),
+    "chicken-fillet": ("Chicken breast fillets", "pc", 300, 120, 70, True, "sample-fresh-foods"),
+    "nugget-pc": ("Chicken nugget pieces (frozen)", "pc", 40, 600, 118, False, "sample-fresh-foods"),
+    "veggie-patty": ("Veggie patties (frozen)", "pc", 280, 40, 30, False, "sample-fresh-foods"),
+    "buns": ("Burger buns", "pc", 70, 250, 52, True, "sample-fresh-foods"),
+    "cheese": ("Cheese slices", "pc", 45, 300, 210, False, "sample-fresh-foods"),
+    "lettuce": ("Lettuce", "kg", 900, 6, 0.6, True, "sample-fresh-foods"),
+    "tomato": ("Tomatoes", "kg", 650, 8, 5.1, True, "sample-fresh-foods"),
+    "onion": ("Onions", "kg", 300, 10, 7, True, "sample-fresh-foods"),
+    "pickles": ("Pickles", "kg", 1400, 3, 2.2, False, "sample-fresh-foods"),
+    "house-sauce": ("House burger sauce", "l", 1800, 5, 3.4, False, "sample-fresh-foods"),
+    "fries": ("French fries (frozen)", "kg", 950, 60, 34, False, "sample-fresh-foods"),
+    "onion-rings": ("Onion rings (frozen)", "kg", 1600, 15, 9, False, "sample-fresh-foods"),
+    "mozz-sticks": ("Mozzarella sticks (frozen)", "pc", 120, 200, 140, False, "sample-fresh-foods"),
+    "salad-mix": ("Salad mix", "kg", 1500, 4, 1.6, True, "sample-fresh-foods"),
+    "oil": ("Frying oil", "l", 650, 40, 22, False, "sample-fresh-foods"),
+    "cola-syrup": ("Cola syrup (bag-in-box)", "l", 2200, 20, 13, False, "sample-fresh-foods"),
+    "lemons": ("Lemons", "kg", 700, 6, 2.5, True, "sample-fresh-foods"),
+    "tea": ("Iced tea brew", "l", 400, 15, 9, True, "sample-fresh-foods"),
+    "milk": ("Fresh milk", "l", 600, 20, 3, True, "sample-fresh-foods"),
+    "ice-cream": ("Vanilla ice cream", "l", 1500, 25, 14, False, "sample-fresh-foods"),
+    "choc-syrup": ("Chocolate syrup", "l", 2500, 4, 2.6, False, "sample-fresh-foods"),
+    "apple-pie-frozen": ("Apple pies (frozen, to bake)", "pc", 250, 80, 38, False, "sample-fresh-foods"),
+    "cookie-dough": ("Cookie dough balls", "pc", 90, 150, 0, True, "sample-fresh-foods"),
+    "cups": ("Drink cups with lids", "pc", 35, 800, 610, False, "sample-packaging"),
+    "boxes": ("Burger boxes", "pc", 40, 600, 190, False, "sample-packaging"),
+    "bags": ("Fries bags", "pc", 30, 500, 360, False, "sample-packaging"),
+}
+_BURGER = [("buns", 1), ("lettuce", 0.02), ("tomato", 0.03), ("house-sauce", 0.02), ("boxes", 1)]
+STARTER_RECIPES = {
+    "custom-burger": [("beef-patty", 1), ("cheese", 1)] + _BURGER,
+    "classic-burger": [("beef-patty", 1), ("onion", 0.02), ("pickles", 0.015)] + _BURGER,
+    "cheeseburger": [("beef-patty", 1), ("cheese", 1), ("onion", 0.02), ("pickles", 0.015)] + _BURGER,
+    "double-burger": [("beef-patty", 2), ("cheese", 2), ("onion", 0.02), ("pickles", 0.015)] + _BURGER,
+    "veggie-burger": [("veggie-patty", 1)] + _BURGER,
+    "chicken-sandwich": [("chicken-fillet", 1), ("oil", 0.05)] + _BURGER,
+    "spicy-chicken": [("chicken-fillet", 1), ("oil", 0.05), ("pickles", 0.01)] + _BURGER,
+    "chicken-nuggets-6": [("nugget-pc", 6), ("oil", 0.04), ("boxes", 1)],
+    "chicken-nuggets-10": [("nugget-pc", 10), ("oil", 0.06), ("boxes", 1)],
+    "fries": [("fries", 0.15), ("oil", 0.03), ("bags", 1)],
+    "onion-rings": [("onion-rings", 0.12), ("oil", 0.03), ("bags", 1)],
+    "mozzarella-sticks": [("mozz-sticks", 5), ("oil", 0.03), ("bags", 1)],
+    "side-salad": [("salad-mix", 0.12), ("tomato", 0.03)],
+    "cola": [("cola-syrup", 0.06), ("cups", 1)],
+    "lemonade": [("lemons", 0.08), ("cups", 1)],
+    "iced-tea": [("tea", 0.3), ("cups", 1)],
+    "milkshake-chocolate": [("milk", 0.25), ("ice-cream", 0.12), ("choc-syrup", 0.03), ("cups", 1)],
+    "milkshake-vanilla": [("milk", 0.25), ("ice-cream", 0.15), ("cups", 1)],
+    "apple-pie": [("apple-pie-frozen", 1)],
+    "sundae": [("ice-cream", 0.15), ("choc-syrup", 0.04), ("cups", 1)],
+    "cookie": [("cookie-dough", 1)],
+}
+# Items the kitchen prepares in batches each morning: (made per day, typical sales per day)
+STARTER_BATCHES = {"apple-pie": (40, 31), "cookie": (60, 47), "lemonade": (50, 41), "iced-tea": (45, 36), "side-salad": (25, 17)}
+STARTER_WASTE = ["unsold", "unsold", "dropped", "expired", "broken", "unsold", "burnt"]
+SAMPLE = {"user": "starter-stock", "role": "merchant_admin", "location": A.ALL}
+
+
+@router.post("/ops/starter-kit")
+def load_starter_kit(user: dict = Depends(A.need("settings.manage"))):
+    """Fill an empty console with stock, recipes and a week of production for this menu. Everything is marked as a sample."""
+    menu = _menu_items()
+    have_ing = {i["id"] for i in A._records("ingredients")}
+    have_rec = {r["id"] for r in A._records("recipes")}
+    added = {"ingredients": 0, "recipes": 0, "production": 0, "waste": 0}
+    for sid, sup in STARTER_SUPPLIERS.items():
+        if not A._record("suppliers", sid):
+            A._save("suppliers", sid, {**sup, "sample": True, "createdAt": A._now()})
+    for iid, (name, unit, cost, par, on, perish, sup) in STARTER_STOCK.items():
+        if iid in have_ing:
+            continue
+        A._save("ingredients", iid, {"name": name, "unit": unit, "unitCost": cost, "parLevel": par, "onHand": 0, "perishable": perish, "supplierId": sup,
+                                     "yieldPct": 100, "sample": True, "createdAt": A._now(), "priceHistory": []})
+        if on:
+            A._move(SAMPLE, iid, on, "purchase", ref="sample", note="Starter stock (sample)")
+        else:
+            check_alert(iid)
+        added["ingredients"] += 1
+    for item_id, lines in STARTER_RECIPES.items():
+        if item_id in menu and item_id not in have_rec:
+            A._save("recipes", item_id, {"lines": [{"ingredientId": i, "qty": q} for i, q in lines], "sample": True, "createdAt": A._now()})
+            added["recipes"] += 1
+    if not any(p.get("sample") for p in A._records("production")):
+        costs, today = portion_costs(), datetime.fromisoformat(local_day()).date()
+        for n in range(7, -1, -1):
+            day = (today - timedelta(days=n)).isoformat()
+            for k, (item_id, (made, sells)) in enumerate(STARTER_BATCHES.items()):
+                if item_id not in menu:
+                    continue
+                wobble = ((n * 7 + k * 3) % 5) - 2                         # a little day-to-day variation
+                sold = max(0, sells + wobble * 2 - (0 if n else sells // 3))   # today is still in progress
+                waste = max(0, (made - sells) // 3 + ((n + k) % 3) - 1)
+                unit = costs.get(item_id, 0)
+                A._save("production", f"{day}#sample-{item_id}", {"day": day, "at": A._now(), "itemId": item_id, "name": menu[item_id]["name"], "qty": made,
+                                                                  "portionCost": unit, "note": "Morning batch", "by": "starter-stock", "branchId": A.DEFAULT_LOCATION, "sample": True})
+                A._save("pos_sales", f"{day}#{A.DEFAULT_LOCATION}#sample-{item_id}", {"day": day, "at": A._now(), "ref": "sample", "by": "starter-stock", "branchId": A.DEFAULT_LOCATION,
+                                                                                     "lines": [{"itemId": item_id, "qty": sold, "amount": sold * menu[item_id]["price"]}], "sample": True})
+                added["production"] += 1
+                if waste and n:   # past days have their end-of-day waste logged; today's is not in yet
+                    reason = STARTER_WASTE[(n + k) % len(STARTER_WASTE)]
+                    A._save("waste", f"{day}-sample-{item_id}", {"at": A._now(), "day": day, "kind": "item", "itemId": item_id, "ingredientName": menu[item_id]["name"],
+                                                                 "qty": waste, "unit": "portion", "cost": waste * unit, "reason": reason, "stage": "pre-consumer",
+                                                                 "note": "End of day", "orderId": "", "by": "starter-stock", "branchId": A.DEFAULT_LOCATION, "sample": True})
+                    added["waste"] += 1
+        if "cheese" in STARTER_STOCK and "cheese" not in have_ing:   # an evening count that finds 12 slices fewer than the records
+            item = A._record("ingredients", "cheese")
+            A._move(SAMPLE, "cheese", -12, "count", ref="sample", note="Evening count (sample)")
+    A.audit(user, "starter_stock_loaded", "", str(added))
+    return {"added": added}
+
+
+@router.delete("/ops/starter-kit")
+def remove_starter_kit(user: dict = Depends(A.need("settings.manage"))):
+    """Remove everything the starter stock added; records you created yourself are kept."""
+    removed = defaultdict(int)
+    sample_ings = set()
+    for name in ("ingredients", "recipes", "suppliers", "production", "pos_sales", "waste"):
+        for r in A._records(name):
+            if r.get("sample"):
+                if name == "ingredients":
+                    sample_ings.add(r["id"])
+                A.data_table.delete_item(Key={"c": name, "id": r["id"]})
+                removed[name] += 1
+    for m in A._records("stock_moves"):
+        if m.get("ref") == "sample" or m.get("ingredientId") in sample_ings:
+            A.data_table.delete_item(Key={"c": "stock_moves", "id": m["id"]})
+            removed["stock_moves"] += 1
+    for a in A._records("alerts"):
+        if a["id"] in sample_ings:
+            A.data_table.delete_item(Key={"c": "alerts", "id": a["id"]})
+    A.audit(user, "starter_stock_removed", "", str(dict(removed)))
+    return {"removed": dict(removed)}

@@ -280,7 +280,7 @@ tr.click:hover td{background:#F3F7EE}
 .stack .sname{display:grid; font-weight:500; line-height:1.2} .stack .sname small{font-weight:400; color:var(--soft); font-size:.78rem}
 .sbarw{display:flex; height:18px; border-radius:9px; overflow:hidden; background:var(--canvas)}
 .sbarw i{height:100%; animation:growx .8s var(--ease) both; transform-origin:left}
-.sbarw .sold{background:var(--palm)} .sbarw .wasted{background:var(--tomato)}
+.sbarw .sold{background:var(--palm)} .sbarw .left{background:#B9CFC4} .sbarw .wasted{background:var(--tomato)}
 .sbarw .missing,.legend i.hatch{background:repeating-linear-gradient(45deg,#E3A400 0 5px,#F5C64A 5px 10px)}
 .stack > b{text-align:end; font-weight:600; font-variant-numeric:tabular-nums} .stack > b.neg{color:var(--bad)}
 .legend.inline{display:flex; flex-wrap:wrap; gap:4px 16px; margin-top:6px} .legend.inline li{padding:0; font-size:.82rem}
@@ -290,6 +290,8 @@ tr.click:hover td{background:#F3F7EE}
 .panel ol.steps li b{color:var(--text); font-weight:600}
 .panel ol.steps li::before{content:counter(s); position:absolute; inset-inline-start:0; top:-2px; width:26px; height:26px; border-radius:50%; background:var(--citron); color:var(--text); display:grid; place-items:center; font-weight:600; font-size:.82rem}
 @media (max-width:640px){ .sbar,.saxis,.stack{grid-template-columns:90px 1fr 60px; gap:8px} }
+.starter{display:flex; gap:16px; align-items:center; justify-content:space-between; background:var(--citron); flex-wrap:wrap}
+.starter > div{display:grid; gap:4px; flex:1; min-width:240px} .starter b{font-weight:600}
 @media print{ body *{visibility:hidden} .receipt,.receipt *{visibility:visible} .receipt{position:absolute; inset:0 auto auto 0; width:80mm; border-radius:0} }
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
@@ -706,7 +708,7 @@ RENDER.inventory = async () => {
     return head + table([{ label: "When", cell: m => esc(when(m.at)) }, { label: "Ingredient", cell: m => esc((names[m.ingredientId] || {}).name || m.ingredientId) }, { label: "Type", cell: m => pill(m.type, m.type === "waste" ? "bad" : m.type === "purchase" ? "ok" : "") },
       { label: "Change", cls: "r", cell: m => (num(m.qty) > 0 ? "+" : "") + num(m.qty) + " " + esc((names[m.ingredientId] || {}).unit || "") }, { label: "Reference", cell: m => esc(m.ref || m.note || "") }, { label: "By", cell: m => esc(m.by) }], S.moves, "No stock movements yet. Purchases, completed orders, waste and counts appear here."); }
   const value = S.ing.reduce((s, i) => s + num(i.onHand) * num(i.unitCost), 0); S.stock = await api("/ops/stock"); const lv = Object.fromEntries(S.stock.items.map(x => [x.id, x]));
-  return head + stockHealth(S.stock, value) +
+  return head + starterBanner() + stockHealth(S.stock, value) +
     table([{ label: "Item", cell: i => `<b style="font-weight:500">${esc(i.name)}</b>${i.trackBatch && i.expiry ? `<br><span class="soft small">Batch ${esc(i.batch || "none")}, expires ${esc(i.expiry)}</span>` : ""}` }, { label: "On hand", cls: "r", cell: i => num(i.onHand) + " " + esc(i.unit) },
       { label: "Par", cls: "r", cell: i => num(i.parLevel) || "" }, { label: "Reorder at", cls: "r", cell: i => num(i.reorderPoint) || "" }, { label: "Unit cost", cls: "r", cell: i => money(i.unitCost) },
       { label: "Level", cls: "r", cell: i => lv[i.id] && lv[i.id].pct != null ? lv[i.id].pct + "%" : "" },
@@ -762,30 +764,56 @@ ACT.buyPo = async () => { const [sup, ing] = await Promise.all([records("supplie
   poSheet({ id: "", supplierId: (sup[0] || {}).id, lines: S.stock.purchaseList.map(x => ({ ingredientId: x.id, qty: +x.shortfall.toFixed(2), unitCost: x.unitCost })) });
   const h = $("sheet").querySelector("h2"); if (h) h.textContent = "Purchase order from today's list"; const del = $("sheet").querySelector('[data-act="poDelete"]'); if (del) del.remove(); };
 
+
+/* the 14-day chart fills in after the page is on screen */
+async function loadTrend() {
+  const mine = ++S.trendRun;
+  try { const tr = await api("/ops/trend" + bq("days=14")); if (mine !== S.trendRun) return;
+    const html = tr.days.some(d => d.wasteCost + d.missingCost) ? barChart(tr.days.map(d => ({ label: d.day.slice(5), value: (d.wasteCost + d.missingCost) / 100 })), v => cur() + " " + v.toFixed(2)) : `<p class="empty">No losses recorded yet.</p>`;
+    for (let i = 0; i < 40 && !$("trendBox"); i++) await new Promise(r => setTimeout(r, 50));
+    if ($("trendBox") && mine === S.trendRun) $("trendBox").innerHTML = html;
+  } catch (e) { if ($("trendBox")) $("trendBox").innerHTML = `<p class="empty">${esc(e.message)}</p>`; }
+}
+S.trendRun = 0;
+/* starter stock: a realistic sample set for this menu, so every screen has something to show */
+function starterBanner(production) {
+  if (!can("settings.manage")) return "";
+  const sample = (S.ing || []).some(i => i.sample);
+  if (sample && !production) return `<div class="card starter"><div><b>You are looking at sample stock.</b><span class="soft small">Starter items, recipes and a week of production were added to show how the screens work. Remove them before going live; anything you added yourself stays.</span></div><button class="btn ghost sm" data-act="starterRemove">Remove sample data</button></div>`;
+  if ((S.ing || []).length && !production) return "";
+  return `<div class="card starter"><div><b>${production ? "No production logged yet." : "Your stock list is empty."}</b><span class="soft small">Load starter stock for this menu: ${production ? "a week of batches, sales and waste for pies, cookies, lemonade, iced tea and salads, plus " : ""}27 stock items with costs and par levels (patties, buns, cheese, fries, milk, ice cream, packaging) and recipes for every dish. It is all marked as sample and can be removed in one tap.</span></div><button class="btn hot" data-act="starterLoad">Load starter stock</button></div>`;
+}
+ACT.starterLoad = d => attempt(async () => { const r = await api("/ops/starter-kit", "POST"); S.ing = await records("ingredients"); await show(page, true); alertBadge();
+  say(`Added ${r.added.ingredients} stock items, ${r.added.recipes} recipes and ${r.added.production} production batches.`); });
+ACT.starterRemove = () => { if (!confirm("Remove all sample stock, recipes and production? Items you added yourself are kept.")) return;
+  attempt(async () => { const r = await api("/ops/starter-kit", "DELETE"); S.ing = await records("ingredients"); await show(page, true); alertBadge(); say("Sample data removed."); }); };
+
 /* ================= daily production and waste ================= */
 const today = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 function lossBars(items) {
   const rows = items.filter(x => x.tracked || x.wasted);
   if (!rows.length) return `<p class="empty">Log what the kitchen prepared today (biryani, cutlets, snacks) to compare it with sales.</p>`;
-  const max = Math.max(...rows.map(x => Math.max(x.produced, x.sold + x.wasted + x.missing)), 1);
+  const max = Math.max(...rows.map(x => Math.max(x.produced, x.sold + x.wasted + x.missing + (x.leftover || 0))), 1);
   return `<div class="stacks">${rows.map(x => `<div class="stack"><span class="sname">${esc(x.name)}<small>${x.produced ? "made " + x.produced : "not logged"}</small></span><span class="sbarw">
-    <i class="sold" style="width:${100 * x.sold / max}%" ${tip(`Sold ${x.sold} (voice ${x.soldVoice}, POS ${x.soldPos})`)}></i><i class="wasted" style="width:${100 * x.wasted / max}%" ${tip(`Wasted ${x.wasted}: ` + Object.entries(x.reasons).map(([r, q]) => q + " " + r).join(", "))}></i><i class="missing" style="width:${100 * x.missing / max}%" ${tip(`Not sold and not logged as waste: ${x.missing}`)}></i></span>
+    <i class="sold" style="width:${100 * x.sold / max}%" ${tip(`Sold ${x.sold} (voice ${x.soldVoice}, POS ${x.soldPos})`)}></i><i class="wasted" style="width:${100 * x.wasted / max}%" ${tip(`Wasted ${x.wasted}: ` + Object.entries(x.reasons).map(([r, q]) => q + " " + r).join(", "))}></i><i class="missing" style="width:${100 * x.missing / max}%" ${tip(`Not sold and not logged as waste: ${x.missing}`)}></i><i class="left" style="width:${100 * (x.leftover || 0) / max}%" ${tip(`Still on the shelf: ${x.leftover}`)}></i></span>
     <b class="${x.lostCost ? "neg" : ""}">${x.lostCost ? "−" + money(x.lostCost) : "OK"}</b></div>`).join("")}
-    <ul class="legend inline"><li><i style="background:#0E3B2E"></i>Sold</li><li><i style="background:#F0462B"></i>Wasted</li><li><i class="hatch"></i>Missing (made, not sold, not logged)</li></ul></div>`;
+    <ul class="legend inline"><li><i style="background:#0E3B2E"></i>Sold</li><li><i style="background:#F0462B"></i>Wasted</li><li><i class="hatch"></i>Missing (made, not sold, not logged)</li><li><i style="background:#B9CFC4"></i>Still on the shelf today</li></ul></div>`;
 }
-RENDER.production = async () => {
-  S.day = S.day || today(); const [r, tr] = await Promise.all([api("/ops/daily" + bq("day=" + S.day)), api("/ops/trend" + bq("days=14"))]); S.daily = r; const t = r.totals, log = can("waste.log");
+RENDER.production = async () => { if (!S.ing) S.ing = await records("ingredients").catch(() => []);
+  S.day = S.day || today(); const r = await api("/ops/daily" + bq("day=" + S.day)); S.daily = r; const t = r.totals, log = can("waste.log");
+  loadTrend();
   return `<div class="tools"><input type="date" value="${esc(S.day)}" data-change="dayPick" style="width:auto"><span class="grow soft small">Production vs sales vs waste for the day. Money lost = wasted portions + portions made but not sold or logged.</span>
       ${log ? `<button class="btn" data-act="prodNew">Log production</button><button class="btn hot" data-act="itemWaste">Log unsold or broken</button>` : ""}${can("inventory.edit") ? `<button class="btn ghost sm" data-act="posImport">Import POS sales</button>` : ""}</div>
     <div class="dash" style="margin-bottom:var(--gap)">
       <div class="kpi lead s3"><span>Money lost this day</span><b>${money(t.totalLost || 0)}</b><span style="margin:10px 0 16px">${money(t.sales || 0)} sold</span></div>
       <div class="kpi s3"><span>Wasted portions</span><b>${+(t.wasted || 0).toFixed(1)}</b><span style="margin:10px 0 16px">${money(t.wasteCost || 0)}</span></div>
-      <div class="kpi s3"><span>Missing portions</span><b>${+(t.missing || 0).toFixed(1)}</b><span style="margin:10px 0 16px">${money(t.missingCost || 0)} unaccounted</span></div>
+      ${r.open ? `<div class="kpi s3"><span>Left so far today</span><b>${+(t.leftover || 0).toFixed(1)}</b><span style="margin:10px 0 16px">log what is unsold at closing</span></div>`
+        : `<div class="kpi s3"><span>Missing portions</span><b>${+(t.missing || 0).toFixed(1)}</b><span style="margin:10px 0 16px">${money(t.missingCost || 0)} unaccounted</span></div>`}
       <div class="kpi s3"><span>Stock count gaps</span><b>${money(t.stockGapCost || 0)}</b><span style="margin:10px 0 16px">shelf vs records</span></div>
       <div class="panel s7"><h2>Made, sold and lost per item<small>${esc(S.day)}</small></h2>${lossBars(r.items)}</div>
-      <div class="panel s5"><h2>Losses, last 14 days<small>waste and missing</small></h2>${tr.days.some(d => d.wasteCost + d.missingCost) ? barChart(tr.days.map(d => ({ label: d.day.slice(5), value: (d.wasteCost + d.missingCost) / 100 })), v => cur() + " " + v.toFixed(2)) : `<p class="empty">No losses recorded yet.</p>`}</div></div>` +
+      <div class="panel s5"><h2>Losses, last 14 days<small>waste and missing</small></h2><div id="trendBox"><div class="skel" style="height:180px"></div></div></div></div>` + (r.items.length ? "" : starterBanner(true)) +
     table([{ label: "Item", cell: x => `<b style="font-weight:500">${esc(x.name)}</b>` }, { label: "Made", cls: "r", cell: x => x.produced || "" }, { label: "Sold (voice + POS)", cls: "r", cell: x => `${x.sold} <span class="soft small">(${x.soldVoice} + ${x.soldPos})</span>` },
-      { label: "Wasted", cls: "r", cell: x => x.wasted || "" }, { label: "Missing", cls: "r", cell: x => x.missing ? pill(String(x.missing), "warn") : x.oversold ? pill("+" + x.oversold + " oversold", "hi") : "" },
+      { label: "Wasted", cls: "r", cell: x => x.wasted || "" }, { label: r.open ? "Left so far" : "Missing", cls: "r", cell: x => x.missing ? pill(String(x.missing), "warn") : x.leftover ? pill(x.leftover + " left") : x.oversold ? pill("+" + x.oversold + " oversold", "hi") : "" },
       { label: "Cost per portion", cls: "r", cell: x => x.portionCost ? money(x.portionCost) : "" }, { label: "Lost", cls: "r", cell: x => x.lostCost ? `<b style="font-weight:600; color:var(--bad)">${money(x.lostCost)}</b>` : "" }], r.items, "Nothing made, sold or wasted on this day yet.") +
     (r.stockGaps.length ? `<div class="card"><h2>Stock count gaps</h2><p class="soft small" style="margin:-4px 0 8px">Stock counts that found less on the shelf than the records said: losses no order or waste log explains.</p>${hbars(r.stockGaps.map(g => ({ label: g.name, text: `${g.qty} ${g.unit} · ${money(g.cost)}`, value: g.cost, max: r.stockGaps[0].cost, color: "#F0462B" })))}</div>` : "");
 };
