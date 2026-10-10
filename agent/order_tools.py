@@ -61,6 +61,21 @@ else:
 logger = logging.getLogger(__name__)
 
 
+# VOICE_PRICE_MODE: "checkout" (default) keeps prices out of the conversation until the order summary, so choosing is
+# quick; the prices stay visible on the customer's screen. "always" also says the item price and running total each time.
+PRICE_MODE = os.getenv("VOICE_PRICE_MODE", "checkout").strip().lower()
+_MID_ORDER_PRICES = ("itemPriceText", "total", "totalText", "price", "priceText")
+
+
+def _while_choosing(result: dict) -> dict:
+    """Results of add/remove while the customer is still choosing: no prices to read out in checkout mode."""
+    if PRICE_MODE == "always":
+        return result
+    quiet = {k: v for k, v in result.items() if k not in _MID_ORDER_PRICES}
+    quiet["say"] = "Confirm in a few words without any price, e.g. 'Done, one Cheeseburger. Anything else?'. The total is said only at checkout."
+    return quiet
+
+
 def _spoken(amount: int) -> str:
     """The amount exactly as the attendant should say it, so speech and screen always match."""
     return f"{int(amount) / 100:.2f} dirhams"
@@ -155,14 +170,14 @@ def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_inst
         logger.warning("add_to_order: failed to auto-update UI: %s", e)
 
     # Return minimal confirmation to keep tool result small for Nova Sonic
-    return _sanitize_result({
+    return _sanitize_result(_while_choosing({
         "status": "added",
         "item": str(menu_item.get("name", "")),
         "quantity": quantity,
         "itemPriceText": _spoken(int(menu_item.get("price", 0))),
         "total": summary["total"],
         "totalText": _spoken(summary["total"]),
-    })
+    }))
 
 
 @tool
@@ -171,7 +186,7 @@ def remove_from_order(item_id: str, quantity: int = 1) -> dict:
     if not _order_state.remove_item(item_id, quantity):
         return {"error": f"Item '{item_id}' is not in the current order."}
     summary = _show_order_on_screen()
-    return _sanitize_result({"status": "removed", "item": item_id, "total": summary["total"], "totalText": _spoken(summary["total"]), "itemCount": len(summary["items"])})
+    return _sanitize_result(_while_choosing({"status": "removed", "item": item_id, "total": summary["total"], "totalText": _spoken(summary["total"]), "itemCount": len(summary["items"])}))
 
 
 @tool
@@ -363,7 +378,7 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
     except Exception as e:
         logger.warning("build_custom_burger: failed to auto-update UI: %s", e)
 
-    return _sanitize_result({
+    return _sanitize_result(_while_choosing({
         "status": "added",
         "item": "Custom Burger",
         "patty": patty,
@@ -373,4 +388,4 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
         "priceText": _spoken(total_price),
         "total": summary["total"],
         "totalText": _spoken(summary["total"]),
-    })
+    }))

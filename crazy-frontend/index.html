@@ -429,6 +429,29 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 .voice:has(.vsum:not([hidden])) .shelf .card .pic{height:76px} .shelf .card .pic{display:block} .shelf .card .pic img{width:100%; height:100%; object-fit:contain}
 .voice:has(.vsum:not([hidden])) .shelf .card h3{min-height:0; margin-top:4px}
 .voice:has(.vsum:not([hidden])) .orb{margin-top:4px; margin-bottom:4px}
+
+/* VoiceBite Rewards */
+.rwcard{position:relative; overflow:hidden; background:var(--palm); color:#fff; border-radius:var(--r); padding:18px; margin-top:var(--gap); display:grid; gap:10px}
+.rwcard::after{content:""; position:absolute; inset-inline-end:-40px; top:-40px; width:150px; height:150px; border-radius:50%; background:rgba(215,242,90,.12); pointer-events:none}
+.rwtop{display:flex; justify-content:space-between; align-items:center}
+.rwbrand{color:var(--citron); font-weight:600; letter-spacing:.02em}
+.rwcard .x{color:#B9CFC4; font-size:.82rem}
+.rwlead{color:#C9DDD2; font-size:.92rem; margin-bottom:2px}
+.rwcard label{display:grid; gap:5px; font-size:.82rem; color:#C9DDD2}
+.rwcard input{width:100%; padding:12px 14px; border:0; border-radius:14px; background:#fff; color:var(--text); font-size:1rem}
+.rwcard #rwPin{letter-spacing:.5em; font-weight:600}
+.rwcard .cta{margin-top:4px; padding:14px}
+.rwerr{color:#FFD3C9; font-size:.86rem; min-height:0} .rwerr:empty{display:none}
+.rwswitch{color:var(--citron); justify-self:center; font-size:.9rem}
+.rwpts{font-size:1rem; color:#C9DDD2; margin-top:4px} .rwpts b{font-size:3rem; font-weight:500; letter-spacing:-.04em; color:#fff; line-height:1; margin-inline-end:4px}
+.rwworth{color:#B9CFC4; font-size:.9rem}
+.rwcode{display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(255,255,255,.08); border-radius:16px; padding:10px 10px 10px 14px}
+.rwcode span{display:block; font-size:.75rem; color:#B9CFC4} .rwcode b{font-size:1.25rem; font-weight:600; letter-spacing:.08em; color:var(--citron)}
+.rwcode .solid{background:var(--citron); color:var(--text)}
+.rwnote{font-size:.8rem; color:#B9CFC4}
+.rwearned{font-weight:600; color:var(--ok); white-space:nowrap}
+.rwline{display:grid; gap:2px; width:100%; text-align:start; background:var(--citron); color:var(--text); border:0; border-radius:var(--r); padding:14px 16px; margin-top:var(--gap); font-size:.9rem}
+.rwline b{font-weight:600}
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
 </head>
@@ -491,6 +514,7 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 
     <section class="view" id="v-more" hidden>
       <h1 class="title" data-t="navMore"></h1>
+      <div id="rewards"></div>
       <div class="group">
         <div class="setting"><div><b data-t="language"></b></div>
           <div class="seg" id="langSeg"><button data-lang="en">English</button><button data-lang="ar">العربية</button></div></div>
@@ -719,7 +743,7 @@ function renderOrder() {
     el.innerHTML = `<div class="totalblock"><span>${esc(t("orderNo"))}</span><p class="bigno">${esc(order.number)}</p>${order.vehicle ? `<span class="plate">${esc(t("vehicle"))} ${esc(order.vehicle)}</span> ` : ""}${order.preview ? `<span class="tag">${esc(t("preview"))}</span>` : ""}${order.cancelled ? `<span class="tag">${esc(t("cancelled"))}</span>` : ""}</div>
       ${arrivalHtml()}<div class="sheet"><ol class="steps">${STEPS.map((s, n) => `<li class="${n < order.status ? "done" : n === order.status ? "now" : ""}">${esc(t(s))}</li>`).join("")}</ol>
       <p class="vat">${esc(t("payAt"))}</p><div class="sum"><span>${esc(t("total"))}</span><span>${money(order.total)}</span></div></div>
-      <button class="outline" data-act="again">${esc(t("again"))}</button>`;
+      ${rewardsLine()}<button class="outline" data-act="again">${esc(t("again"))}</button>`;
   } else {
     const ls = lines(), sum = total();
     el.innerHTML = `<h1 class="title">${esc(t("navOrder"))}</h1>` +
@@ -864,7 +888,7 @@ function arrivalTap(what) {
 document.addEventListener("visibilitychange", () => { if (!document.hidden) pollTrack(); });
 
 function renderCart() { renderHome(); renderMenu(); renderOrder(); renderNav(); renderSpot(); }
-function render() { renderChrome(); renderCart(); renderInstall(); }
+function render() { renderChrome(); renderCart(); renderInstall(); renderRewards(); }
 
 /* ================= moving between screens ================= */
 function go(name) {
@@ -930,6 +954,79 @@ $("app").addEventListener("click", e => {
 $("q").addEventListener("input", e => { query = e.target.value; lit = null; renderMenu(); });
 $("langQuick").onclick = () => setLang(lang === "en" ? "ar" : "en");
 addEventListener("resize", renderNav);
+
+
+/* ================= VoiceBite Rewards: mobile number + 4-digit PIN, points wallet, referrals ================= */
+const RW = {
+  en: { rwTitle: "VoiceBite Rewards", rwLead: "Earn points on every order. Just your mobile number and a 4-digit PIN.", rwPhone: "Mobile number", rwPin: "4-digit PIN", rwName: "Your name (optional)",
+    rwRef: "Friend's code (optional)", rwJoin: "Join and start earning", rwSignIn: "Sign in", rwHaveAcc: "Already a member? Sign in", rwNew: "New here? Join", rwPoints: "points", rwWorth: "worth",
+    rwCode: "Your code", rwShare: "Share with a friend", rwShareText: "Order by voice at VoiceBite and get {n} bonus points with my code {code}:", rwCopied: "Link copied", rwFriends: "friends joined",
+    rwRecent: "Recent orders", rwOut: "Sign out", rwEarn: "You'll earn about {n} points when this order is collected.", rwLinked: "Linked to your Rewards", rwJoinOrder: "Join Rewards to earn {n} points on this order",
+    rwBadPin: "The PIN is 4 digits.", rwRefLine: "Friends get {a} points when they join with your code, you get {b} after their first order." },
+  ar: { rwTitle: "مكافآت VoiceBite", rwLead: "اكسب نقاطاً مع كل طلب. فقط رقم جوالك ورمز من 4 أرقام.", rwPhone: "رقم الجوال", rwPin: "رمز من 4 أرقام", rwName: "اسمك (اختياري)",
+    rwRef: "رمز صديق (اختياري)", rwJoin: "انضم وابدأ بجمع النقاط", rwSignIn: "تسجيل الدخول", rwHaveAcc: "عضو بالفعل؟ سجّل الدخول", rwNew: "جديد هنا؟ انضم", rwPoints: "نقطة", rwWorth: "قيمتها",
+    rwCode: "رمزك", rwShare: "شارك مع صديق", rwShareText: "اطلب بصوتك من VoiceBite واحصل على {n} نقطة إضافية برمزي {code}:", rwCopied: "تم نسخ الرابط", rwFriends: "أصدقاء انضموا",
+    rwRecent: "آخر الطلبات", rwOut: "تسجيل الخروج", rwEarn: "ستكسب حوالي {n} نقطة عند استلام هذا الطلب.", rwLinked: "مرتبط بحساب المكافآت", rwJoinOrder: "انضم إلى المكافآت لتكسب {n} نقطة على هذا الطلب",
+    rwBadPin: "الرمز من 4 أرقام.", rwRefLine: "يحصل أصدقاؤك على {a} نقطة عند الانضمام برمزك، وتحصل أنت على {b} بعد أول طلب لهم." } };
+const rt = (k, v = {}) => String((RW[lang] || RW.en)[k] || RW.en[k]).replace(/\{(\w+)\}/g, (_, x) => v[x] ?? "");
+let member = null, rwMode = params.get("ref") ? "join" : "signin", rwBusy = false;
+const rwToken = () => store.get("memberToken") || "";
+async function rwCall(path, body, auth) {
+  const r = await fetch(apiBase() + "/rewards" + path, { method: body ? "POST" : "GET", headers: { "Content-Type": "application/json", ...(auth ? { Authorization: "Bearer " + rwToken() } : {}) }, body: body ? JSON.stringify(body) : undefined });
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 401 && auth) { store.set("memberToken", ""); member = null; renderRewards(); }
+  if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : t("noReach"));
+  return data;
+}
+async function loadMember() { if (!rwToken()) return; try { member = await rwCall("/me", null, true); } catch (e) {} renderRewards(); renderOrder(); }
+function rewardsLine() {
+  if (!order || order.preview) return "";
+  const prog = member && member.program, n = Math.floor((order.total || 0) / 100) * ((prog && prog.pointsPerAed) || 1);
+  if (member && order.claimed) return `<div class="rwline"><b>★ ${esc(rt("rwLinked"))}</b><span>${esc(rt("rwEarn", { n }))}</span></div>`;
+  if (!member && n > 0) return `<button class="rwline cta2" data-rw="goJoin"><b>★ ${esc(rt("rwJoinOrder", { n }))}</b></button>`;
+  return "";
+}
+async function claimOrder() {
+  if (!order || order.preview || order.claimed || !rwToken() || !order.token) return;
+  try { member = await rwCall("/claim", { orderId: order.number, token: order.token }, true); order.claimed = true; saveOrder(); renderOrder(); renderRewards(); } catch (e) {}
+}
+function renderRewards() {
+  const el = $("rewards"); if (!el) return;
+  if (member) {
+    const m = member, code = m.referralCode;
+    el.innerHTML = `<div class="rwcard"><div class="rwtop"><span class="rwbrand">★ ${esc(rt("rwTitle"))}</span><button class="x" data-rw="out" title="${esc(rt("rwOut"))}">${esc(rt("rwOut"))}</button></div>
+      <p class="rwpts"><b>${m.points.toLocaleString()}</b> ${esc(rt("rwPoints"))}</p><p class="rwworth">${esc(rt("rwWorth"))} ${money(m.walletValue)}${m.name ? " · " + esc(m.name) : ""}</p>
+      <div class="rwcode"><div><span>${esc(rt("rwCode"))}</span><b dir="ltr">${esc(code)}</b></div><button class="solid" data-rw="share">${esc(rt("rwShare"))}</button></div>
+      <p class="rwnote">${esc(rt("rwRefLine", { a: m.program.welcomePoints, b: m.program.referrerPoints }))}${m.friendsJoined ? ` · <b>${m.friendsJoined}</b> ${esc(rt("rwFriends"))}` : ""}</p></div>
+      ${m.orders.length ? `<div class="group"><div class="setting"><b>${esc(rt("rwRecent"))}</b></div>${m.orders.slice(0, 4).map(o => `<div class="setting"><div><b dir="ltr">${esc(o.orderId)}</b><span>${esc(o.items.join(", "))}</span></div><span class="rwearned">${o.points ? "+" + o.points : money(o.total)}</span></div>`).join("")}</div>` : ""}`;
+    return;
+  }
+  const join = rwMode === "join";
+  el.innerHTML = `<form class="rwcard" id="rwForm" novalidate><div class="rwtop"><span class="rwbrand">★ ${esc(rt("rwTitle"))}</span></div><p class="rwlead">${esc(rt("rwLead"))}</p>
+    <label>${esc(rt("rwPhone"))}<input id="rwPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="050 123 4567" dir="ltr" required></label>
+    <label>${esc(rt("rwPin"))}<input id="rwPin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="${join ? "new-password" : "current-password"}" placeholder="••••" dir="ltr" required></label>
+    ${join ? `<label>${esc(rt("rwName"))}<input id="rwName" type="text" autocomplete="given-name"></label><label>${esc(rt("rwRef"))}<input id="rwRef" type="text" dir="ltr" value="${esc(params.get("ref") || "")}" autocapitalize="characters"></label>` : ""}
+    <p class="rwerr" id="rwErr" role="alert"></p><button class="cta" type="submit">${esc(join ? rt("rwJoin") : rt("rwSignIn"))}</button>
+    <button class="link rwswitch" type="button" data-rw="mode">${esc(join ? rt("rwHaveAcc") : rt("rwNew"))}</button></form>`;
+}
+$("rewards").addEventListener("submit", async e => {
+  e.preventDefault(); if (rwBusy) return; const pin = $("rwPin").value.trim(), err = $("rwErr");
+  if (!/^\d{4}$/.test(pin)) return err.textContent = rt("rwBadPin");
+  rwBusy = true; err.textContent = "";
+  try { const body = { phone: $("rwPhone").value, pin }; if (rwMode === "join") Object.assign(body, { name: $("rwName").value.trim(), referralCode: $("rwRef").value.trim() });
+    member = await rwCall(rwMode === "join" ? "/join" : "/login", body); store.set("memberToken", member.token); renderRewards(); claimOrder(); renderOrder(); }
+  catch (x) { err.textContent = x.message; } finally { rwBusy = false; }
+});
+$("rewards").addEventListener("click", async e => {
+  const b = e.target.closest("[data-rw]"); if (!b) return;
+  if (b.dataset.rw === "mode") { rwMode = rwMode === "join" ? "signin" : "join"; return renderRewards(); }
+  if (b.dataset.rw === "out") { store.set("memberToken", ""); member = null; return renderRewards(); }
+  if (b.dataset.rw === "share" && member) {
+    const url = location.origin + location.pathname + "?ref=" + encodeURIComponent(member.referralCode), text = rt("rwShareText", { n: member.program.welcomePoints, code: member.referralCode });
+    try { if (navigator.share) await navigator.share({ title: "VoiceBite", text, url }); else { await navigator.clipboard.writeText(text + " " + url); toast(rt("rwCopied")); } } catch (x) {}
+  }
+});
+$("app").addEventListener("click", e => { if (e.target.closest('[data-rw="goJoin"]')) { rwMode = "join"; renderRewards(); go("more"); } });
 
 /* ================= install as an app ================= */
 let installEvent = null;
@@ -1092,7 +1189,7 @@ function applyState(s) {
   let placed = false;
   if (s.orderConfirmed && s.orderNumber && !(order && order.number === s.orderNumber)) { order = { number: s.orderNumber, status: 0, total: agentTotal || total(), preview: false, vehicle: s.vehicleNumber || "", token: s.trackToken || "", placedAt: Date.now() }; cart = []; lit = null; shown = []; placed = true; saveOrder(); startTracking(); }
   renderCart(); centerChip();
-  if (placed) { celebrate(s.orderNumber); closeVoice(); go("order"); }
+  if (placed) { celebrate(s.orderNumber); closeVoice(); go("order"); claimOrder(); }
   return true;
 }
 function onMessage(m) {
@@ -1252,6 +1349,7 @@ try { const saved = JSON.parse(store.get("order") || "null");   // a placed orde
 } catch (e) {}
 render();
 if (order) startTracking();
+loadMember();
 requestAnimationFrame(renderNav);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderNav);
 </script>

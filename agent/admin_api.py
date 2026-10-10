@@ -47,7 +47,7 @@ TOKEN_HOURS = 12
 STATUSES = ["received", "preparing", "ready", "completed", "cancelled"]
 ALL = "all"
 _SLUG = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")
-_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$")
+_ID = re.compile(r"^\+?[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$")   # customers are keyed by phone, e.g. +971501234567
 _TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 _OFFSET = re.compile(r"^[+-](0\d|1[0-4]):[0-5]\d$")
 _DAY = re.compile(r"^\d{4}-\d{2}-\d{2}")
@@ -90,11 +90,24 @@ COLLECTIONS = {
     "refunds": ("orders.view", None),
     "audit": ("audit.view", None),
 }
-WASTE_REASONS = ["trimming", "overproduction", "burnt", "dropped", "expired", "damaged", "cancelled order", "unclaimed pickup", "other"]
+_CUSTOMER_PRIVATE = ("pinHash", "pinSalt", "failedPins", "lockUntil")
+_CUSTOMER_LEDGER = ("points", "lifetimePoints", "referralCode", "referredBy", "referralPaid", "joinedAt")
+WASTE_REASONS = ["trimming", "overproduction", "burnt", "dropped", "broken", "expired", "damaged", "cancelled order", "unclaimed pickup", "other"]
 MOVE_TYPES = ["purchase", "adjustment", "count", "transfer", "return"]
 
 
 # ---------- helpers ----------
+
+def _extra(name: str):
+    """The operations (ops.py) and rewards (rewards.py) modules, when they are installed."""
+    import importlib
+    for module in (f"agent.{name}", name):
+        try:
+            return importlib.import_module(module)
+        except ModuleNotFoundError:
+            continue
+    return None
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -348,7 +361,14 @@ def set_order_status(order_id: str, body: StatusIn, user: dict = Depends(need("o
         fields["stockDeducted"] = True
     _set_order(order_id, **fields)
     audit(user, "order_status", order_id, body.status)
-    return {"orderId": order_id, "status": body.status, "stockMoves": deducted}
+    points = 0
+    rewards = _extra("rewards")
+    if body.status == "completed" and rewards:
+        try:
+            points = rewards.award_for_order({**order, **fields})   # loyalty points for a member's order, once
+        except Exception as e:
+            logger.warning("Could not award points for %s: %s", order_id, e)
+    return {"orderId": order_id, "status": body.status, "stockMoves": deducted, "pointsAwarded": points}
 
 
 @router.post("/orders/{order_id}/payment")
@@ -365,10 +385,11 @@ def take_payment(order_id: str, body: PaymentIn, user: dict = Depends(need("orde
 
 @router.post("/orders/{order_id}/customer")
 def attach_customer(order_id: str, body: CustomerIn, user: dict = Depends(need("orders.status"))):
-    phone = re.sub(r"[^\d+]", "", body.phone)
+    rewards = _extra("rewards")
+    phone = rewards.norm_phone(body.phone) if rewards else re.sub(r"[^\d+]", "", body.phone)
     if len(phone) < 6:
         raise HTTPException(400, "Enter a phone number.")
-    _order(order_id, user)
+    order = _order(order_id, user)
     _set_order(order_id, customerPhone=phone, customerName=body.name)
     existing = _record("customers", phone) or {"createdAt": _now()}
     existing.update({"phone": phone, "marketingConsent": body.marketingConsent, "consentAt": _now() if body.marketingConsent else existing.get("consentAt", "")})
@@ -376,6 +397,11 @@ def attach_customer(order_id: str, body: CustomerIn, user: dict = Depends(need("
         existing["name"] = body.name
     _save("customers", phone, existing)
     audit(user, "customer_attached", order_id, phone[-4:].rjust(len(phone), "*"))
+    if rewards and order.get("status") == "completed":
+        try:
+            rewards.award_for_order({**order, "customerPhone": phone})
+        except Exception as e:
+            logger.warning("Could not award points for %s: %s", order_id, e)
     return {"orderId": order_id, "customerPhone": phone}
 
 
@@ -417,6 +443,9 @@ def _move(user: dict, ingredient_id: str, qty: float, kind: str, ref: str = "", 
     if cost is not None:
         line["cost"] = cost
     _save("stock_moves", _new_id(), line)
+    ops = _extra("ops")
+    if ops:
+        ops.check_alert(ingredient_id)   # opens or closes the low-stock alert for this item
 
 
 def _deduct_stock(order: dict, user: dict) -> int:
@@ -586,7 +615,9 @@ def _collection(name: str, user: dict, write: bool) -> None:
 def list_records(collection: str, user: dict = Depends(current_user)):
     _collection(collection, user, write=False)
     rows = _records(collection)
-    if collection in ("stock_moves", "waste", "asset_moves", "refunds", "audit"):
+    if collection == "customers":   # PINs never leave the server
+        rows = [{k: v for k, v in r.items() if k not in _CUSTOMER_PRIVATE} for r in rows]
+    if collection in ("stock_moves", "waste", "asset_moves", "refunds", "audit", "loyalty_moves", "production", "pos_sales"):
         rows = sorted(rows, key=lambda r: r["id"], reverse=True)[:500]
     return {"records": rows}
 
@@ -600,6 +631,12 @@ def save_record(collection: str, record_id: str, body: Dict[str, Any], user: dic
         raise HTTPException(400, "This record is too large.")
     existing = _record(collection, record_id) or {}
     record = {**body, "updatedAt": _now(), "updatedBy": user["user"], "createdAt": existing.get("createdAt") or _now()}
+    if collection == "customers":         # PINs and points only change through Rewards and the points ledger
+        for key in _CUSTOMER_PRIVATE + _CUSTOMER_LEDGER:
+            if key in existing:
+                record[key] = existing[key]
+            else:
+                record.pop(key, None)
     if collection == "ingredients":       # quantity and price history only change through the stock ledger
         record["onHand"] = existing.get("onHand", 0)
         record["priceHistory"] = existing.get("priceHistory", [])
@@ -952,6 +989,11 @@ def delete_staff(username: str, user: dict = Depends(need("team.manage"))):
 def setup_admin(app) -> None:
     origins = [o.strip() for o in os.environ.get("ADMIN_ORIGINS", DEFAULT_ORIGINS).split(",") if o.strip()]
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"])
+    for name in ("ops", "rewards"):   # their routes join this router, so they load first
+        _extra(name)
     app.include_router(router)
+    rewards = _extra("rewards")
+    if rewards:
+        rewards.setup_rewards(app)   # the customer sign-in and wallet under /rewards
     ensure_sessions_table()
     ensure_data_table()

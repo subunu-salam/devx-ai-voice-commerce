@@ -164,3 +164,24 @@ After an order is placed, the ordering app (`crazy-frontend/index.html`) shows t
 Customers can also choose to share their phone's location. The app then works out the distance to the restaurant and a rough driving time by itself (straight-line distance × 1.3 at 30 km/h; no maps service or API key) and sends "on the way", "5 minutes away" and "I'm here" automatically. This needs the restaurant's coordinates: **Console → Settings → Business and tax → Restaurant latitude / longitude**. Until they are entered, only the buttons are shown.
 
 The routes are in `agent/arrival.py` (`GET /orders/{id}/track`, `POST /orders/{id}/arrival`). They are public, so every order gets a private tracking key when it is placed. If the ordering app is served from a different domain than the console, add that domain to the `ADMIN_ORIGINS` environment variable.
+
+## Operations: stock alerts, production and waste, POS sales
+
+The merchant console (`crazy-frontend/console.html`, API in `agent/ops.py`) adds:
+
+- **Stock alerts at 20–30%.** Give each stock item a *par level* (how much you want on the shelf). When it falls to the alert level (25% by default, change it on the Inventory page) it is flagged *low*; below the critical level it is *critical*; at zero, *out*. Each crossing opens an alert, shown with a badge on Inventory until someone taps "Got it", and closes itself when the item is refilled. Items marked *perishable* (milk, bread, fresh meat) are always on **Today's purchase list**, topped up to par, which can be turned into a purchase order in one tap.
+- **Production and waste.** The kitchen logs what it prepared (biryani, cutlets, snacks) and anything thrown away (unsold, dropped, broken). The daily report compares *made* with *sold* (voice orders + POS) and *wasted*, and shows the money lost: wasted portions, portions made but neither sold nor logged ("missing"), and stock-count gaps.
+- **POS sales.** A POS posts each day's item sales to `POST /admin/api/ops/pos/sales` with the header `X-POS-Key` (set the key under Production and waste → Import POS sales). Body: `{"day": "2026-10-10", "ref": "Z-1042", "sales": [{"itemId": "chicken-biryani", "qty": 28, "amount": 50400}]}` (amount in fils; `name` can be sent instead of `itemId`). Managers can also paste sales in by hand.
+
+## Loyalty and rewards (mobile number + 4-digit PIN)
+
+Customers join from the **More** tab of the ordering app with their mobile number and a 4-digit PIN; no email. PINs are stored hashed, five wrong PINs lock the account for 15 minutes, and obvious PINs (1234, 0000…) are refused. Members earn points when an order linked to them is marked *completed* (1 point per AED 1 by default; 1 point = AED 0.05). Orders placed by voice while signed in are linked automatically.
+
+Each member has a referral code and a share link (`?ref=CODE`). A friend who joins with it gets welcome points; the member gets a referral reward after that friend's first completed order. Cashiers redeem points at the window from **Loyalty and rewards → Redeem at the window**. All rates are set under **Programme settings**. Customer API: `agent/rewards.py` (`/rewards/join`, `/rewards/login`, `/rewards/me`, `/rewards/claim`).
+
+## Voice conversation length
+
+| Variable | Default | Effect |
+|---|---|---|
+| `VOICE_PRICE_MODE` | `checkout` | No prices while the customer is choosing; the total is said only at the order summary. Set to `always` to also say each item price and the running total. |
+| `VOICE_REPLY_SENTENCES` | `1` | Longest reply the attendant gives (1–3 short sentences). |
