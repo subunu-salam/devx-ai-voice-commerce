@@ -70,11 +70,14 @@ _MID_ORDER_PRICES = ("itemPriceText", "total", "totalText", "price", "priceText"
 
 
 def _who_first(result: dict) -> dict:
-    """Until we know who is ordering, every tool result reminds the attendant to ask (the drive-through flow)."""
-    c = customer()
-    if rewards_on and not c.get("phone") and not c.get("declined"):
-        result["first"] = ("You have not asked who is ordering yet. In your next sentence ask: \"Are you a VoiceBite Rewards member, "
-                           "would you like to join, or continue as a guest?\" and call show_choices with [\"I'm a member\", \"Join now\", \"No thanks\"].")
+    """Until we know who is ordering, every tool result reminds the attendant to settle it (the drive-through flow)."""
+    if _identity_open():
+        result["first"] = f'Before anything else, say exactly: "{_WHO_Q}" and wait for the answer.'
+    call = _call()
+    if call.step in ("plate", "plate_ok", "pay", "review"):   # the order changed during checkout: checkout starts again
+        call.step, call.plate, call.pay = "order", "", ""
+        _flow_screen(2)
+        result["checkout"] = "The order changed, so checkout starts again: when they are done, call checkout."
     return result
 
 
@@ -142,7 +145,6 @@ rewards_on = False   # main.py turns this on when VoiceBite Rewards is set up
 # customer actually gave (spoken or tapped), so the attendant can never fill it in from memory or an example.
 _NUM_WORDS = {"zero": "0", "oh": "0", "o": "0", "one": "1", "two": "2", "three": "3", "four": "4", "for": "4", "five": "5",
               "six": "6", "seven": "7", "eight": "8", "ate": "8", "nine": "9"}
-_YES = re.compile(r"\b(yes|yeah|yep|yup|same car|same one|same vehicle|correct|that's right|sure|that one|نعم|أيوه|ايوه|اي|صحيح|نفس|അതെ|ശരി|അതേ)\b|^\s*(نعم|اي|അതെ)", re.I)
 
 
 def customer() -> dict:
@@ -176,17 +178,95 @@ def _digits_spoken(text: str) -> str:
     return " ".join(_NUM_WORDS.get(w, w) for w in re.findall(r"[a-z]+|\d+|[^\sa-z\d]+", t))
 
 
-def _plate_from_customer(vehicle: str) -> bool:
-    """True when the customer said or tapped this plate's number in this order. Never a remembered plate."""
+def _plate_from_customer(vehicle: str, lines=None) -> bool:
+    """True when the customer said or tapped this plate's number (in `lines`, default the whole call). Never a remembered plate."""
     call = _call()
-    heard = call.heard
     if not call.heard_any:
         return True   # no transcript reaches us (text-only test calls): nothing to check against
-    said = re.sub(r"\D", "", "".join(_digits_spoken(h) for h in heard))
+    said = re.sub(r"\D", "", "".join(_digits_spoken(h) for h in (call.heard if lines is None else lines)))
     digits = re.sub(r"\D", "", vehicle)
-    if digits and digits in said:
-        return True
-    return False
+    return bool(digits) and digits in said
+
+
+# ---------- the drive-through flow, enforced here rather than left to the voice model ----------
+# 1 who is ordering -> 2 the order -> 3 vehicle plate (+ confirm) -> 4 payment -> 5 review and place.
+# Each step tool only moves on when the customer has actually answered the question it asked (spoken or tapped),
+# and tells the attendant the exact next sentence. The attendant cannot skip a step or answer for the customer.
+
+_WHO_Q = "Are you a VoiceBite Rewards member, would you like to join, or continue as a guest?"
+_WHO_OPTIONS = ["I'm a member", "Join now", "Continue as guest"]
+_OFFER_Q = "No problem. Would you like to join VoiceBite Rewards now? It's free and takes a few seconds. Or continue as a guest?"
+_GUEST = re.compile(r"\b(guest|no thanks|no thank you|not now|skip|without|don'?t want|continue)\b|لا شكر|ضيف|بدون|വേണ്ട|ഗസ്റ്റ്", re.I)
+_YES = re.compile(r"\b(yes|yeah|yep|yup|correct|that's right|that is right|right|sure|ok|okay|go ahead|place( it| the order| order)?|confirm|perfect|exactly)\b"
+                  r"|نعم|أيوه|ايوه|صحيح|تمام|أكد|اطلب|അതെ|ശരി|ഓക്കെ", re.I)
+_NO = re.compile(r"\b(no|nope|wrong|not right|change|incorrect)\b|لا|خطأ|غير|അല്ല|മാറ്റ", re.I)
+_PAY_WORDS = {"cash": re.compile(r"\bcash\b|كاش|نقد|ക്യാഷ്|പണം", re.I),
+              "card": re.compile(r"\bcard\b|credit|debit|visa|master|بطاقة|كارت|കാർഡ്", re.I),
+              "link": re.compile(r"\blink\b|online|apple ?pay|رابط|اونلاين|ലിങ്ക്", re.I)}
+PAY_LABEL = {"cash": "Cash", "card": "Card", "link": "Payment link"}
+FLOW_STEPS = ["Who's ordering", "Your order", "Car", "Payment", "Confirm"]
+
+
+def _identity_open() -> bool:
+    c = customer()
+    return rewards_on and not c.get("phone") and not c.get("declined")
+
+
+def _since() -> list:
+    """What the customer has said or tapped since the current question was asked."""
+    call = _call()
+    return call.heard[call.mark:]
+
+
+def _answered(pattern) -> bool:
+    call = _call()
+    return (not call.heard_any) or any(pattern.search(h) for h in _since())
+
+
+def _flow_screen(step_no: int, choices=None) -> None:
+    current = get_ui_state()
+    current.update(flowStep=step_no, flowSteps=FLOW_STEPS, choices=choices)
+    set_ui_state(current)
+
+
+def _ask(step: str, step_no: int, question: str, options=None) -> dict:
+    """Move to `step`, put the question (and tap answers) on screen, and tell the attendant to ask it and wait."""
+    call = _call()
+    call.step, call.mark = step, len(call.heard)
+    _flow_screen(step_no, {"question": question, "options": options} if options else None)
+    return {"next": f'Say exactly: "{question}" Then stop and wait for the customer to answer. Do not call another checkout tool until they do.'}
+
+
+def flow_begin() -> None:
+    """Start of a call (main.py): members go straight to ordering, everyone else is asked who is ordering."""
+    call = _call()
+    call.plate = call.pay = ""
+    if _identity_open():
+        _ask("identify", 1, _WHO_Q, _WHO_OPTIONS)
+    else:
+        call.step = "order"
+        _flow_screen(2)
+
+
+def greeting_question() -> str:
+    """Added to the attendant's first sentence when the customer is not identified yet."""
+    return _WHO_Q if _identity_open() else ""
+
+
+def identity_done(name: str = "") -> dict:
+    """Called once the customer has signed in, joined or chosen to continue as a guest."""
+    call = _call()
+    call.step = "order"
+    call.mark = len(call.heard)
+    _flow_screen(2)
+    hello = f"Thanks, {name}. " if name else "Thanks. "
+    if get_order_state().is_empty():
+        return {"next": f'Say: "{hello}What would you like to order today?"'}
+    return {"next": f'Say: "{hello}Anything else, or is that everything?"'}
+
+
+def _spell(plate: str) -> str:
+    return " ".join(plate.replace(" ", ""))
 
 
 @tool
@@ -204,19 +284,101 @@ def sign_in_rewards(mobile_number: str, pin: str) -> dict:
     from rewards import voice_login   # loaded only when Rewards is on
     result = voice_login(mobile_number, pin, short=_call().kiosk)
     if result.get("error"):
-        return {"error": result["error"] + " Ask for the number and PIN again (offer to join instead if they are not a member). Never repeat the PIN."}
+        return {"error": result["error"] + " Ask for the number and PIN again, or offer to join or continue as a guest. Never repeat the PIN."}
     set_call_customer({k: result.get(k, "") for k in ("phone", "name", "lastVehicle", "lastPayment")})
-    current = get_ui_state(); current.update(memberToken=result["token"], choices=None); set_ui_state(current)
-    return {"status": "signed in", "name": result.get("name", ""), "lastVehicle": result.get("lastVehicle", ""), "lastPayment": result.get("lastPayment", ""),
-            "next": "Greet them by name in a few words (never repeat the number or PIN), then ask for the vehicle plate."}
+    current = get_ui_state(); current.update(memberToken=result["token"]); set_ui_state(current)
+    return {"status": "signed in", **identity_done(result.get("name", ""))}
 
 
 @tool
 def skip_rewards() -> dict:
-    """The customer said they do not want to sign in or join VoiceBite Rewards for this order."""
+    """The customer is not a member. Call it when they say they are not a member or want to continue as a guest."""
+    call = _call()
+    if call.heard_any and not any(_GUEST.search(h) for h in _since()):
+        call.join_offered = True   # "I'm not a member": offer to join before going on as a guest
+        return {"status": "offer join", **_ask("identify", 1, _OFFER_Q, ["Join now", "Continue as guest"])}
     customer()["declined"] = True
-    current = get_ui_state(); current["choices"] = None; set_ui_state(current)
-    return {"status": "skipped", "next": "Carry on: ask for the vehicle plate."}
+    return {"status": "guest", **identity_done()}
+
+
+@tool
+def checkout() -> dict:
+    """The customer says that is everything / wants to place the order. Starts checkout: reads back the order and asks for the car."""
+    call = _call()
+    if get_order_state().is_empty():
+        return {"error": "The order is empty. Ask what they would like."}
+    if _identity_open():
+        return {"error": "Who is ordering is not settled yet.", **_ask("identify", 1, _WHO_Q, _WHO_OPTIONS)}
+    summary = _show_order_on_screen()
+    said = ", ".join(f"{i['quantity']} {i['name']}" for i in summary["items"])
+    call.plate = call.pay = ""
+    return {"status": "checkout", **_ask("plate", 3, f"That's {said}, {_spoken(summary['total'])}. What's your vehicle plate number?")}
+
+
+@tool
+def set_vehicle(plate_number: str) -> dict:
+    """Record the vehicle plate number the customer just said, then ask them to confirm it.
+
+    Args:
+        plate_number: The plate exactly as the customer said it, letters and digits, e.g. "D 12345".
+    """
+    call = _call()
+    if call.step not in ("plate", "plate_ok"):
+        return {"error": "Not at the car step. If they are done ordering, call checkout first."}
+    vehicle = re.sub(r"\s+", " ", re.sub(r"[^A-Za-z0-9 ]", " ", str(plate_number or "")).upper()).strip()[:20]
+    if not re.search(r"\d", vehicle):
+        return {"error": "A plate needs its number.", **_ask("plate", 3, "Sorry, I didn't catch that. What's your vehicle plate number?")}
+    if not _plate_from_customer(vehicle, _since()):
+        return {"error": f"The customer has not said {vehicle}. Wait for them to say their plate number. Never guess or reuse a plate."}
+    call.plate = vehicle
+    return {"status": "heard", **_ask("plate_ok", 3, f"I have {_spell(vehicle)}. Is that right?", [vehicle, "Change plate"])}
+
+
+@tool
+def confirm_vehicle(is_correct: bool) -> dict:
+    """The customer answered whether the plate you read back is right.
+
+    Args:
+        is_correct: true if they said yes / tapped the plate, false if they want to change it.
+    """
+    call = _call()
+    if call.step != "plate_ok" or not call.plate:
+        return {"error": "No plate to confirm. Ask for the plate number first."}
+    tapped = any(h.replace(" ", "").upper() == call.plate.replace(" ", "") for h in _since())
+    said_no = call.heard_any and not tapped and any(_NO.search(h) for h in _since())
+    if is_correct and said_no:
+        return {"error": "They said the plate is not right. Call confirm_vehicle with is_correct false."}
+    if is_correct:
+        if not (tapped or _answered(_YES)):
+            return {"error": "The customer has not confirmed the plate yet. Wait for their answer."}
+        last = customer().get("lastPayment", "")
+        options = [PAY_LABEL[last]] + [PAY_LABEL[m] for m in PAY_LABEL if m != last] if last in PAY_LABEL else list(PAY_LABEL.values())
+        q = f"How would you like to pay? {PAY_LABEL[last]} like last time, or something else?" if last in PAY_LABEL else "How would you like to pay: cash, card or a payment link?"
+        return {"status": "plate confirmed", **_ask("pay", 4, q, options)}
+    call.plate = ""
+    return {"status": "change", **_ask("plate", 3, "Sorry about that. What's your vehicle plate number?")}
+
+
+@tool
+def set_payment(method: str) -> dict:
+    """Record how the customer said they will pay, then read back the whole order for a final yes.
+
+    Args:
+        method: "cash", "card" or "link", exactly as the customer chose.
+    """
+    call = _call()
+    if call.step != "pay":
+        return {"error": "Not at the payment step yet. Follow the steps: checkout, set_vehicle, confirm_vehicle, then payment."}
+    m = PAYMENT_METHODS.get(str(method or "").strip().lower(), "")
+    if not m:
+        return {"error": "Ask: cash, card or a payment link?"}
+    if call.heard_any and not any(_PAY_WORDS[m].search(h) or h.strip().lower() == PAY_LABEL[m].lower() for h in _since()):
+        return {"error": f"The customer has not chosen {PAY_LABEL[m].lower()}. Wait for them to say or tap how they will pay. Never choose for them."}
+    call.pay = m
+    summary = _show_order_on_screen()
+    said = ", ".join(f"{i['quantity']} {i['name']}" for i in summary["items"])
+    return {"status": "payment chosen", **_ask("review", 5, f"So that's {said}, {_spoken(summary['total'])}, for car {_spell(call.plate)}, paying by {PAY_LABEL[m].lower()}. Shall I place the order?",
+                                               ["Place order", "Change something"])}
 
 
 def set_tables(menu_table, orders_table) -> None:
@@ -298,9 +460,9 @@ def get_order_summary(tool_context=None) -> dict:
 
 @tool
 def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str = "guest") -> dict:
-    """Finalizes the order, persists to DynamoDB, returns order number.
+    """Places the order once the customer has said yes to the final read-back (after set_payment).
 
-    Confirm the vehicle plate and the payment method first, then call this.
+    The plate and payment are the ones the customer gave in the earlier steps; the arguments are ignored.
 
     Args:
         vehicle_number: The plate number exactly as the customer said or tapped it IN THIS CALL. Required for every
@@ -310,21 +472,16 @@ def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str
     """
     if get_order_state().is_empty():
         return {"error": "Cannot place an empty order."}
-    vehicle = re.sub(r"[^A-Za-z0-9 ]", " ", str(vehicle_number or "")).upper()
-    vehicle = re.sub(r"\s+", " ", vehicle).strip()[:20]
-    if rewards_on and not customer().get("phone") and not customer().get("declined"):
-        return {"error": "First ask who is ordering: \"Are you a VoiceBite Rewards member?\" with show_choices([\"I'm a member\", \"Join now\", \"No thanks\"]). "
-                         "Member: ask for their mobile number and PIN, call sign_in_rewards. Join: name, mobile number and a 4-digit PIN, call join_rewards. "
-                         "No thanks: call skip_rewards. Then call place_order again."}
-    if len(vehicle.replace(" ", "")) < 2:
-        return {"error": "The vehicle plate number is missing. Ask the customer for their vehicle plate number, then call place_order again with vehicle_number."}
-    if not re.search(r"\d", vehicle):
-        return {"error": "A plate needs its number, e.g. \"D 12345\". Ask \"What's your vehicle plate number?\" and wait."}
-    if not _plate_from_customer(vehicle):
-        return {"error": f"The customer has not given the plate {vehicle} in this call. Ask \"What's your vehicle plate number?\" and wait for their answer. Never guess or reuse a plate."}
-    method = PAYMENT_METHODS.get(str(payment_method or "").strip().lower(), "")
-    if not method:
-        return {"error": "Ask how the customer will pay (cash, card or a payment link), then call place_order again with payment_method."}
+    call = _call()
+    if call.step != "review" or not call.plate or not call.pay:
+        where = {"identify": "who is ordering", "order": "the order (call checkout when they are done)", "plate": "the vehicle plate",
+                 "plate_ok": "confirming the plate", "pay": "the payment method"}.get(call.step, "checkout")
+        return {"error": f"Not ready: still at {where}. Follow the steps and wait for the customer's answer at each one."}
+    if call.heard_any and any(_NO.search(h) and not _YES.search(h) for h in _since()):
+        return {"error": "They want to change something. Ask what they would like to change."}
+    if not _answered(_YES):
+        return {"error": "The customer has not said yes to placing the order. Wait for their answer."}
+    vehicle, method = call.plate, call.pay   # what the customer gave and confirmed, never the model's arguments
     order_record = get_order_state().place_order(user_id)
     order_record["vehicleNumber"] = vehicle          # staff serve the order to this car
     order_record["paymentPreference"] = method       # shown to the window; the payment itself is taken there
@@ -349,7 +506,7 @@ def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str
         len(order_record["items"]),
     )
     get_order_state().cancel()
-    _call().heard = []   # a second order in the same call asks for the plate again
+    call.heard, call.mark, call.plate, call.pay, call.step = [], 0, "", "", "done"   # a second order asks for the car again
 
     # Update UI to show order confirmation page
     try:
@@ -380,6 +537,10 @@ def cancel_order(tool_context=None) -> dict:
     logger.info("ORDER_CANCELLED: itemCount=%s", len(get_order_state().items))
     get_order_state().cancel()
     _show_order_on_screen()
+    call = _call()
+    if call.step not in ("identify",):
+        call.step, call.plate, call.pay = "order", "", ""
+        _flow_screen(2)
     return _sanitize_result({"status": "cancelled"})
 
 

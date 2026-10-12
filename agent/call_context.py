@@ -47,10 +47,17 @@ class Call:
         self.looking_at = {"visibleCategory": None, "selectedItem": None}
         self.lang = "en"
         self.kiosk = False                     # a shared kiosk: sign-ins only last for this visit
+        # the drive-through flow, run by the server (order_tools): who -> order -> plate -> plate ok -> pay -> review -> done
+        self.step = "order"
+        self.mark = 0                          # index in heard where the current question was asked
+        self.plate = ""
+        self.pay = ""
+        self.join_offered = False
 
     def carry_over_from(self, old: "Call") -> None:
         """A language switch reconnects: the same customer, same order, same identity."""
         self.order, self.customer, self.heard, self.heard_any = old.order, old.customer, old.heard, old.heard_any
+        self.step, self.mark, self.plate, self.pay, self.join_offered = old.step, old.mark, old.plate, old.pay, old.join_offered
 
 
 _current: contextvars.ContextVar = contextvars.ContextVar("voicebite_call", default=None)

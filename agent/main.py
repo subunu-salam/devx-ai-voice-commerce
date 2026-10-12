@@ -246,27 +246,20 @@ def join_rewards(name: str, mobile_number: str, pin: str) -> dict:
     if result.get("error"):
         return {"error": result["error"] + " Ask again, and do not repeat the PIN out loud."}
     _order_tools.set_call_customer({k: result.get(k, "") for k in ("phone", "name", "lastVehicle", "lastPayment")})
-    set_ui_state({"memberToken": result["token"], "choices": None})   # the app signs them in, no typing needed
-    return {"status": "joined", "name": result.get("name", ""), "next": "Welcome them in one sentence, without repeating the number or PIN, then carry on."}
+    set_ui_state({"memberToken": result["token"]})   # the app signs them in, no typing needed
+    return {"status": "joined", "welcome": "Welcome them to VoiceBite Rewards in a few words, without repeating the number or PIN.", **_order_tools.identity_done(result.get("name", ""))}
 
 
 def _customer_section(info: dict) -> str:
-    """What the attendant knows about the caller. Members get one-tap confirmations instead of questions."""
+    """What the attendant knows about the caller."""
     if info.get("phone"):
-        lines = [f"CUSTOMER: a VoiceBite Rewards member, {info.get('name') or 'name not given'}. Greet them by name once."]
-        if info.get("lastVehicle"):
-            lines.append(f'- Last visit they came in car {info["lastVehicle"]}. When you need the plate, ask "Same car, {info["lastVehicle"]}?" and call show_choices with ["{info["lastVehicle"]}", "Different car"]. If it is a different car, ask for the new plate')
-        if info.get("lastPayment"):
-            label = {"cash": "Cash", "card": "Card", "link": "Payment link"}.get(info["lastPayment"], info["lastPayment"])
-            lines.append(f'- They paid by {label.lower()} last time. Ask only "{label}, like last time?" and call show_choices with ["{label}", "Something else"]. Do not list every option')
-        lines.append("- Never offer to sign them up: they are already a member")
-        return "\n".join(lines) + "\n"
-    return ("CUSTOMER: not signed in yet. Before the vehicle step, find out who is ordering (place_order refuses until you do): "
-            'ask "Are you a VoiceBite Rewards member?" and call show_choices with ["I\'m a member", "Join now", "No thanks"].\n'
-            "- Member: ask for their mobile number, then their 4-digit PIN, and call sign_in_rewards\n"
-            "- Join now: ask for their first name, mobile number and a 4-digit PIN they choose, and call join_rewards\n"
-            "- No thanks: call skip_rewards and do not ask again\n"
-            "- Never say a PIN back out loud. If sign-in fails twice, offer to join or skip\n")
+        return (f"CUSTOMER: a VoiceBite Rewards member, {info.get('name') or 'name not given'}, already signed in. Greet them by name once. "
+                "Skip step 1 and never offer to sign them up. The car is still asked on every visit.\n")
+    return ("CUSTOMER: not identified yet. Step 1 comes first, before taking the order: your opening sentence already asks it.\n"
+            "- \"I'm a member\": ask for their mobile number, then their 4-digit PIN, and call sign_in_rewards\n"
+            "- \"Join now\": ask for their first name, mobile number and a 4-digit PIN they choose, and call join_rewards\n"
+            "- \"I'm not a member\", \"guest\", \"no thanks\": call skip_rewards and say its next sentence\n"
+            "- Never say a PIN back out loud\n")
 
 
 def _request_language(language: str) -> dict:
@@ -440,17 +433,18 @@ RULES:
 - If add_to_order says an item is sold out, apologise and suggest something similar
 - When the customer ORDERS an item (e.g. "I'll have the...", "I need that one"): call add_to_order straight away, then confirm in a few words ("Done, one Double Burger. Anything else?")
 - The order and total on screen update automatically from the order tools. Do not pass order_items or order_total to update_ui
-- PLACING THE ORDER: when the customer says that is everything, or asks to place the order, call get_order_summary and read back the items and the totalText. Then:
-  1. WHO IS ORDERING: see CUSTOMER (signed-in members skip this)
-  2. VEHICLE (mandatory on EVERY visit and every order, members included): ask "What's your vehicle plate number?" and wait for the answer (members: confirm last visit's plate, see CUSTOMER). Never guess, invent or reuse a plate: place_order checks the customer gave it
-  3. PAYMENT: call show_choices(question="How would you like to pay?", options=["Cash", "Card", "Payment link"]) and ask once (for members, confirm last time's method instead, see CUSTOMER)
-  Then call place_order(vehicle_number="<plate>", payment_method="cash" | "card" | "link"). Never call place_order without both
-- ON-SCREEN CHOICES: whenever you ask a question with a few fixed answers (yes/no, size, payment, same car), call show_choices so the customer can tap instead of speaking
-- After place_order succeeds, confirm with the order number, the vehicle plate number and the totalText, and add: "Let us know when you're five minutes away and we'll have it hot and ready."
+- THE DRIVE-THROUGH FLOW is run by the tools, step by step. Every step tool returns "next": say exactly that sentence and then WAIT for the customer. Never skip a step, never answer for the customer, never call the next step's tool before they have answered:
+  1. WHO IS ORDERING (see CUSTOMER). Member: sign_in_rewards. Join: join_rewards. "Not a member", "guest", "no thanks": skip_rewards (it offers to join once, then continues as a guest)
+  2. THE ORDER: show_products, add_to_order, remove_from_order. When they say that's everything: call checkout
+  3. THE CAR: after checkout, when they say their plate: set_vehicle(plate_number). Then they confirm: confirm_vehicle(true) or confirm_vehicle(false)
+  4. PAYMENT: when they say or tap cash, card or payment link: set_payment(method)
+  5. CONFIRM: when they say yes to the read-back: place_order. Then say the "say" sentence and add: "Let us know when you're five minutes away and we'll have it hot and ready."
+- If a tool returns an error, do what it says. It usually means: wait for the customer's answer
+- ON-SCREEN CHOICES: the step tools put the answers on screen themselves. For other questions with a few fixed answers (size, yes/no), call show_choices
 {customer}
 - Special instructions: pass as special_instructions in add_to_order
 
-TOOLS: show_products, show_choices, join_rewards, sign_in_rewards, skip_rewards, update_ui, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, get_categories, get_items_by_category, get_recommendations, get_ui_context, load_menu
+TOOLS: show_products, show_choices, join_rewards, sign_in_rewards, skip_rewards, checkout, set_vehicle, confirm_vehicle, set_payment, update_ui, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, get_categories, get_items_by_category, get_recommendations, get_ui_context, load_menu
 
 BUILD YOUR OWN BURGER (itemId: custom-burger):
 Walk customer through: patty (beef/chicken), toppings, sauces. Use update_ui(burger_builder={"active":true,"patty":null,"toppings":[],"sauces":[],"price":{base_price}}) to open the builder. Update it as they choose, adding each extra's price in cents to "price" (e.g. burger_builder={"active":true,"patty":"beef patty","toppings":["bacon"],"sauces":[],"price":<running total>}). When done, recap the burger (no prices) and ask "Sound good, or want to change anything?" and only call build_custom_burger AFTER they confirm.
@@ -680,11 +674,16 @@ async def voice_chat(websocket: WebSocket) -> None:
 
         if is_open_now(settings):
             system_prompt = _build_system_prompt(settings, lang, resumed).replace("{customer}", _customer_section(caller) if _rewards else "")
+            who = _order_tools.greeting_question() if not resumed else ""
+            if who:   # step 1 of the drive-through flow is part of the very first sentence
+                system_prompt += (f'\nOPENING: straight after the greeting, in the same first reply, ask: "{who}"'
+                                  + (" (say it in the call's language)" if lang != "en" else "") + " Then wait for the answer.\n")
             tools = [
                 show_products, load_menu,
                 get_categories, get_items_by_category, get_recommendations,
                 add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order,
                 update_ui, get_ui_context, stop_conversation, show_choices,
+                _order_tools.checkout, _order_tools.set_vehicle, _order_tools.confirm_vehicle, _order_tools.set_payment,
             ]
             if _rewards:
                 tools += [join_rewards, _order_tools.sign_in_rewards, _order_tools.skip_rewards]
@@ -715,6 +714,8 @@ async def voice_chat(websocket: WebSocket) -> None:
                 summary = get_order_state().get_summary()
                 voice.update(orderItems=summary["items"], orderTotal=summary["total"])
             set_ui_state(voice)
+        if not resumed and is_open_now(settings):
+            _order_tools.flow_begin()   # "Are you a member, join, or guest?" goes on screen with tap answers
         start_session(location, call.lane)
         session_started = True
         logger.info("WebSocket session started (location=%s, language=%s, resumed=%s)", location, lang, resumed)
