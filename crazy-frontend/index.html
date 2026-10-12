@@ -473,13 +473,39 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 .rushbtn{display:flex; align-items:center; gap:12px; width:100%; text-align:start; border:0; border-radius:var(--r); padding:14px 16px; margin-top:var(--gap); background:linear-gradient(120deg,#FF6B3D,#F0462B); color:#fff; animation:rise .4s var(--ease)}
 .rushbtn span:last-child{display:grid} .rushbtn b{font-weight:600; font-size:1.02rem} .rushbtn small{opacity:.88; font-size:.82rem}
 .rushfruits{display:flex} .rushfruits svg{margin-inline-end:-10px; filter:drop-shadow(0 2px 3px rgba(0,0,0,.2))}
-/* Fruit Rush */
-.rush{position:absolute; inset:0; z-index:80; background:linear-gradient(#123F31,#0B2A20 70%,#1C4B35); color:#fff; touch-action:none; animation:rise .3s var(--ease)}
-.rtop{height:56px; display:flex; align-items:center; gap:14px; padding:calc(8px + var(--top)) 16px 0}
-.rtop b{font-size:1.8rem; font-weight:600; flex:1} .rtop span{font-size:1.2rem; font-weight:600; background:rgba(255,255,255,.12); border-radius:999px; padding:4px 14px; font-variant-numeric:tabular-nums} .rtop .x{color:#fff; font-size:1.2rem}
-.rush canvas{display:block}
-.rintro{position:absolute; inset:56px 0 0; display:grid; place-content:center; justify-items:center; gap:12px; text-align:center; padding:24px; background:rgba(7,30,23,.72); animation:rise .3s var(--ease)}
-.rintro h2{font-size:2rem; font-weight:600; letter-spacing:-.03em} .rintro p{color:#C9DDD2; max-width:28ch} .rintro .cta{width:auto; padding:14px 34px; margin-top:6px}
+/* Fruit Slice */
+.slice{position:absolute; inset:0; z-index:80; background:#06231A; color:#fff; touch-action:none; user-select:none; -webkit-user-select:none; overflow:hidden; animation:rise .3s var(--ease)}
+.slice canvas{position:absolute; inset:0; display:block}
+.shud{position:absolute; inset:calc(12px + var(--top)) 14px auto; display:flex; align-items:center; gap:10px; z-index:2}
+.spill{font-size:1.25rem; font-weight:700; min-width:58px; text-align:center; background:rgba(255,255,255,.14); backdrop-filter:blur(6px); border-radius:999px; padding:5px 16px; font-variant-numeric:tabular-nums; transition:background .3s, color .3s}
+.spill.hit{background:#D7F25A; color:#0B2A20}
+.slives{flex:1; color:#FF6B5A; font-size:1.15rem; letter-spacing:2px} .slives s{text-decoration:none; opacity:.25}
+.sx{color:#fff; font-size:1.2rem; background:rgba(255,255,255,.12); width:38px; height:38px; border-radius:50%; border:0}
+.stime{position:absolute; inset:calc(58px + var(--top)) 16px auto; height:5px; border-radius:4px; background:rgba(255,255,255,.12); z-index:2; overflow:hidden}
+.stime i{display:block; height:100%; background:linear-gradient(90deg,#D7F25A,#7ED957); transform-origin:left; border-radius:4px}
+[dir=rtl] .stime i{transform-origin:right}
+.sintro{position:absolute; inset:0; z-index:3; display:grid; place-content:center; justify-items:center; gap:14px; text-align:center; padding:24px}
+.sintro h2{font-size:2.1rem; font-weight:700; letter-spacing:-.03em}
+.sorb{position:relative; width:170px; height:170px; border-radius:50%; display:grid; place-items:center; background:radial-gradient(circle at 35% 30%,rgba(215,242,90,.35),rgba(215,242,90,.06) 60%,transparent 70%); box-shadow:0 0 60px rgba(215,242,90,.25); animation:sorb 2.4s ease-in-out infinite}
+@keyframes sorb{50%{transform:translateY(-8px) scale(1.03)}}
+.scomet{position:absolute; width:120px; height:6px; border-radius:6px; background:linear-gradient(90deg,transparent,#D7F25A); top:16px; inset-inline-start:-40px; transform:rotate(28deg); animation:scomet 1.8s linear infinite}
+@keyframes scomet{from{transform:translate(-40px,-30px) rotate(28deg); opacity:0} 30%{opacity:1} to{transform:translate(160px,60px) rotate(28deg); opacity:0}}
+.shalf{position:absolute; transition:transform .5s var(--ease), opacity .5s} .shalf.l{clip-path:inset(0 50% 0 0)} .shalf.r{clip-path:inset(0 0 0 50%)}
+.sslash{position:absolute; width:0; height:4px; background:#fff; box-shadow:0 0 14px #D7F25A; transform:rotate(-30deg); border-radius:4px}
+.sintro.cut .shalf.l{transform:translate(-34px,26px) rotate(-22deg); opacity:0} .sintro.cut .shalf.r{transform:translate(34px,-14px) rotate(18deg); opacity:0}
+.sintro.cut .sslash{width:220px; transition:width .18s} .sintro.cut .scomet{display:none}
+.shint{font-weight:600; color:#D7F25A; letter-spacing:.02em; animation:pulse 1.6s ease-in-out infinite} .srules{color:#C9DDD2; max-width:30ch; font-size:.92rem}
+@keyframes pulse{50%{opacity:.55}}
+.sload{position:relative; width:96px; height:96px; display:grid; place-items:center} .sload svg{animation:sorb 1.2s ease-in-out infinite}
+.sload span{position:absolute; inset:0; border-radius:50%; border:4px solid rgba(215,242,90,.2); border-top-color:#D7F25A; animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sres{position:absolute; inset:0; z-index:4; display:grid; place-content:center; justify-items:center; gap:12px; text-align:center; padding:28px; background:rgba(4,22,16,.82); backdrop-filter:blur(4px); animation:rise .35s var(--ease)}
+.sres h2{font-size:1.9rem; font-weight:700; letter-spacing:-.03em} .sres p{color:#C9DDD2; max-width:30ch} .sres .sk{color:#D7F25A; font-weight:600}
+.sres.win{background:radial-gradient(circle at 50% 38%,rgba(215,242,90,.25),rgba(4,22,16,.9) 60%)}
+.sres.win .sprize{position:relative} .sres.win .sprize::before{content:""; position:absolute; inset:-60px; background:repeating-conic-gradient(rgba(215,242,90,.16) 0 10deg,transparent 10deg 20deg); border-radius:50%; animation:spin 12s linear infinite; z-index:-1}
+.sprize{animation:pop .6s var(--spring)} .sres.lose .sprize{filter:grayscale(.3); opacity:.9}
+.smini{display:flex; gap:6px; background:rgba(255,255,255,.08); border-radius:16px; padding:8px 10px} .smini i{opacity:.28; filter:grayscale(1)} .smini i.got{opacity:1; filter:none} .smini i.new{animation:pop .6s .4s var(--spring) both}
+.sbtn{margin-top:8px; border:0; border-radius:999px; padding:14px 38px; font-weight:700; font-size:1rem; background:#D7F25A; color:#0B2A20}
 .rprize{animation:pop .6s var(--spring)}
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
@@ -988,7 +1014,7 @@ addEventListener("resize", renderNav);
 
 
 
-/* ================= Fruit basket and Fruit Rush ================= */
+/* ================= Fruit basket and Fruit Slice ================= */
 const FRUIT_SVG = {
   strawberry: `<path d="M20 9c7 0 12 4 12 10 0 9-8 16-12 16S8 28 8 19c0-6 5-10 12-10z" fill="#E8344B"/><path d="M13 9c2-3 5-2 7 0 2-2 5-3 7 0-3 1-4 3-7 3s-4-2-7-3z" fill="#3C9A3C"/><g fill="#FFE3A3"><circle cx="15" cy="18" r="1"/><circle cx="21" cy="17" r="1"/><circle cx="26" cy="19" r="1"/><circle cx="17" cy="24" r="1"/><circle cx="23" cy="25" r="1"/><circle cx="20" cy="30" r="1"/></g>`,
   orange: `<circle cx="20" cy="22" r="13" fill="#FF8A1F"/><path d="M20 9c1-4 6-5 9-3-2 3-6 4-9 3z" fill="#3C9A3C"/><circle cx="15" cy="17" r="3" fill="#FFB35C" opacity=".7"/><g fill="#E06E0B"><circle cx="24" cy="25" r=".8"/><circle cx="18" cy="28" r=".8"/><circle cx="27" cy="19" r=".8"/></g>`,
@@ -1013,55 +1039,106 @@ function gameButton() {
   if (!member || !order || order.preview || !member.games || !member.games.includes(order.number)) return "";
   return `<button class="rushbtn" data-rw="play"><span class="rushfruits">${["strawberry", "orange", "grapes"].map(f => fruitSvg(f, 30)).join("")}</span><span><b>${esc(rt("frPlay"))}</b><small>${esc(rt("frPlaySub", { n: member.gameTarget }))}</small></span></button>`;
 }
-/* Fruit Rush: drag the basket, catch falling fruit for 20 seconds, avoid the burnt buns */
+/* Fruit Slice: VoiceBite's take on a swipe-to-slice reward. Fruit comets fall through the desert night,
+   swipe to cut them, never cut the burnt bun. 3 misses or 30 seconds ends the round. */
 const fruitImgs = {};
 for (const f of Object.keys(FRUIT_SVG)) { const im = new Image(); im.src = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">${FRUIT_SVG[f]}</svg>`); fruitImgs[f] = im; }
-const burntImg = new Image(); burntImg.src = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path d="M6 24c0-8 6-13 14-13s14 5 14 13z" fill="#3A2A20"/><rect x="6" y="25" width="28" height="7" rx="3" fill="#2A1E17"/><g fill="#6B5444"><circle cx="15" cy="17" r="1"/><circle cx="22" cy="15" r="1"/><circle cx="27" cy="19" r="1"/></g><path d="M14 8c0-3 3-3 3-6M22 8c0-3 3-3 3-6" stroke="#9AA" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`);
+const BOMB_SVG = `<path d="M6 24c0-8 6-13 14-13s14 5 14 13z" fill="#3A2A20"/><rect x="6" y="25" width="28" height="7" rx="3" fill="#2A1E17"/><path d="M12 19l5 2M28 19l-5 2" stroke="#FF4D3A" stroke-width="2.4" stroke-linecap="round"/><circle cx="15.5" cy="21.5" r="1.6" fill="#FF4D3A"/><circle cx="24.5" cy="21.5" r="1.6" fill="#FF4D3A"/><path d="M14 8c0-3 3-3 3-6M22 8c0-3 3-3 3-6" stroke="#9AA" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+const burntImg = new Image(); burntImg.src = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">${BOMB_SVG}</svg>`);
+const FRUIT_JUICE = { strawberry: "#FF4D6A", orange: "#FF9A2E", lemon: "#FFE14A", watermelon: "#FF4D5E", grapes: "#A070F0", mango: "#FFB830" };
 function playRush() {
   if (!member || !order) return;
-  const app = $("app"), box = document.createElement("div"); box.className = "rush";
-  box.innerHTML = `<div class="rtop"><b id="rScore">0</b><span id="rTime">20</span><button class="x" id="rQuit" aria-label="Close">✕</button></div><canvas id="rCv"></canvas>
-    <div class="rintro" id="rIntro"><h2>${esc(rt("frTitle"))}</h2><p>${esc(rt("frRules", { n: member.gameTarget }))}</p><button class="cta" id="rGo">${esc(rt("frStart"))}</button></div>`;
+  const app = $("app"), box = document.createElement("div"); box.className = "slice";
+  const GAME = 30, target = member.gameTarget || 12;
+  box.innerHTML = `<canvas id="rCv"></canvas>
+    <div class="shud"><span class="spill" id="rScore">0</span><span class="slives" id="rLives">${"♥".repeat(3)}</span><button class="sx" id="rQuit" aria-label="Close">✕</button></div>
+    <div class="stime"><i id="rBar"></i></div>
+    <div class="sintro" id="rIntro"><h2>${esc(rt("frTitle"))}</h2>
+      <div class="sorb" id="rOrb"><span class="scomet"></span><span class="shalf l">${fruitSvg("watermelon", 92)}</span><span class="shalf r">${fruitSvg("watermelon", 92)}</span><span class="sslash"></span></div>
+      <p class="shint">${esc(rt("frSwipe"))}</p><p class="srules">${esc(rt("frRules2", { n: target }))}</p></div>`;
   app.appendChild(box);
   const cv = $("rCv"), cx = cv.getContext("2d"), dpr = Math.min(2, devicePixelRatio || 1);
-  const W = box.clientWidth, H = box.clientHeight - 56; cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + "px"; cv.style.height = H + "px"; cx.scale(dpr, dpr);
-  let bx = W / 2, score = 0, items = [], start = 0, last = 0, spawn = 0, raf = 0, over = false, pops = [];
-  const BW = Math.min(110, W * .28), BH = 34, fruits = Object.keys(FRUIT_SVG);
-  const move = e => { const r = cv.getBoundingClientRect(), x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; bx = Math.max(BW / 2, Math.min(W - BW / 2, x)); };
-  cv.addEventListener("pointermove", move); cv.addEventListener("pointerdown", move); cv.addEventListener("touchmove", e => { e.preventDefault(); move(e); }, { passive: false });
+  const W = box.clientWidth, H = box.clientHeight; cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + "px"; cv.style.height = H + "px"; cx.scale(dpr, dpr);
+  const fruits = Object.keys(FRUIT_SVG), font = getComputedStyle(document.body).fontFamily;
+  const stars = Array.from({ length: 70 }, () => ({ x: Math.random() * W, y: Math.random() * H * .8, r: Math.random() * 1.4 + .3, p: Math.random() * 6 }));
+  let score = 0, lives = 3, items = [], bits = [], pops = [], trail = [], start = 0, last = 0, spawn = .4, raf = 0, over = false, playing = false, endWhy = "";
   const quit = () => { cancelAnimationFrame(raf); over = true; box.remove(); };
   $("rQuit").onclick = quit;
-  function drawBasket() {
-    cx.save(); cx.translate(bx, H - 20);
-    cx.fillStyle = "#C98A3E"; cx.beginPath(); cx.moveTo(-BW / 2, -BH / 2); cx.lineTo(BW / 2, -BH / 2); cx.lineTo(BW / 2 - 10, BH / 2); cx.lineTo(-BW / 2 + 10, BH / 2); cx.closePath(); cx.fill();
-    cx.strokeStyle = "#A86E2A"; cx.lineWidth = 3; for (let i = -2; i <= 2; i++) { cx.beginPath(); cx.moveTo(i * BW / 6, -BH / 2); cx.lineTo(i * BW / 7, BH / 2); cx.stroke(); }
-    cx.fillStyle = "#E3A95A"; cx.fillRect(-BW / 2 - 4, -BH / 2 - 6, BW + 8, 8); cx.restore();
+  function sky(t) {
+    const g = cx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#06231A"); g.addColorStop(.6, "#0B3326"); g.addColorStop(1, "#164A34"); cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    for (const [x, y, r, c] of [[W * .2, H * .25, W * .6, "rgba(215,242,90,.10)"], [W * .85, H * .55, W * .5, "rgba(255,107,61,.09)"]]) { const n = cx.createRadialGradient(x, y, 0, x, y, r); n.addColorStop(0, c); n.addColorStop(1, "rgba(0,0,0,0)"); cx.fillStyle = n; cx.fillRect(0, 0, W, H); }
+    for (const s of stars) { cx.globalAlpha = .35 + .35 * Math.sin(t / 600 + s.p); cx.fillStyle = "#EAF7D0"; cx.beginPath(); cx.arc(s.x, s.y, s.r, 0, 6.29); cx.fill(); } cx.globalAlpha = 1;
+    cx.fillStyle = "#0E3A2A"; cx.beginPath(); cx.moveTo(0, H); cx.quadraticCurveTo(W * .3, H - 90, W * .6, H - 40); cx.quadraticCurveTo(W * .85, H - 10, W, H - 60); cx.lineTo(W, H); cx.fill();
+    cx.fillStyle = "#123F2E"; cx.beginPath(); cx.moveTo(0, H - 30); cx.quadraticCurveTo(W * .45, H - 5, W, H - 20); cx.lineTo(W, H); cx.lineTo(0, H); cx.fill();
+  }
+  function launch(el) {
+    const bad = el > 3 && Math.random() < .14 + el * .003, fromLeft = Math.random() < .5;
+    const x = 30 + Math.random() * (W - 60), tx = Math.max(30, Math.min(W - 30, x + (fromLeft ? 1 : -1) * (40 + Math.random() * 120)));
+    const v = 150 + el * 6 + Math.random() * 70, dur = (H + 60) / v;
+    items.push({ x, y: -40, vx: (tx - x) / dur, vy: v, bad, f: fruits[Math.floor(Math.random() * 6)], r: Math.random() * 6.28, s: (Math.random() - .5) * 3, tail: [] });
+  }
+  function cut(it) {
+    it.done = true;
+    if (it.bad) { endWhy = "bomb"; for (let i = 0; i < 26; i++) bits.push({ x: it.x, y: it.y, vx: (Math.random() - .5) * 520, vy: (Math.random() - .5) * 520, t: 0, c: i % 2 ? "#FF4D3A" : "#3A2A20", r: 3 + Math.random() * 4 }); if (navigator.vibrate) try { navigator.vibrate([40, 30, 80]); } catch (e) {} return;}
+    score++; $("rScore").textContent = score; if (score >= target) $("rScore").classList.add("hit");
+    pops.push({ x: it.x, y: it.y, t: 0, txt: "+1" });
+    for (const side of [-1, 1]) bits.push({ half: side, f: it.f, x: it.x, y: it.y, vx: side * 90 + it.vx * .3, vy: -60, r: it.r, s: side * 4, t: 0 });
+    for (let i = 0; i < 12; i++) bits.push({ x: it.x, y: it.y, vx: (Math.random() - .5) * 300, vy: (Math.random() - .7) * 300, t: 0, c: FRUIT_JUICE[it.f], r: 2 + Math.random() * 3 });
+    if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) {}
+  }
+  const segHit = (ax, ay, bx, by, px, py, r) => { const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy || 1, k = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l)); return Math.hypot(ax + k * dx - px, ay + k * dy - py) < r; };
+  const pt = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top, t: performance.now() }; };
+  let down = false;
+  box.addEventListener("pointerdown", e => { down = true; trail = [pt(e)]; });
+  box.addEventListener("pointerup", () => { down = false; });
+  box.addEventListener("pointermove", e => {
+    if (!down && e.pointerType !== "mouse") return; const p = pt(e), q = trail[trail.length - 1]; trail.push(p); if (trail.length > 14) trail.shift();
+    if (!q) return;
+    if (!playing) { const o = $("rOrb"); if (o) { const r = o.getBoundingClientRect(), b = box.getBoundingClientRect(), ox = r.left - b.left + r.width / 2, oy = r.top - b.top + r.height / 2; if (Math.hypot(p.x - q.x, p.y - q.y) > 4 && segHit(q.x, q.y, p.x, p.y, ox, oy, r.width / 2)) cutOrb(); } return; }
+    for (const it of items) if (!it.done && segHit(q.x, q.y, p.x, p.y, it.x, it.y, 32)) cut(it);
+  });
+  function cutOrb() {
+    const intro = $("rIntro"); if (!intro || intro.dataset.cut) return; intro.dataset.cut = 1; intro.classList.add("cut");
+    setTimeout(() => { intro.innerHTML = `<div class="sload">${fruitSvg("orange", 48)}<span></span></div><p class="shint">${esc(rt("frReady"))}</p>`; }, 520);
+    setTimeout(() => { intro.remove(); playing = true; start = last = performance.now(); }, 1500);
   }
   function frame(t) {
-    if (over) return; const dt = Math.min(.05, (t - last) / 1000 || 0); last = t; const el = (t - start) / 1000, left = Math.max(0, 20 - el);
-    $("rTime").textContent = Math.ceil(left);
-    spawn -= dt; if (spawn <= 0 && left > .6) { const bad = Math.random() < .16; items.push({ x: 24 + Math.random() * (W - 48), y: -30, v: 140 + el * 9 + Math.random() * 60, bad, f: fruits[Math.floor(Math.random() * 6)], r: Math.random() * 6.28, s: (Math.random() - .5) * 3 }); spawn = Math.max(.28, .62 - el * .016); }
-    cx.clearRect(0, 0, W, H);
-    for (const it of items) { it.y += it.v * dt; it.r += it.s * dt;
-      if (!it.done && it.y > H - 20 - BH / 2 - 20 && it.y < H - 10 && Math.abs(it.x - bx) < BW / 2 + 10) { it.done = true; score = Math.max(0, score + (it.bad ? -2 : 1)); pops.push({ x: it.x, y: it.y, t: 0, txt: it.bad ? "−2" : "+1", bad: it.bad }); $("rScore").textContent = score; if (navigator.vibrate && it.bad) try { navigator.vibrate(30); } catch (e) {} }
-      if (!it.done) { cx.save(); cx.translate(it.x, it.y); cx.rotate(it.r); cx.drawImage(it.bad ? burntImg : fruitImgs[it.f], -26, -26, 52, 52); cx.restore(); } }
-    items = items.filter(it => !it.done && it.y < H + 40);
-    for (const p of pops) { p.t += dt; cx.globalAlpha = Math.max(0, 1 - p.t * 1.6); cx.fillStyle = p.bad ? "#FFB4A6" : "#D7F25A"; cx.font = "700 22px " + getComputedStyle(document.body).fontFamily; cx.textAlign = "center"; cx.fillText(p.txt, p.x, p.y - 30 - p.t * 60); cx.globalAlpha = 1; }
-    pops = pops.filter(p => p.t < .7);
-    drawBasket();
-    if (left <= 0) return finish(el);
+    if (over) return; const dt = Math.min(.05, (t - last) / 1000 || 0); last = t; sky(t);
+    const el = playing ? (t - start) / 1000 : 0, left = Math.max(0, GAME - el);
+    if (playing) { $("rBar").style.transform = `scaleX(${left / GAME})`;
+      spawn -= dt; if (spawn <= 0 && left > .8 && !endWhy) { launch(el); if (el > 12 && Math.random() < .35) launch(el); spawn = Math.max(.42, .95 - el * .02); } }
+    for (const it of items) { if (it.done) continue; it.x += it.vx * dt; it.y += it.vy * dt; it.r += it.s * dt;
+      it.tail.push([it.x, it.y]); if (it.tail.length > 12) it.tail.shift();
+      if (it.tail.length > 1) { const [tx, ty] = it.tail[0], g = cx.createLinearGradient(tx, ty, it.x, it.y); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, it.bad ? "rgba(255,77,58,.55)" : "rgba(215,242,90,.55)"); cx.strokeStyle = g; cx.lineWidth = 16; cx.lineCap = "round"; cx.beginPath(); cx.moveTo(tx, ty); cx.lineTo(it.x, it.y); cx.stroke(); }
+      cx.save(); cx.translate(it.x, it.y); cx.rotate(it.r); cx.drawImage(it.bad ? burntImg : fruitImgs[it.f], -28, -28, 56, 56); cx.restore();
+      if (it.y > H + 30) { it.done = true; if (!it.bad) { lives--; $("rLives").innerHTML = "♥".repeat(Math.max(0, lives)) + `<s>${"♥".repeat(3 - Math.max(0, lives))}</s>`; if (lives <= 0) endWhy = "missed"; } } }
+    items = items.filter(it => !it.done);
+    for (const b of bits) { b.t += dt; b.x += b.vx * dt; b.y += b.vy * dt; b.vy += 700 * dt; cx.globalAlpha = Math.max(0, 1 - b.t * 1.3);
+      if (b.half) { b.r += b.s * dt; cx.save(); cx.translate(b.x, b.y); cx.rotate(b.r); cx.beginPath(); cx.rect(b.half < 0 ? -28 : 0, -28, 28, 56); cx.clip(); cx.drawImage(fruitImgs[b.f], -28, -28, 56, 56); cx.restore(); }
+      else { cx.fillStyle = b.c; cx.beginPath(); cx.arc(b.x, b.y, b.r, 0, 6.29); cx.fill(); } }
+    cx.globalAlpha = 1; bits = bits.filter(b => b.t < .9);
+    for (const p of pops) { p.t += dt; cx.globalAlpha = Math.max(0, 1 - p.t * 1.6); cx.fillStyle = "#D7F25A"; cx.font = "700 22px " + font; cx.textAlign = "center"; cx.fillText(p.txt, p.x, p.y - 30 - p.t * 60); } cx.globalAlpha = 1; pops = pops.filter(p => p.t < .7);
+    const now = performance.now(); trail = trail.filter(q => now - q.t < 160);
+    if (trail.length > 1) { cx.lineCap = "round"; cx.lineJoin = "round"; for (const [w, c] of [[9, "rgba(215,242,90,.35)"], [3.5, "#fff"]]) { cx.strokeStyle = c; cx.lineWidth = w; cx.beginPath(); trail.forEach((q, i) => i ? cx.lineTo(q.x, q.y) : cx.moveTo(q.x, q.y)); cx.stroke(); } }
+    if (playing && (endWhy || left <= 0)) { playing = false; return setTimeout(() => finish(Math.min(GAME, el), endWhy || "time"), endWhy === "bomb" ? 700 : 200); }
     raf = requestAnimationFrame(frame);
   }
-  async function finish(seconds) {
-    over = true; const msg = document.createElement("div"); msg.className = "rintro"; msg.innerHTML = `<h2>${score}</h2><p>${esc(rt("frSending"))}</p>`; box.appendChild(msg);
+  async function finish(seconds, why) {
+    over = true; cancelAnimationFrame(raf);
+    const msg = document.createElement("div"); msg.className = "sres"; msg.innerHTML = `<div class="sload"><span></span></div><p>${esc(rt("frSending"))}</p>`; box.appendChild(msg);
+    const done = `<button class="sbtn" id="rDone">${esc(rt("frDone"))}</button>`;
     try { const r = await rwCall("/game", { orderId: order.number, token: order.token, score, seconds }, true); member = r; renderRewards(); renderOrder();
-      msg.innerHTML = r.won ? `<div class="rprize">${fruitSvg(r.prize.fruit, 90)}</div><h2>${esc(rt("frWon", { f: fname(r.prize.fruit) }))}</h2><p>${esc(r.prize.voucher ? rt("frBasket", { reward: r.prize.voucher.reward }) : rt("frWonSub", { n: Object.values(r.fruits).filter(Boolean).length }))}</p><button class="cta" id="rDone">${esc(rt("frDone"))}</button>`
-        : `<h2>${score} / ${r.target}</h2><p>${esc(rt("frLost", { n: r.target }))}</p><button class="cta" id="rDone">${esc(rt("frDone"))}</button>`;
-      if (r.won) celebrateFruit(); }
-    catch (e) { msg.innerHTML = `<h2>${score}</h2><p>${esc(e.message)}</p><button class="cta" id="rDone">${esc(rt("frDone"))}</button>`; }
+      if (r.won) { const have = Object.values(r.fruits).filter(Boolean).length;
+        msg.className = "sres win"; msg.innerHTML = `<p class="sk">${esc(rt("frScore", { n: score }))}</p><div class="sprize">${fruitSvg(r.prize.fruit, 110)}</div>
+          <h2>${esc(rt("frWon", { f: fname(r.prize.fruit) }))}</h2><p>${esc(r.prize.voucher ? rt("frBasket", { reward: r.prize.voucher.reward }) : rt("frWonSub", { n: have }))}</p>
+          <div class="smini">${Object.entries(r.fruits).map(([f, n]) => `<i class="${n ? "got" : ""} ${f === r.prize.fruit ? "new" : ""}">${fruitSvg(f, 30)}</i>`).join("")}</div>
+          <button class="sbtn" id="rDone">${esc(rt("frCollect"))}</button>`; celebrateFruit(); }
+      else { const t = why === "bomb" ? [rt("frBomb"), rt("frBombSub")] : why === "missed" ? [rt("frLostT"), rt("frMissed")] : [rt("frLostT"), rt("frTime", { s: score, n: r.target })];
+        msg.className = "sres lose"; msg.innerHTML = `<div class="sprize">${why === "bomb" ? `<svg viewBox="0 0 40 40" width="110" height="110">${BOMB_SVG}</svg>` : fruitSvg("watermelon", 110)}</div><h2>${esc(t[0])}</h2><p>${esc(t[1])}</p><p class="sk">${esc(rt("frScore", { n: score }))} · ${esc(rt("frNext"))}</p>${done}`; } }
+    catch (e) { msg.className = "sres lose"; msg.innerHTML = `<h2>${score}</h2><p>${esc(e.message)}</p>${done}`; }
     $("rDone").onclick = quit;
   }
-  $("rGo").onclick = () => { $("rIntro").remove(); start = last = performance.now(); raf = requestAnimationFrame(frame); };
+  last = performance.now(); raf = requestAnimationFrame(frame);
 }
 function celebrateFruit() { if (calm) return; const box = document.createElement("div"); box.className = "party"; box.style.background = "transparent";
   box.innerHTML = Array.from({ length: 22 }, (_, i) => `<i style="--x:${Math.round(Math.cos(i * 2.4) * (110 + (i * 31) % 90))}px; --y:${Math.round(Math.sin(i * 2.4) * (110 + (i * 47) % 100) - 80)}px; --r:${(i * 83) % 360}deg; --d:${(i % 5) * 40}ms; width:26px; height:26px; background:none">${fruitSvg(Object.keys(FRUIT_SVG)[i % 6], 26)}</i>`).join("");
@@ -1083,17 +1160,15 @@ const RW = {
     rwCode: "Your code", rwShare: "Share with a friend", rwShareText: "Order by voice at VoiceBite and get {n} bonus points with my code {code}:", rwCopied: "Link copied", rwFriends: "friends joined",
     rwRecent: "Recent orders", rwOut: "Sign out", rwEarn: "You'll earn about {n} points when this order is collected.", rwLinked: "Linked to your Rewards", rwJoinOrder: "Join Rewards to earn {n} points on this order",
     rwBadPin: "The PIN is 4 digits.", rwJoinedVoice: "You're in! Signed in to VoiceBite Rewards.", rwRefFruit: "Bring a friend: you both get a fruit when they order with your code.",
-    fbTitle: "Fruit basket", fbNeed: "{n} more fruits for a {reward}", fbFull: "Basket full!", fbVoucher: "Show at the window", fbHow: "Every order adds a fruit, orders of {n}+ items add two. Win more in Fruit Rush.",
-    frPlay: "Play Fruit Rush while you wait", frPlaySub: "Catch {n} fruits to win one for your basket", frTitle: "Fruit Rush", frRules: "Drag the basket. Catch {n} fruits in 20 seconds to win one for your basket. Burnt buns cost 2.",
-    frStart: "Start", frSending: "Counting your fruit…", frWon: "You won a {f}!", frWonSub: "{n} of 6 fruits in your basket.", frBasket: "Basket complete: {reward} is yours!", frLost: "So close. You needed {n}. Next order, next try!", frDone: "Done", rwRefLine: "Friends get {a} points when they join with your code, you get {b} after their first order." },
+    fbTitle: "Fruit basket", fbNeed: "{n} more fruits for a {reward}", fbFull: "Basket full!", fbVoucher: "Show at the window", fbHow: "Every order adds a fruit, orders of {n}+ items add two. Win more in Fruit Slice.",
+    frPlay: "Play Fruit Slice while you wait", frPlaySub: "Slice {n} fruits to win one for your basket", frTitle: "Fruit Slice", frSwipe: "swipe to slice", frRules2: "Slice {n} fruits in 30 seconds. Miss 3 or cut a burnt bun and it's over.", frReady: "Fruit incoming…", frSending: "Counting your fruit…", frWon: "You won a {f}!", frWonSub: "{n} of 6 fruits in your basket.", frBasket: "Basket complete: {reward} is yours!", frScore: "{n} sliced", frCollect: "Add to my basket", frLostT: "So close!", frMissed: "You let 3 fruits fall.", frTime: "{s} of {n} before the timer ran out.", frBomb: "Burnt bun!", frBombSub: "That one was from the back of the grill.", frNext: "Play again on your next order", frDone: "Done", rwRefLine: "Friends get {a} points when they join with your code, you get {b} after their first order." },
   ar: { rwTitle: "مكافآت VoiceBite", rwLead: "اكسب نقاطاً مع كل طلب. فقط رقم جوالك ورمز من 4 أرقام.", rwPhone: "رقم الجوال", rwPin: "رمز من 4 أرقام", rwName: "اسمك (اختياري)",
     rwRef: "رمز صديق (اختياري)", rwJoin: "انضم وابدأ بجمع النقاط", rwSignIn: "تسجيل الدخول", rwHaveAcc: "عضو بالفعل؟ سجّل الدخول", rwNew: "جديد هنا؟ انضم", rwPoints: "نقطة", rwWorth: "قيمتها",
     rwCode: "رمزك", rwShare: "شارك مع صديق", rwShareText: "اطلب بصوتك من VoiceBite واحصل على {n} نقطة إضافية برمزي {code}:", rwCopied: "تم نسخ الرابط", rwFriends: "أصدقاء انضموا",
     rwRecent: "آخر الطلبات", rwOut: "تسجيل الخروج", rwEarn: "ستكسب حوالي {n} نقطة عند استلام هذا الطلب.", rwLinked: "مرتبط بحساب المكافآت", rwJoinOrder: "انضم إلى المكافآت لتكسب {n} نقطة على هذا الطلب",
     rwBadPin: "الرمز من 4 أرقام.", rwJoinedVoice: "تم! أنت الآن عضو في مكافآت VoiceBite.", rwRefFruit: "ادعُ صديقاً: تحصلان كلاكما على فاكهة عند طلبه برمزك.",
-    fbTitle: "سلة الفاكهة", fbNeed: "{n} فواكه أخرى للحصول على {reward}", fbFull: "السلة ممتلئة!", fbVoucher: "أظهره عند النافذة", fbHow: "كل طلب يضيف فاكهة، والطلبات من {n} أصناف أو أكثر تضيف اثنتين. اربح المزيد في Fruit Rush.",
-    frPlay: "العب Fruit Rush أثناء الانتظار", frPlaySub: "التقط {n} فاكهة لتربح واحدة لسلتك", frTitle: "Fruit Rush", frRules: "اسحب السلة. التقط {n} فاكهة في 20 ثانية لتربح واحدة لسلتك. الخبز المحروق يخصم 2.",
-    frStart: "ابدأ", frSending: "نعدّ فاكهتك…", frWon: "ربحت {f}!", frWonSub: "{n} من 6 فواكه في سلتك.", frBasket: "اكتملت السلة: {reward} لك!", frLost: "قريب جداً. كنت تحتاج {n}. حاول في الطلب القادم!", frDone: "تم", rwRefLine: "يحصل أصدقاؤك على {a} نقطة عند الانضمام برمزك، وتحصل أنت على {b} بعد أول طلب لهم." } };
+    fbTitle: "سلة الفاكهة", fbNeed: "{n} فواكه أخرى للحصول على {reward}", fbFull: "السلة ممتلئة!", fbVoucher: "أظهره عند النافذة", fbHow: "كل طلب يضيف فاكهة، والطلبات من {n} أصناف أو أكثر تضيف اثنتين. اربح المزيد في قطّع الفاكهة.",
+    frPlay: "العب قطّع الفاكهة أثناء الانتظار", frPlaySub: "قطّع {n} فاكهة لتربح واحدة لسلتك", frTitle: "قطّع الفاكهة", frSwipe: "اسحب لتقطّع", frRules2: "قطّع {n} فاكهة في 30 ثانية. إذا فاتتك 3 أو قطعت خبزاً محروقاً تنتهي اللعبة.", frReady: "الفاكهة قادمة…", frSending: "نعدّ فاكهتك…", frWon: "ربحت {f}!", frWonSub: "{n} من 6 فواكه في سلتك.", frBasket: "اكتملت السلة: {reward} لك!", frScore: "قطّعت {n}", frCollect: "أضفها إلى سلتي", frLostT: "قريب جداً!", frMissed: "سقطت منك 3 فواكه.", frTime: "{s} من {n} قبل انتهاء الوقت.", frBomb: "خبز محروق!", frBombSub: "هذا من آخر الشواية.", frNext: "العب مجدداً في طلبك القادم", frDone: "تم", rwRefLine: "يحصل أصدقاؤك على {a} نقطة عند الانضمام برمزك، وتحصل أنت على {b} بعد أول طلب لهم." } };
 const rt = (k, v = {}) => String((RW[lang] || RW.en)[k] || RW.en[k]).replace(/\{(\w+)\}/g, (_, x) => v[x] ?? "");
 let member = null, rwMode = params.get("ref") ? "join" : "signin", rwBusy = false;
 const rwToken = () => store.get("memberToken") || "";

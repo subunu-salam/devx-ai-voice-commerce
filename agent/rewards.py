@@ -42,7 +42,7 @@ MAX_TRIES, LOCK_MINUTES = 5, 15
 WEAK_PINS = {"0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999", "1234", "4321", "1212", "0123"}
 PRIVATE = ("pinHash", "pinSalt", "failedPins", "lockUntil")
 FRUITS = ["strawberry", "orange", "lemon", "watermelon", "grapes", "mango"]
-GAME_SECONDS, GAME_MAX_SCORE, GAME_HOURS = 20, 60, 6   # one Fruit Rush per order, playable for a few hours after ordering
+GAME_SECONDS, GAME_MAX_SCORE, GAME_HOURS = 30, 60, 6   # one Fruit Slice per order, playable for a few hours after ordering
 
 
 # ---------- phone numbers, PINs and member tokens ----------
@@ -379,7 +379,7 @@ class GameIn(BaseModel):
 
 @router.post("/game")
 def play_game(body: GameIn, authorization: str = Header(default="")):
-    """Fruit Rush: one game per order, while the customer waits. A good score wins a fruit they are missing."""
+    """Fruit Slice: one game per order, while the customer waits. A good score wins a fruit they are missing."""
     phone = _member_from(authorization)
     item = orders_table.get_item(Key={"orderId": body.orderId}).get("Item")
     saved = str((item or {}).get("trackToken") or "")
@@ -390,15 +390,15 @@ def play_game(body: GameIn, authorization: str = Header(default="")):
         raise HTTPException(409, "This order belongs to another customer.")
     if not _game_open(order):
         raise HTTPException(409, "Fruit Rush was already played for this order.")
-    if body.seconds < GAME_SECONDS - 1:
-        raise HTTPException(400, "The game ended early.")
-    score = min(body.score, GAME_MAX_SCORE)   # more than about 3 catches a second is not possible
+    # The game can end early (three missed fruits, or slicing the burnt bun), so the score is capped by how long it ran:
+    # nobody slices more than about 3 fruits a second.
+    score = min(body.score, GAME_MAX_SCORE, int(max(0.0, min(body.seconds, GAME_SECONDS + 5)) * 2))
     A._set_order(body.orderId, gamePlayed=True, gameScore=score)
     cfg = ops.loyalty_config()
     won = score >= cfg["gameTarget"]
     A._save("loyalty_moves", A._new_id(), {"at": A._now(), "phone": phone, "points": 0, "kind": "game", "orderId": body.orderId,
-                                           "note": f"Fruit Rush {score}" + (" (won a fruit)" if won else ""), "by": "system"})
-    prize = add_fruit(phone, _missing(phone) or _pick(body.orderId + "#game"), "Fruit Rush win", body.orderId) if won else {}
+                                           "note": f"Fruit Slice {score}" + (" (won a fruit)" if won else ""), "by": "system"})
+    prize = add_fruit(phone, _missing(phone) or _pick(body.orderId + "#game"), "Fruit Slice win", body.orderId) if won else {}
     return {"score": score, "target": cfg["gameTarget"], "won": won, "prize": prize, **_view(phone)}
 
 
