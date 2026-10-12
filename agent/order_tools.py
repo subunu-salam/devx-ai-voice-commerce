@@ -69,8 +69,18 @@ PRICE_MODE = os.getenv("VOICE_PRICE_MODE", "checkout").strip().lower()
 _MID_ORDER_PRICES = ("itemPriceText", "total", "totalText", "price", "priceText")
 
 
+def _who_first(result: dict) -> dict:
+    """Until we know who is ordering, every tool result reminds the attendant to ask (the drive-through flow)."""
+    c = customer()
+    if rewards_on and not c.get("phone") and not c.get("declined"):
+        result["first"] = ("You have not asked who is ordering yet. In your next sentence ask: \"Are you a VoiceBite Rewards member, "
+                           "would you like to join, or continue as a guest?\" and call show_choices with [\"I'm a member\", \"Join now\", \"No thanks\"].")
+    return result
+
+
 def _while_choosing(result: dict) -> dict:
     """Results of add/remove while the customer is still choosing: no prices to read out in checkout mode."""
+    result = _who_first(result)
     if PRICE_MODE == "always":
         return result
     quiet = {k: v for k, v in result.items() if k not in _MID_ORDER_PRICES}
@@ -167,7 +177,7 @@ def _digits_spoken(text: str) -> str:
 
 
 def _plate_from_customer(vehicle: str) -> bool:
-    """True when the customer said or tapped this plate in this order (or confirmed last visit's plate)."""
+    """True when the customer said or tapped this plate's number in this order. Never a remembered plate."""
     call = _call()
     heard = call.heard
     if not call.heard_any:
@@ -176,10 +186,7 @@ def _plate_from_customer(vehicle: str) -> bool:
     digits = re.sub(r"\D", "", vehicle)
     if digits and digits in said:
         return True
-    if not digits and vehicle.replace(" ", "").lower() in re.sub(r"\W", "", " ".join(heard).lower()):
-        return True
-    last = re.sub(r"\W", "", str(customer().get("lastVehicle", ""))).upper()
-    return bool(last) and last == vehicle.replace(" ", "") and any(_YES.search(h) for h in heard[-4:])
+    return False
 
 
 @tool
@@ -284,7 +291,9 @@ def get_order_summary(tool_context=None) -> dict:
     """Returns the current order summary."""
     summary = _show_order_on_screen()
     items_brief = [f"{i['name']} x{i['quantity']}" for i in summary["items"]]
-    return _sanitize_result({"items": items_brief, "total": summary["total"], "totalText": _spoken(summary["total"])})
+    said = ", ".join(f"{i['quantity']} {i['name']}" for i in summary["items"])
+    return _sanitize_result({"items": items_brief, "total": summary["total"], "totalText": _spoken(summary["total"]),
+                             "say": f"Read back exactly: \"{said}. Your total is {_spoken(summary['total'])}.\" Never work out a total yourself."})
 
 
 @tool
@@ -309,6 +318,8 @@ def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str
                          "No thanks: call skip_rewards. Then call place_order again."}
     if len(vehicle.replace(" ", "")) < 2:
         return {"error": "The vehicle plate number is missing. Ask the customer for their vehicle plate number, then call place_order again with vehicle_number."}
+    if not re.search(r"\d", vehicle):
+        return {"error": "A plate needs its number, e.g. \"D 12345\". Ask \"What's your vehicle plate number?\" and wait."}
     if not _plate_from_customer(vehicle):
         return {"error": f"The customer has not given the plate {vehicle} in this call. Ask \"What's your vehicle plate number?\" and wait for their answer. Never guess or reuse a plate."}
     method = PAYMENT_METHODS.get(str(payment_method or "").strip().lower(), "")
@@ -359,7 +370,8 @@ def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str
         logger.warning("place_order: failed to update UI: %s", e)
 
     return _sanitize_result({"status": "confirmed", "orderId": order_record["orderId"], "vehicleNumber": vehicle, "paymentMethod": method,
-                             "total": order_record["total"], "totalText": _spoken(order_record["total"])})
+                             "total": order_record["total"], "totalText": _spoken(order_record["total"]),
+                             "say": f"Say exactly: \"Your order number is {order_record['orderId']}, for car {vehicle}. The total is {_spoken(order_record['total'])}. Please drive to the window.\""})
 
 
 @tool
