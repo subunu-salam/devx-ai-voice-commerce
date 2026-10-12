@@ -370,6 +370,17 @@ def voice_join(name: str, phone: str, pin: str) -> dict:
     return {"token": result["token"], **context(result["phone"])}
 
 
+def voice_login(phone: str, pin: str) -> dict:
+    """Sign-in by voice: the same checks (and lockout) as the app. Returns the member token and context, or {"error": ...}."""
+    try:
+        result = login(LoginIn(phone=str(phone), pin=re.sub(r"\D", "", str(pin))))
+    except HTTPException as e:
+        return {"error": str(e.detail)}
+    except Exception:
+        return {"error": "That mobile number or PIN does not look right."}
+    return {"token": result["token"], **context(result["phone"])}
+
+
 class GameIn(BaseModel):
     orderId: str = Field(min_length=1, max_length=40)
     token: str = Field(min_length=8, max_length=64)

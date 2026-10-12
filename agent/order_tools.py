@@ -126,11 +126,85 @@ _order_state = OrderState()
 PAYMENT_METHODS = {"cash": "cash", "card": "card", "link": "link", "payment link": "link", "online": "link", "online link": "link"}
 call_customer: dict = {}
 after_order = None
+rewards_on = False   # main.py turns this on when VoiceBite Rewards is set up
+
+# What the customer has said or tapped during this order. The plate passed to place_order must be one the
+# customer actually gave (spoken or tapped), so the attendant can never fill it in from memory or an example.
+heard: list = []
+_transcripts = {"on": False}   # True once any customer line reached us in this call
+_NUM_WORDS = {"zero": "0", "oh": "0", "o": "0", "one": "1", "two": "2", "three": "3", "four": "4", "for": "4", "five": "5",
+              "six": "6", "seven": "7", "eight": "8", "ate": "8", "nine": "9"}
+_YES = re.compile(r"\b(yes|yeah|yep|yup|same car|same one|same vehicle|correct|that's right|sure|that one|نعم|أيوه|ايوه|اي|صحيح|نفس|അതെ|ശരി|അതേ)\b|^\s*(نعم|اي|അതെ)", re.I)
 
 
 def set_call_customer(info: dict) -> None:
     call_customer.clear()
     call_customer.update(info or {})
+
+
+def reset_heard() -> None:
+    heard.clear()
+    _transcripts["on"] = False
+
+
+def note_heard(text: str) -> None:
+    """main.py passes every line the customer speaks or taps."""
+    t = str(text or "").strip()
+    if t:
+        heard.append(t[:300])
+        _transcripts["on"] = True
+        del heard[:-40]
+
+
+def _digits_spoken(text: str) -> str:
+    """'D one two double three' -> 'D 1 2 33': spoken digits as numerals, Arabic-Indic digits too."""
+    t = str(text).translate(str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")).lower()
+    t = re.sub(r"\b(double|triple)\s+(\w+)", lambda m: (_NUM_WORDS.get(m.group(2), m.group(2)) + " ") * (2 if m.group(1) == "double" else 3), t)
+    return " ".join(_NUM_WORDS.get(w, w) for w in re.findall(r"[a-z]+|\d+|[^\sa-z\d]+", t))
+
+
+def _plate_from_customer(vehicle: str) -> bool:
+    """True when the customer said or tapped this plate in this order (or confirmed last visit's plate)."""
+    if not _transcripts["on"]:
+        return True   # no transcript reaches us (text-only test calls): nothing to check against
+    said = re.sub(r"\D", "", "".join(_digits_spoken(h) for h in heard))
+    digits = re.sub(r"\D", "", vehicle)
+    if digits and digits in said:
+        return True
+    if not digits and vehicle.replace(" ", "").lower() in re.sub(r"\W", "", " ".join(heard).lower()):
+        return True
+    last = re.sub(r"\W", "", str(call_customer.get("lastVehicle", ""))).upper()
+    return bool(last) and last == vehicle.replace(" ", "") and any(_YES.search(h) for h in heard[-4:])
+
+
+@tool
+def sign_in_rewards(mobile_number: str, pin: str) -> dict:
+    """Sign in an existing VoiceBite Rewards member by voice, so this order earns their points and fruit.
+
+    Args:
+        mobile_number: Their mobile number, digits as spoken, e.g. "0501234567".
+        pin: Their 4-digit PIN. Never say it back out loud.
+    """
+    if not rewards_on:
+        return {"error": "Rewards are not available. Carry on with the order."}
+    if call_customer.get("phone"):
+        return {"status": "already signed in", "name": call_customer.get("name", "")}
+    from rewards import voice_login   # loaded only when Rewards is on
+    result = voice_login(mobile_number, pin)
+    if result.get("error"):
+        return {"error": result["error"] + " Ask for the number and PIN again (offer to join instead if they are not a member). Never repeat the PIN."}
+    set_call_customer({k: result.get(k, "") for k in ("phone", "name", "lastVehicle", "lastPayment")})
+    current = get_ui_state(); current.update(memberToken=result["token"], choices=None); set_ui_state(current)
+    return {"status": "signed in", "name": result.get("name", ""), "lastVehicle": result.get("lastVehicle", ""), "lastPayment": result.get("lastPayment", ""),
+            "next": "Greet them by name in a few words (never repeat the number or PIN), then ask for the vehicle plate."}
+
+
+@tool
+def skip_rewards() -> dict:
+    """The customer said they do not want to sign in or join VoiceBite Rewards for this order."""
+    call_customer["declined"] = True
+    current = get_ui_state(); current["choices"] = None; set_ui_state(current)
+    return {"status": "skipped", "next": "Carry on: ask for the vehicle plate."}
 
 
 def set_tables(menu_table, orders_table) -> None:
@@ -215,8 +289,8 @@ def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str
     Confirm the vehicle plate and the payment method first, then call this.
 
     Args:
-        vehicle_number: The customer's vehicle plate number for THIS visit, e.g. "D 12345". Required for every order,
-            even for a known customer: they may be in a different car today.
+        vehicle_number: The plate number exactly as the customer said or tapped it IN THIS CALL. Required for every
+            order, even for a known customer: they may be in a different car today. Never guess or reuse a plate.
         payment_method: "cash", "card" or "link" (a payment link sent to their phone), as the customer chose.
         user_id: The customer identifier. Defaults to "guest".
     """
@@ -224,8 +298,14 @@ def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str
         return {"error": "Cannot place an empty order."}
     vehicle = re.sub(r"[^A-Za-z0-9 ]", " ", str(vehicle_number or "")).upper()
     vehicle = re.sub(r"\s+", " ", vehicle).strip()[:20]
+    if rewards_on and not call_customer.get("phone") and not call_customer.get("declined"):
+        return {"error": "First ask who is ordering: \"Are you a VoiceBite Rewards member?\" with show_choices([\"I'm a member\", \"Join now\", \"No thanks\"]). "
+                         "Member: ask for their mobile number and PIN, call sign_in_rewards. Join: name, mobile number and a 4-digit PIN, call join_rewards. "
+                         "No thanks: call skip_rewards. Then call place_order again."}
     if len(vehicle.replace(" ", "")) < 2:
         return {"error": "The vehicle plate number is missing. Ask the customer for their vehicle plate number, then call place_order again with vehicle_number."}
+    if not _plate_from_customer(vehicle):
+        return {"error": f"The customer has not given the plate {vehicle} in this call. Ask \"What's your vehicle plate number?\" and wait for their answer. Never guess or reuse a plate."}
     method = PAYMENT_METHODS.get(str(payment_method or "").strip().lower(), "")
     if not method:
         return {"error": "Ask how the customer will pay (cash, card or a payment link), then call place_order again with payment_method."}
@@ -253,6 +333,7 @@ def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str
         len(order_record["items"]),
     )
     _order_state.cancel()
+    heard.clear()   # a second order in the same call asks for the plate again
 
     # Update UI to show order confirmation page
     try:
