@@ -452,6 +452,63 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 .rwearned{font-weight:600; color:var(--ok); white-space:nowrap}
 .rwline{display:grid; gap:2px; width:100%; text-align:start; background:var(--citron); color:var(--text); border:0; border-radius:var(--r); padding:14px 16px; margin-top:var(--gap); font-size:.9rem}
 .rwline b{font-weight:600}
+
+/* tappable answers in voice mode */
+.choices{width:100%; text-align:start; animation:rise .35s var(--ease)}
+.choices p{font-size:.85rem; color:#B9CFC4; margin:0 2px 8px}
+.choices div{display:flex; flex-wrap:wrap; gap:8px}
+.choices button{border:0; background:#fff; color:var(--text); border-radius:999px; padding:11px 18px; font-weight:600; font-size:1rem; transition:transform .15s var(--spring), background .2s}
+.choices button:active{transform:scale(.94)} .choices button.picked{background:var(--citron)}
+
+/* fruit basket */
+.basket{background:#fff; border-radius:var(--r); padding:16px; margin-top:var(--gap); display:grid; gap:10px}
+.bhead{display:flex; justify-content:space-between; align-items:baseline} .bhead b{font-weight:600; font-size:1.05rem} .bhead span{font-weight:600; color:var(--soft)}
+.bslots{display:grid; grid-template-columns:repeat(6,1fr); gap:6px}
+.bslot{position:relative; aspect-ratio:1; border-radius:14px; background:var(--bg); display:grid; place-items:center; transition:transform .3s var(--spring)}
+.bslot svg{filter:grayscale(1) opacity(.28)} .bslot.got{background:#FFF4DC} .bslot.got svg{filter:none}
+.bslot i{position:absolute; top:-4px; inset-inline-end:-4px; font-style:normal; font-size:.66rem; font-weight:700; background:var(--palm); color:#fff; border-radius:999px; padding:1px 5px}
+.bnote{font-weight:600} .bhow{font-size:.8rem; color:var(--soft)}
+.voucher{display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--citron); border-radius:14px; padding:10px 14px; border:2px dashed var(--palm)}
+.voucher span{display:grid} .voucher small{font-size:.72rem} .voucher b{font-weight:600} .voucher code{font-size:1.15rem; font-weight:700; letter-spacing:.08em; font-family:inherit}
+.rushbtn{display:flex; align-items:center; gap:12px; width:100%; text-align:start; border:0; border-radius:var(--r); padding:14px 16px; margin-top:var(--gap); background:radial-gradient(1.5px 1.5px at 72% 30%,#EAF7D0 50%,transparent 51%),radial-gradient(1px 1px at 86% 70%,#EAF7D0 50%,transparent 51%),radial-gradient(1px 1px at 60% 80%,#EAF7D0 50%,transparent 51%),radial-gradient(circle at 100% 0,rgba(215,242,90,.28),transparent 55%),linear-gradient(120deg,#0B2E22,#145A3E); color:#fff; box-shadow:inset 0 0 0 1px rgba(215,242,90,.25); animation:rise .4s var(--ease)}
+.rushbtn b{color:#fff} .rushbtn small{color:#D7F25A}
+.rushbtn span:last-child{display:grid} .rushbtn b{font-weight:600; font-size:1.02rem} .rushbtn small{opacity:.88; font-size:.82rem}
+.rushfruits{display:flex} .rushfruits svg{margin-inline-end:-12px; filter:drop-shadow(0 0 6px rgba(215,242,90,.35))}
+/* Meteor Slice */
+.slice{position:absolute; inset:0; z-index:80; background:#06231A; color:#fff; touch-action:none; user-select:none; -webkit-user-select:none; overflow:hidden; animation:rise .3s var(--ease)}
+.slice canvas{position:absolute; inset:0; display:block}
+.shud{position:absolute; inset:calc(12px + var(--top)) 14px auto; display:flex; align-items:center; gap:10px; z-index:2}
+.spill{font-size:1.2rem; font-weight:700; min-width:64px; text-align:center; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); backdrop-filter:blur(8px); border-radius:999px; padding:5px 16px; font-variant-numeric:tabular-nums; transition:background .3s, color .3s}
+.spill.hit{background:#D7F25A; color:#0B2A20; box-shadow:0 0 18px rgba(215,242,90,.6)} .spill small{font-size:.7rem; font-weight:600; opacity:.6; margin-inline-start:2px}
+.slives{flex:1; color:#FF6B5A; font-size:1.15rem; letter-spacing:2px} .slives s{text-decoration:none; opacity:.25}
+.sx{color:#fff; font-size:1.2rem; background:rgba(255,255,255,.12); width:38px; height:38px; border-radius:50%; border:0}
+.stime{position:absolute; inset:calc(58px + var(--top)) 16px auto; height:5px; border-radius:4px; background:rgba(255,255,255,.12); z-index:2; overflow:hidden}
+.stime i{display:block; height:100%; background:linear-gradient(90deg,#D7F25A,#7ED957); transform-origin:left; border-radius:4px}
+[dir=rtl] .stime i{transform-origin:right}
+.sintro{position:absolute; inset:0; z-index:3; display:grid; place-content:center; justify-items:center; gap:14px; text-align:center; padding:24px}
+.sintro h2{font-size:2.1rem; font-weight:700; letter-spacing:-.03em; text-shadow:0 0 24px rgba(215,242,90,.35)} .sintro .skick{font-size:.78rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:#D7F25A; opacity:.85; margin-bottom:-8px}
+.sorb{position:relative; width:180px; height:180px; border-radius:50%; display:grid; place-items:center; background:radial-gradient(circle,rgba(215,242,90,.22),rgba(215,242,90,.04) 62%,transparent 70%); border:1px solid rgba(215,242,90,.25); box-shadow:0 0 0 14px rgba(215,242,90,.04), 0 0 80px rgba(215,242,90,.22); animation:sorb 2.4s ease-in-out infinite}
+@keyframes sorb{50%{transform:translateY(-8px) scale(1.03)}}
+.scomet{position:absolute; width:120px; height:5px; border-radius:6px; background:linear-gradient(90deg,transparent,#FF8A3D 60%,#FFF6D8); box-shadow:0 0 12px #FF8A3D; top:16px; inset-inline-start:-40px; transform:rotate(28deg); animation:scomet 1.8s linear infinite}
+@keyframes scomet{from{transform:translate(-40px,-30px) rotate(28deg); opacity:0} 30%{opacity:1} to{transform:translate(160px,60px) rotate(28deg); opacity:0}}
+.shalf{position:absolute; transition:transform .5s var(--ease), opacity .5s} .shalf.l{clip-path:inset(0 50% 0 0)} .shalf.r{clip-path:inset(0 0 0 50%)}
+.sslash{position:absolute; width:0; height:4px; background:#fff; box-shadow:0 0 14px #D7F25A; transform:rotate(-30deg); border-radius:4px}
+.sintro.cut .shalf.l{transform:translate(-34px,26px) rotate(-22deg); opacity:0} .sintro.cut .shalf.r{transform:translate(34px,-14px) rotate(18deg); opacity:0}
+.sintro.cut .sslash{width:220px; transition:width .18s} .sintro.cut .scomet{display:none}
+.shint{font-weight:600; color:#D7F25A; letter-spacing:.02em; animation:pulse 1.6s ease-in-out infinite} .srules{color:#C9DDD2; max-width:30ch; font-size:.92rem}
+@keyframes pulse{50%{opacity:.55}}
+.sload{position:relative; width:96px; height:96px; display:grid; place-items:center} .splanet{width:46px; height:46px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#3E8B63,#0F3F2D 70%); box-shadow:0 0 24px rgba(215,242,90,.45), inset -6px -6px 12px rgba(0,0,0,.4)}
+.sorbit{position:absolute; inset:-6px; animation:spin 1.4s linear infinite} .sorbit i{position:absolute; top:-4px; left:50%; margin-left:-11px; filter:drop-shadow(0 0 6px #D7F25A)}
+.sload span{position:absolute; inset:0; border-radius:50%; border:4px solid rgba(215,242,90,.2); border-top-color:#D7F25A; animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sres{position:absolute; inset:0; z-index:4; display:grid; place-content:center; justify-items:center; gap:12px; text-align:center; padding:28px; background:rgba(4,22,16,.82); backdrop-filter:blur(4px); animation:rise .35s var(--ease)}
+.sres h2{font-size:1.9rem; font-weight:700; letter-spacing:-.03em} .sres p{color:#C9DDD2; max-width:30ch} .sres .sk{color:#D7F25A; font-weight:600}
+.sres.win{background:radial-gradient(circle at 50% 38%,rgba(215,242,90,.25),rgba(4,22,16,.9) 60%)}
+.sres.win .sprize{position:relative} .sres.win .sprize::before{content:""; position:absolute; inset:-50px; -webkit-mask:radial-gradient(circle,#000 30%,transparent 70%); mask:radial-gradient(circle,#000 30%,transparent 70%); background:repeating-conic-gradient(rgba(215,242,90,.16) 0 10deg,transparent 10deg 20deg); border-radius:50%; animation:spin 12s linear infinite; z-index:-1}
+.sprize{animation:pop .6s var(--spring)} .sres.lose .sprize{filter:grayscale(.3); opacity:.9}
+.smini{display:flex; gap:6px; background:rgba(255,255,255,.08); border-radius:16px; padding:8px 10px} .smini i{opacity:.28; filter:grayscale(1)} .smini i.got{opacity:1; filter:none} .smini i.new{animation:pop .6s .4s var(--spring) both}
+.sbtn{margin-top:8px; border:0; border-radius:999px; padding:14px 38px; font-weight:700; font-size:1rem; background:#D7F25A; color:#0B2A20}
+.rprize{animation:pop .6s var(--spring)}
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
 </head>
@@ -556,6 +613,7 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
         <p class="vnote in" id="vnote" hidden></p>
         <div class="shelfwrap" id="shelfWrap" hidden><div class="shelfhead"><b id="shelfTitle"></b><span data-t="shelfHint"></span></div><div class="shelf" id="shelf"></div></div>
         <div id="spot" style="width:100%"></div>
+        <div class="choices" id="choices" hidden></div>
         <ul class="caps" id="caps" aria-live="polite"></ul>
       </div>
       <div class="vbot in">
@@ -743,7 +801,7 @@ function renderOrder() {
     el.innerHTML = `<div class="totalblock"><span>${esc(t("orderNo"))}</span><p class="bigno">${esc(order.number)}</p>${order.vehicle ? `<span class="plate">${esc(t("vehicle"))} ${esc(order.vehicle)}</span> ` : ""}${order.preview ? `<span class="tag">${esc(t("preview"))}</span>` : ""}${order.cancelled ? `<span class="tag">${esc(t("cancelled"))}</span>` : ""}</div>
       ${arrivalHtml()}<div class="sheet"><ol class="steps">${STEPS.map((s, n) => `<li class="${n < order.status ? "done" : n === order.status ? "now" : ""}">${esc(t(s))}</li>`).join("")}</ol>
       <p class="vat">${esc(t("payAt"))}</p><div class="sum"><span>${esc(t("total"))}</span><span>${money(order.total)}</span></div></div>
-      ${rewardsLine()}<button class="outline" data-act="again">${esc(t("again"))}</button>`;
+      ${rewardsLine()}${gameButton()}<button class="outline" data-act="again">${esc(t("again"))}</button>`;
   } else {
     const ls = lines(), sum = total();
     el.innerHTML = `<h1 class="title">${esc(t("navOrder"))}</h1>` +
@@ -956,18 +1014,175 @@ $("langQuick").onclick = () => setLang(lang === "en" ? "ar" : "en");
 addEventListener("resize", renderNav);
 
 
+
+
+/* ================= Fruit basket and Meteor Slice ================= */
+const FRUIT_SVG = {
+  strawberry: `<path d="M20 9c7 0 12 4 12 10 0 9-8 16-12 16S8 28 8 19c0-6 5-10 12-10z" fill="#E8344B"/><path d="M13 9c2-3 5-2 7 0 2-2 5-3 7 0-3 1-4 3-7 3s-4-2-7-3z" fill="#3C9A3C"/><g fill="#FFE3A3"><circle cx="15" cy="18" r="1"/><circle cx="21" cy="17" r="1"/><circle cx="26" cy="19" r="1"/><circle cx="17" cy="24" r="1"/><circle cx="23" cy="25" r="1"/><circle cx="20" cy="30" r="1"/></g>`,
+  orange: `<circle cx="20" cy="22" r="13" fill="#FF8A1F"/><path d="M20 9c1-4 6-5 9-3-2 3-6 4-9 3z" fill="#3C9A3C"/><circle cx="15" cy="17" r="3" fill="#FFB35C" opacity=".7"/><g fill="#E06E0B"><circle cx="24" cy="25" r=".8"/><circle cx="18" cy="28" r=".8"/><circle cx="27" cy="19" r=".8"/></g>`,
+  lemon: `<path d="M5 21c3-8 10-12 15-12s12 4 15 12c-3 8-10 11-15 11S8 29 5 21z" fill="#FFD83A"/><path d="M5 21l-2 0M35 21l2 0" stroke="#E2B800" stroke-width="3" stroke-linecap="round"/><ellipse cx="15" cy="17" rx="4" ry="2" fill="#FFF0A0"/>`,
+  watermelon: `<path d="M4 15h32c0 11-7 19-16 19S4 26 4 15z" fill="#2E9D4F"/><path d="M7 15h26c0 9-6 15-13 15S7 24 7 15z" fill="#FF4D5E"/><g fill="#2A1B1B"><ellipse cx="14" cy="20" rx="1" ry="1.6"/><ellipse cx="20" cy="23" rx="1" ry="1.6"/><ellipse cx="26" cy="20" rx="1" ry="1.6"/><ellipse cx="17" cy="26" rx="1" ry="1.6"/><ellipse cx="23" cy="26" rx="1" ry="1.6"/></g>`,
+  grapes: `<path d="M20 6v6" stroke="#6B4A2B" stroke-width="2.4" stroke-linecap="round"/><path d="M21 9c3-3 7-3 9-1-3 2-6 2-9 1z" fill="#3C9A3C"/><g fill="#7B4BC9"><circle cx="14" cy="16" r="4.5"/><circle cx="23" cy="16" r="4.5"/><circle cx="18.5" cy="23" r="4.5"/><circle cx="27" cy="23" r="4"/><circle cx="12" cy="24" r="4"/><circle cx="16" cy="31" r="4"/><circle cx="23" cy="30" r="4"/></g><g fill="#B48CF0"><circle cx="12.5" cy="14.5" r="1.3"/><circle cx="21.5" cy="14.5" r="1.3"/><circle cx="17" cy="21.5" r="1.3"/></g>`,
+  mango: `<path d="M9 25c-3-9 4-17 13-16s12 9 9 16-17 9-22 0z" fill="#FFB020"/><path d="M24 11c5 2 8 7 7 12-4-1-7-5-7-12z" fill="#FF6B3D" opacity=".75"/><path d="M19 9c0-3 3-5 7-4-1 3-4 4-7 4z" fill="#3C9A3C"/><ellipse cx="14" cy="19" rx="3" ry="2" fill="#FFD27A"/>`,
+};
+const FRUIT_NAME = { en: { strawberry: "Strawberry", orange: "Orange", lemon: "Lemon", watermelon: "Watermelon", grapes: "Grapes", mango: "Mango" },
+  ar: { strawberry: "فراولة", orange: "برتقال", lemon: "ليمون", watermelon: "بطيخ", grapes: "عنب", mango: "مانجو" } };
+const fruitSvg = (f, size = 40) => `<svg viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true">${FRUIT_SVG[f]}</svg>`;
+const fname = f => (FRUIT_NAME[lang] || FRUIT_NAME.en)[f] || f;
+function basketHtml(m) {
+  const have = Object.values(m.fruits).filter(Boolean).length, need = 6 - have;
+  return `<div class="basket"><div class="bhead"><b>${esc(rt("fbTitle"))}</b><span>${have}/6</span></div>
+    <div class="bslots">${Object.entries(m.fruits).map(([f, n]) => `<div class="bslot ${n ? "got" : ""}" title="${esc(fname(f))}">${fruitSvg(f, 34)}${n > 1 ? `<i>×${n}</i>` : ""}</div>`).join("")}</div>
+    <p class="bnote">${need ? esc(rt("fbNeed", { n: need, reward: m.basketReward })) : esc(rt("fbFull"))}</p>
+    ${m.vouchers.map(v => `<div class="voucher"><span><small>${esc(rt("fbVoucher"))}</small><b>${esc(v.reward)}</b></span><code dir="ltr">${esc(v.code)}</code></div>`).join("")}
+    <p class="bhow">${esc(rt("fbHow", { n: m.groupItems }))}</p></div>`;
+}
+function gameButton() {
+  if (!member || !order || order.preview || !member.games || !member.games.includes(order.number)) return "";
+  return `<button class="rushbtn" data-rw="play"><span class="rushfruits">${[0, 1, 2].map(i => meteorIcon(i, 30)).join("")}</span><span><b>${esc(rt("frPlay"))}</b><small>${esc(rt("frPlaySub", { n: member.gameTarget }))}</small></span></button>`;
+}
+/* Meteor Slice: VoiceBite's take on Slice's meteor game. Meteors streak across a VoiceBite-green sky,
+   swipe to cut them, never touch a space mine. 3 misses or 30 seconds ends the round; winners get a basket fruit. */
+const METEOR_GLOW = ["#D7F25A", "#FF8A3D", "#7EE0B0"];
+const meteorSvg = (i = 0) => { const c = METEOR_GLOW[i % 3]; return `<defs><radialGradient id="mg${i}" cx="38%" cy="34%" r="70%"><stop offset="0" stop-color="#9C8572"/><stop offset=".55" stop-color="#5E4A3C"/><stop offset="1" stop-color="#2C211A"/></radialGradient><radialGradient id="mh${i}" r=".5"><stop offset=".55" stop-color="${c}" stop-opacity=".55"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient></defs>
+  <circle cx="20" cy="20" r="20" fill="url(#mh${i})"/>
+  <path d="M20 6.5c4.2-.6 8.6 1.6 11 5.3 2.4 3.6 2.6 8.6.4 12.6-2.1 3.9-6.1 7.2-10.7 7.6-4.7.4-9.4-1.8-11.8-5.7-2.5-4-2.6-9.3-.2-13.1C11 9.4 15.5 7 20 6.5z" fill="url(#mg${i})"/>
+  <path d="M30.6 12.3c2.2 3.5 2.4 8.3.3 12.1-2 3.8-5.9 6.9-10.3 7.3" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" opacity=".9"/>
+  <g fill="#2A1F18" opacity=".75"><ellipse cx="15" cy="15" rx="3.2" ry="2.6"/><ellipse cx="24.5" cy="22" rx="2.6" ry="2.2"/><ellipse cx="15.5" cy="25" rx="1.8" ry="1.5"/><circle cx="23" cy="12.5" r="1.2"/></g>
+  <g fill="#B8A290" opacity=".55"><path d="M12.4 14.2a3.2 2.6 0 0 1 5.2-1"/><ellipse cx="13.8" cy="13.6" rx="1.2" ry=".6"/><ellipse cx="23.4" cy="21" rx="1" ry=".5"/></g>`; };
+const BOMB_SVG = `<defs><radialGradient id="bm" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#4A4D5A"/><stop offset="1" stop-color="#14151C"/></radialGradient><radialGradient id="bc" r=".5"><stop offset="0" stop-color="#FFD0C4"/><stop offset=".35" stop-color="#FF4D3A"/><stop offset="1" stop-color="#FF4D3A" stop-opacity="0"/></radialGradient></defs>
+  <circle cx="20" cy="21" r="19" fill="#FF4D3A" opacity=".18"/>
+  <g stroke="#2A2C36" stroke-width="3.4" stroke-linecap="round"><path d="M20 4v5M20 33v5M3 21h5M32 21h5M8 9l3.5 3.5M28.5 29.5L32 33M8 33l3.5-3.5M28.5 12.5L32 9"/></g>
+  <circle cx="20" cy="21" r="11.5" fill="url(#bm)"/><circle cx="20" cy="21" r="11.5" fill="none" stroke="#FF4D3A" stroke-width="1.2" stroke-dasharray="3 3" opacity=".9"/>
+  <circle cx="20" cy="21" r="6" fill="url(#bc)"/><path d="M15.5 16.5a6.5 6.5 0 0 1 4-2.2" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".35" fill="none"/>`;
+const svgImg = body => { const im = new Image(); im.src = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">${body}</svg>`); return im; };
+const meteorImgs = [0, 1, 2].map(i => svgImg(meteorSvg(i))), burntImg = svgImg(BOMB_SVG);
+const meteorIcon = (i, size) => `<svg viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true">${meteorSvg(i).replace(/id="m([gh])\d"/g, `id="m$1${i}x${size}"`).replace(/url\(#m([gh])\d\)/g, `url(#m$1${i}x${size})`)}</svg>`;
+function playRush() {
+  if (!member || !order) return;
+  const app = $("app"), box = document.createElement("div"); box.className = "slice";
+  const GAME = 30, target = member.gameTarget || 12;
+  box.innerHTML = `<canvas id="rCv"></canvas>
+    <div class="shud"><span class="spill" id="rScore">0<small>/${target}</small></span><span class="slives" id="rLives">${"♥".repeat(3)}</span><button class="sx" id="rQuit" aria-label="Close">✕</button></div>
+    <div class="stime"><i id="rBar"></i></div>
+    <div class="sintro" id="rIntro"><p class="skick">${esc(rt("frKick"))}</p><h2>${esc(rt("frTitle"))}</h2>
+      <div class="sorb" id="rOrb"><span class="scomet"></span><span class="shalf l">${meteorIcon(0, 118)}</span><span class="shalf r">${meteorIcon(0, 118)}</span><span class="sslash"></span></div>
+      <p class="shint">${esc(rt("frSwipe"))}</p><p class="srules">${esc(rt("frRules2", { n: target }))}</p></div>`;
+  app.appendChild(box);
+  const cv = $("rCv"), cx = cv.getContext("2d"), dpr = Math.min(2, devicePixelRatio || 1);
+  const W = box.clientWidth, H = box.clientHeight; cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + "px"; cv.style.height = H + "px"; cx.scale(dpr, dpr);
+  const font = getComputedStyle(document.body).fontFamily;
+  const stars = Array.from({ length: 90 }, () => ({ x: Math.random() * W, y: Math.random() * H * .8, r: Math.random() * 1.4 + .3, p: Math.random() * 6 }));
+  let score = 0, lives = 3, items = [], bits = [], pops = [], trail = [], start = 0, last = 0, spawn = .4, raf = 0, over = false, playing = false, endWhy = "";
+  const quit = () => { cancelAnimationFrame(raf); over = true; box.remove(); };
+  $("rQuit").onclick = quit;
+  function sky(t) {
+    const g = cx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#041A13"); g.addColorStop(.55, "#082B20"); g.addColorStop(1, "#0D3A2A"); cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    for (const [x, y, r, c] of [[W * .15, H * .2, W * .7, "rgba(215,242,90,.09)"], [W * .9, H * .5, W * .55, "rgba(255,138,61,.08)"], [W * .4, H * .78, W * .5, "rgba(126,224,176,.07)"]]) { const n = cx.createRadialGradient(x, y, 0, x, y, r); n.addColorStop(0, c); n.addColorStop(1, "rgba(0,0,0,0)"); cx.fillStyle = n; cx.fillRect(0, 0, W, H); }
+    for (const s of stars) { cx.globalAlpha = .3 + .4 * Math.abs(Math.sin(t / 700 + s.p)); cx.fillStyle = "#EAF7D0"; cx.beginPath(); cx.arc(s.x, s.y, s.r, 0, 6.29); cx.fill(); } cx.globalAlpha = 1;
+    const R = W * 1.5, py = H + R - 70, pg = cx.createRadialGradient(W / 2, py - R * .2, R * .6, W / 2, py, R); pg.addColorStop(0, "#1C5A40"); pg.addColorStop(1, "#0F3F2D");
+    cx.save(); cx.shadowColor = "rgba(215,242,90,.45)"; cx.shadowBlur = 28; cx.fillStyle = pg; cx.beginPath(); cx.arc(W / 2, py, R, 0, 6.29); cx.fill(); cx.restore();
+    cx.strokeStyle = "rgba(215,242,90,.35)"; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(W / 2, py, R, Math.PI * 1.3, Math.PI * 1.7); cx.stroke();
+  }
+  function launch(el) {
+    const bad = el > 3 && Math.random() < .14 + el * .003, fromLeft = Math.random() < .5;
+    const x = 30 + Math.random() * (W - 60), tx = Math.max(30, Math.min(W - 30, x + (fromLeft ? 1 : -1) * (40 + Math.random() * 120)));
+    const v = 150 + el * 6 + Math.random() * 70, dur = (H + 60) / v;
+    items.push({ x, y: -40, vx: (tx - x) / dur, vy: v, bad, f: Math.floor(Math.random() * 3), sz: 50 + Math.random() * 16, r: Math.random() * 6.28, s: (Math.random() - .5) * 3, tail: [] });
+  }
+  function cut(it) {
+    it.done = true;
+    if (it.bad) { endWhy = "bomb"; for (let i = 0; i < 26; i++) bits.push({ x: it.x, y: it.y, vx: (Math.random() - .5) * 520, vy: (Math.random() - .5) * 520, t: 0, c: i % 3 ? "#FF4D3A" : "#FFD0C4", r: 2 + Math.random() * 4 }); bits.push({ ring: 1, x: it.x, y: it.y, t: 0, c: "#FF4D3A" }); if (navigator.vibrate) try { navigator.vibrate([40, 30, 80]); } catch (e) {} return;}
+    score++; $("rScore").innerHTML = `${score}<small>/${target}</small>`; if (score >= target) $("rScore").classList.add("hit");
+    pops.push({ x: it.x, y: it.y, t: 0, txt: "+1" });
+    for (const side of [-1, 1]) bits.push({ half: side, f: it.f, sz: it.sz, x: it.x, y: it.y, vx: side * 90 + it.vx * .3, vy: -60, r: it.r, s: side * 4, t: 0 });
+    for (let i = 0; i < 12; i++) bits.push({ x: it.x, y: it.y, vx: (Math.random() - .5) * 300, vy: (Math.random() - .7) * 300, t: 0, c: i % 3 ? METEOR_GLOW[it.f] : "#FFF6D8", r: 1.5 + Math.random() * 3 }); bits.push({ ring: 1, x: it.x, y: it.y, t: 0, c: METEOR_GLOW[it.f] });
+    if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) {}
+  }
+  const segHit = (ax, ay, bx, by, px, py, r) => { const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy || 1, k = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l)); return Math.hypot(ax + k * dx - px, ay + k * dy - py) < r; };
+  const pt = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top, t: performance.now() }; };
+  let down = false;
+  box.addEventListener("pointerdown", e => { down = true; trail = [pt(e)]; });
+  box.addEventListener("pointerup", () => { down = false; });
+  box.addEventListener("pointermove", e => {
+    if (!down && e.pointerType !== "mouse") return; const p = pt(e), q = trail[trail.length - 1]; trail.push(p); if (trail.length > 14) trail.shift();
+    if (!q) return;
+    if (!playing) { const o = $("rOrb"); if (o) { const r = o.getBoundingClientRect(), b = box.getBoundingClientRect(), ox = r.left - b.left + r.width / 2, oy = r.top - b.top + r.height / 2; if (Math.hypot(p.x - q.x, p.y - q.y) > 4 && segHit(q.x, q.y, p.x, p.y, ox, oy, r.width / 2)) cutOrb(); } return; }
+    for (const it of items) if (!it.done && segHit(q.x, q.y, p.x, p.y, it.x, it.y, it.sz * .55)) cut(it);
+  });
+  function cutOrb() {
+    const intro = $("rIntro"); if (!intro || intro.dataset.cut) return; intro.dataset.cut = 1; intro.classList.add("cut");
+    setTimeout(() => { intro.innerHTML = `<div class="sload"><b class="splanet"></b><span></span><em class="sorbit"><i>${meteorIcon(0, 22)}</i></em></div><p class="shint">${esc(rt("frReady"))}</p>`; }, 520);
+    setTimeout(() => { intro.remove(); playing = true; start = last = performance.now(); }, 1500);
+  }
+  function frame(t) {
+    if (over) return; const dt = Math.min(.05, (t - last) / 1000 || 0); last = t; sky(t);
+    const el = playing ? (t - start) / 1000 : 0, left = Math.max(0, GAME - el);
+    if (playing) { $("rBar").style.transform = `scaleX(${left / GAME})`;
+      spawn -= dt; if (spawn <= 0 && left > .8 && !endWhy) { launch(el); if (el > 12 && Math.random() < .35) launch(el); spawn = Math.max(.42, .95 - el * .02); } }
+    for (const it of items) { if (it.done) continue; it.x += it.vx * dt; it.y += it.vy * dt; it.r += it.s * dt;
+      it.tail.push([it.x, it.y]); if (it.tail.length > 26) it.tail.shift();
+      if (it.tail.length > 1) { const [tx, ty] = it.tail[0], g = cx.createLinearGradient(tx, ty, it.x, it.y); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(.6, it.bad ? "rgba(255,77,58,.25)" : "rgba(255,138,61,.35)"); g.addColorStop(1, it.bad ? "rgba(255,77,58,.6)" : METEOR_GLOW[it.f]); cx.strokeStyle = g; cx.lineWidth = it.sz * .42; cx.globalAlpha = .75; cx.lineCap = "round"; cx.beginPath(); cx.moveTo(tx, ty); cx.lineTo(it.x, it.y); cx.stroke(); cx.globalAlpha = 1; }
+      cx.save(); cx.translate(it.x, it.y); cx.rotate(it.r); const h = it.sz / 2; if (it.bad) { const k = 1 + .08 * Math.sin(t / 90); cx.scale(k, k); } cx.drawImage(it.bad ? burntImg : meteorImgs[it.f], -h, -h, it.sz, it.sz); cx.restore();
+      if (it.y > H + 30) { it.done = true; if (!it.bad) { lives--; $("rLives").innerHTML = "♥".repeat(Math.max(0, lives)) + `<s>${"♥".repeat(3 - Math.max(0, lives))}</s>`; if (lives <= 0) endWhy = "missed"; } } }
+    items = items.filter(it => !it.done);
+    for (const b of bits) { b.t += dt; b.x += b.vx * dt; b.y += b.vy * dt; if (!b.ring) b.vy += 700 * dt; cx.globalAlpha = Math.max(0, 1 - b.t * 1.3);
+      if (b.ring) { cx.strokeStyle = b.c; cx.lineWidth = 3 * (1 - b.t); cx.beginPath(); cx.arc(b.x, b.y, 18 + b.t * 120, 0, 6.29); cx.stroke(); }
+      else if (b.half) { b.r += b.s * dt; const h = b.sz / 2; cx.save(); cx.translate(b.x, b.y); cx.rotate(b.r); cx.beginPath(); cx.rect(b.half < 0 ? -h : 0, -h, h, b.sz); cx.clip(); cx.drawImage(meteorImgs[b.f], -h, -h, b.sz, b.sz); cx.fillStyle = METEOR_GLOW[b.f]; cx.globalAlpha *= .8; cx.fillRect(-1.5, -h * .62, 3, h * 1.24); cx.restore(); }
+      else { cx.fillStyle = b.c; cx.shadowColor = b.c; cx.shadowBlur = 8; cx.beginPath(); cx.arc(b.x, b.y, b.r, 0, 6.29); cx.fill(); cx.shadowBlur = 0; } }
+    cx.globalAlpha = 1; bits = bits.filter(b => b.t < .9);
+    for (const p of pops) { p.t += dt; cx.globalAlpha = Math.max(0, 1 - p.t * 1.6); cx.fillStyle = "#D7F25A"; cx.font = "700 22px " + font; cx.textAlign = "center"; cx.fillText(p.txt, p.x, p.y - 30 - p.t * 60); } cx.globalAlpha = 1; pops = pops.filter(p => p.t < .7);
+    const now = performance.now(); trail = trail.filter(q => now - q.t < 160);
+    if (trail.length > 1) { cx.lineCap = "round"; cx.lineJoin = "round"; for (const [w, c] of [[12, "rgba(215,242,90,.22)"], [6, "rgba(215,242,90,.5)"], [2.5, "#fff"]]) { cx.strokeStyle = c; cx.lineWidth = w; cx.beginPath(); trail.forEach((q, i) => i ? cx.lineTo(q.x, q.y) : cx.moveTo(q.x, q.y)); cx.stroke(); } }
+    if (playing && (endWhy || left <= 0)) { playing = false; return setTimeout(() => finish(Math.min(GAME, el), endWhy || "time"), endWhy === "bomb" ? 700 : 200); }
+    raf = requestAnimationFrame(frame);
+  }
+  async function finish(seconds, why) {
+    over = true; cancelAnimationFrame(raf);
+    const msg = document.createElement("div"); msg.className = "sres"; msg.innerHTML = `<div class="sload"><span></span></div><p>${esc(rt("frSending"))}</p>`; box.appendChild(msg);
+    const done = `<button class="sbtn" id="rDone">${esc(rt("frDone"))}</button>`;
+    try { const r = await rwCall("/game", { orderId: order.number, token: order.token, score, seconds }, true); member = r; renderRewards(); renderOrder();
+      if (r.won) { const have = Object.values(r.fruits).filter(Boolean).length;
+        msg.className = "sres win"; msg.innerHTML = `<p class="sk">${esc(rt("frScore", { n: score }))}</p><div class="sprize">${fruitSvg(r.prize.fruit, 110)}</div>
+          <h2>${esc(rt("frWon", { f: fname(r.prize.fruit) }))}</h2><p>${esc(r.prize.voucher ? rt("frBasket", { reward: r.prize.voucher.reward }) : rt("frWonSub", { n: have }))}</p>
+          <div class="smini">${Object.entries(r.fruits).map(([f, n]) => `<i class="${n ? "got" : ""} ${f === r.prize.fruit ? "new" : ""}">${fruitSvg(f, 30)}</i>`).join("")}</div>
+          <button class="sbtn" id="rDone">${esc(rt("frCollect"))}</button>`; celebrateFruit(); }
+      else { const t = why === "bomb" ? [rt("frBomb"), rt("frBombSub")] : why === "missed" ? [rt("frLostT"), rt("frMissed")] : [rt("frLostT"), rt("frTime", { s: score, n: r.target })];
+        msg.className = "sres lose"; msg.innerHTML = `<div class="sprize">${why === "bomb" ? `<svg viewBox="0 0 40 40" width="120" height="120">${BOMB_SVG}</svg>` : meteorIcon(1, 120)}</div><h2>${esc(t[0])}</h2><p>${esc(t[1])}</p><p class="sk">${esc(rt("frScore", { n: score }))} · ${esc(rt("frNext"))}</p>${done}`; } }
+    catch (e) { msg.className = "sres lose"; msg.innerHTML = `<h2>${score}</h2><p>${esc(e.message)}</p>${done}`; }
+    $("rDone").onclick = quit;
+  }
+  last = performance.now(); raf = requestAnimationFrame(frame);
+}
+function celebrateFruit() { if (calm) return; const box = document.createElement("div"); box.className = "party"; box.style.background = "transparent";
+  box.innerHTML = Array.from({ length: 22 }, (_, i) => `<i style="--x:${Math.round(Math.cos(i * 2.4) * (110 + (i * 31) % 90))}px; --y:${Math.round(Math.sin(i * 2.4) * (110 + (i * 47) % 100) - 80)}px; --r:${(i * 83) % 360}deg; --d:${(i % 5) * 40}ms; width:26px; height:26px; background:none">${fruitSvg(Object.keys(FRUIT_SVG)[i % 6], 26)}</i>`).join("");
+  $("app").appendChild(box); setTimeout(() => box.remove(), 2600); }
+
+/* questions with a few answers: shown as buttons, so the customer can tap instead of speaking */
+function renderChoices(c) {
+  const el = $("choices"); if (!el) return;
+  if (!c || !Array.isArray(c.options) || !c.options.length) { el.hidden = true; el.innerHTML = ""; return; }
+  el.innerHTML = `${c.question ? `<p>${esc(c.question)}</p>` : ""}<div>${c.options.map(o => `<button data-choice="${esc(o)}" dir="auto">${esc(o)}</button>`).join("")}</div>`; el.hidden = false;
+}
+$("choices").addEventListener("click", e => { const b = e.target.closest("[data-choice]"); if (!b) return;
+  b.classList.add("picked"); sendText(b.dataset.choice); setTimeout(() => renderChoices(null), 250); if (navigator.vibrate) try { navigator.vibrate(8); } catch (x) {} });
+
 /* ================= VoiceBite Rewards: mobile number + 4-digit PIN, points wallet, referrals ================= */
 const RW = {
   en: { rwTitle: "VoiceBite Rewards", rwLead: "Earn points on every order. Just your mobile number and a 4-digit PIN.", rwPhone: "Mobile number", rwPin: "4-digit PIN", rwName: "Your name (optional)",
     rwRef: "Friend's code (optional)", rwJoin: "Join and start earning", rwSignIn: "Sign in", rwHaveAcc: "Already a member? Sign in", rwNew: "New here? Join", rwPoints: "points", rwWorth: "worth",
     rwCode: "Your code", rwShare: "Share with a friend", rwShareText: "Order by voice at VoiceBite and get {n} bonus points with my code {code}:", rwCopied: "Link copied", rwFriends: "friends joined",
     rwRecent: "Recent orders", rwOut: "Sign out", rwEarn: "You'll earn about {n} points when this order is collected.", rwLinked: "Linked to your Rewards", rwJoinOrder: "Join Rewards to earn {n} points on this order",
-    rwBadPin: "The PIN is 4 digits.", rwRefLine: "Friends get {a} points when they join with your code, you get {b} after their first order." },
+    rwBadPin: "The PIN is 4 digits.", rwJoinedVoice: "You're in! Signed in to VoiceBite Rewards.", rwRefFruit: "Bring a friend: you both get a fruit when they order with your code.",
+    fbTitle: "Fruit basket", fbNeed: "{n} more fruits for a {reward}", fbFull: "Basket full!", fbVoucher: "Show at the window", fbHow: "Every order adds a fruit, orders of {n}+ items add two. Win more in Meteor Slice.",
+    frPlay: "Play Meteor Slice while you wait", frPlaySub: "Slice {n} meteors to win a fruit for your basket", frKick: "VoiceBite Rewards", frTitle: "Meteor Slice", frSwipe: "swipe the meteor to begin", frRules2: "Slice {n} meteors in 30 seconds. Miss 3 or touch a mine and it's over.", frReady: "Meteors incoming…", frSending: "Counting your meteors…", frWon: "You won a {f}!", frWonSub: "A new fruit landed in your basket: {n} of 6.", frBasket: "Basket complete: {reward} is yours!", frScore: "{n} meteors sliced", frCollect: "Add to my basket", frLostT: "You lost", frMissed: "You missed too many meteors.", frTime: "{s} of {n} before the timer ran out.", frBomb: "Boom!", frBombSub: "You sliced a space mine.", frNext: "Play again on your next order", frDone: "Done", rwRefLine: "Friends get {a} points when they join with your code, you get {b} after their first order." },
   ar: { rwTitle: "مكافآت VoiceBite", rwLead: "اكسب نقاطاً مع كل طلب. فقط رقم جوالك ورمز من 4 أرقام.", rwPhone: "رقم الجوال", rwPin: "رمز من 4 أرقام", rwName: "اسمك (اختياري)",
     rwRef: "رمز صديق (اختياري)", rwJoin: "انضم وابدأ بجمع النقاط", rwSignIn: "تسجيل الدخول", rwHaveAcc: "عضو بالفعل؟ سجّل الدخول", rwNew: "جديد هنا؟ انضم", rwPoints: "نقطة", rwWorth: "قيمتها",
     rwCode: "رمزك", rwShare: "شارك مع صديق", rwShareText: "اطلب بصوتك من VoiceBite واحصل على {n} نقطة إضافية برمزي {code}:", rwCopied: "تم نسخ الرابط", rwFriends: "أصدقاء انضموا",
     rwRecent: "آخر الطلبات", rwOut: "تسجيل الخروج", rwEarn: "ستكسب حوالي {n} نقطة عند استلام هذا الطلب.", rwLinked: "مرتبط بحساب المكافآت", rwJoinOrder: "انضم إلى المكافآت لتكسب {n} نقطة على هذا الطلب",
-    rwBadPin: "الرمز من 4 أرقام.", rwRefLine: "يحصل أصدقاؤك على {a} نقطة عند الانضمام برمزك، وتحصل أنت على {b} بعد أول طلب لهم." } };
+    rwBadPin: "الرمز من 4 أرقام.", rwJoinedVoice: "تم! أنت الآن عضو في مكافآت VoiceBite.", rwRefFruit: "ادعُ صديقاً: تحصلان كلاكما على فاكهة عند طلبه برمزك.",
+    fbTitle: "سلة الفاكهة", fbNeed: "{n} فواكه أخرى للحصول على {reward}", fbFull: "السلة ممتلئة!", fbVoucher: "أظهره عند النافذة", fbHow: "كل طلب يضيف فاكهة، والطلبات من {n} أصناف أو أكثر تضيف اثنتين. اربح المزيد في قطّع النيازك.",
+    frPlay: "العب قطّع النيازك أثناء الانتظار", frPlaySub: "قطّع {n} نيزكاً لتربح فاكهة لسلتك", frKick: "مكافآت VoiceBite", frTitle: "قطّع النيازك", frSwipe: "اسحب على النيزك للبدء", frRules2: "قطّع {n} نيزكاً في 30 ثانية. إذا فاتتك 3 أو لمست لغماً تنتهي اللعبة.", frReady: "النيازك قادمة…", frSending: "نعدّ نيازكك…", frWon: "ربحت {f}!", frWonSub: "فاكهة جديدة في سلتك: {n} من 6.", frBasket: "اكتملت السلة: {reward} لك!", frScore: "قطّعت {n} نيزكاً", frCollect: "أضفها إلى سلتي", frLostT: "خسرت", frMissed: "فاتتك نيازك كثيرة.", frTime: "{s} من {n} قبل انتهاء الوقت.", frBomb: "بوم!", frBombSub: "قطّعت لغماً فضائياً.", frNext: "العب مجدداً في طلبك القادم", frDone: "تم", rwRefLine: "يحصل أصدقاؤك على {a} نقطة عند الانضمام برمزك، وتحصل أنت على {b} بعد أول طلب لهم." } };
 const rt = (k, v = {}) => String((RW[lang] || RW.en)[k] || RW.en[k]).replace(/\{(\w+)\}/g, (_, x) => v[x] ?? "");
 let member = null, rwMode = params.get("ref") ? "join" : "signin", rwBusy = false;
 const rwToken = () => store.get("memberToken") || "";
@@ -997,7 +1212,8 @@ function renderRewards() {
     el.innerHTML = `<div class="rwcard"><div class="rwtop"><span class="rwbrand">★ ${esc(rt("rwTitle"))}</span><button class="x" data-rw="out" title="${esc(rt("rwOut"))}">${esc(rt("rwOut"))}</button></div>
       <p class="rwpts"><b>${m.points.toLocaleString()}</b> ${esc(rt("rwPoints"))}</p><p class="rwworth">${esc(rt("rwWorth"))} ${money(m.walletValue)}${m.name ? " · " + esc(m.name) : ""}</p>
       <div class="rwcode"><div><span>${esc(rt("rwCode"))}</span><b dir="ltr">${esc(code)}</b></div><button class="solid" data-rw="share">${esc(rt("rwShare"))}</button></div>
-      <p class="rwnote">${esc(rt("rwRefLine", { a: m.program.welcomePoints, b: m.program.referrerPoints }))}${m.friendsJoined ? ` · <b>${m.friendsJoined}</b> ${esc(rt("rwFriends"))}` : ""}</p></div>
+      <p class="rwnote">${esc(rt("rwRefFruit"))}${m.friendsJoined ? ` · <b>${m.friendsJoined}</b> ${esc(rt("rwFriends"))}` : ""}</p></div>
+      ${m.fruits ? basketHtml(m) : ""}
       ${m.orders.length ? `<div class="group"><div class="setting"><b>${esc(rt("rwRecent"))}</b></div>${m.orders.slice(0, 4).map(o => `<div class="setting"><div><b dir="ltr">${esc(o.orderId)}</b><span>${esc(o.items.join(", "))}</span></div><span class="rwearned">${o.points ? "+" + o.points : money(o.total)}</span></div>`).join("")}</div>` : ""}`;
     return;
   }
@@ -1026,7 +1242,7 @@ $("rewards").addEventListener("click", async e => {
     try { if (navigator.share) await navigator.share({ title: "VoiceBite", text, url }); else { await navigator.clipboard.writeText(text + " " + url); toast(rt("rwCopied")); } } catch (x) {}
   }
 });
-$("app").addEventListener("click", e => { if (e.target.closest('[data-rw="goJoin"]')) { rwMode = "join"; renderRewards(); go("more"); } });
+$("app").addEventListener("click", e => { if (e.target.closest('[data-rw="goJoin"]')) { rwMode = "join"; renderRewards(); go("more"); } if (e.target.closest('[data-rw="play"]')) playRush(); });
 
 /* ================= install as an app ================= */
 let installEvent = null;
@@ -1053,6 +1269,7 @@ let accessCode = params.get("code") || store.get("accessCode") || "";
 function lineAddress(resume) {
   const q = new URLSearchParams(); if (STORE_LOCATION) q.set("location", STORE_LOCATION); if (accessCode) q.set("code", accessCode);
   if (voiceLang !== "en") q.set("lang", voiceLang); if (resume) q.set("resume", resume);
+  if (store.get("memberToken")) q.set("member", store.get("memberToken"));   // a signed-in member: the attendant knows their car and payment
   const extra = q.toString(); return wsUrl + (extra ? (wsUrl.includes("?") ? "&" : "?") + extra : "");
 }
 // Free hosting sleeps when idle; wake the kitchen while the customer reads the menu.
@@ -1175,10 +1392,12 @@ function captionPiece(role, raw) {   // Arabic and Malayalam arrive a few words 
   }
   assistantText(raw, true);
 }
-const STATE_KEYS = ["categories", "menuItems", "highlightedCategory", "highlightedItem", "orderItems", "orderTotal", "orderConfirmed", "orderNumber", "burgerBuilder", "vehicleNumber", "shownItems", "trackToken"];
+const STATE_KEYS = ["categories", "menuItems", "highlightedCategory", "highlightedItem", "orderItems", "orderTotal", "orderConfirmed", "orderNumber", "burgerBuilder", "vehicleNumber", "shownItems", "trackToken", "choices", "memberToken"];
 function applyState(s) {
   if (!s || typeof s !== "object" || !STATE_KEYS.some(k => k in s)) return false;
   if (applyVoice(s)) return true;
+  if ("choices" in s) renderChoices(s.choices);
+  if (s.memberToken && s.memberToken !== store.get("memberToken")) { store.set("memberToken", s.memberToken); loadMember().then(claimOrder); toast(rt("rwJoinedVoice")); }
   if (Array.isArray(s.categories) && s.categories.length && s.menuItems) menu = { categories: s.categories, menuItems: s.menuItems };
   if ("highlightedCategory" in s && s.highlightedCategory) { activeCat = s.highlightedCategory; query = ""; $("q").value = ""; lit = null; }
   if ("highlightedItem" in s) { lit = s.highlightedItem || null; const it = lit && findItem(lit); if (it) { activeCat = it.cat; query = ""; $("q").value = ""; } }

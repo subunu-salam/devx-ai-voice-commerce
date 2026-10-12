@@ -989,7 +989,7 @@ def delete_staff(username: str, user: dict = Depends(need("team.manage"))):
 def setup_admin(app) -> None:
     origins = [o.strip() for o in os.environ.get("ADMIN_ORIGINS", DEFAULT_ORIGINS).split(",") if o.strip()]
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"])
-    for name in ("ops", "rewards"):   # their routes join this router, so they load first
+    for name in ("ops", "rewards", "insights"):   # their routes join this router, so they load first
         _extra(name)
     app.include_router(router)
     rewards = _extra("rewards")

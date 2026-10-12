@@ -185,3 +185,23 @@ Each member has a referral code and a share link (`?ref=CODE`). A friend who joi
 |---|---|---|
 | `VOICE_PRICE_MODE` | `checkout` | No prices while the customer is choosing; the total is said only at the order summary. Set to `always` to also say each item price and the running total. |
 | `VOICE_REPLY_SENTENCES` | `1` | Longest reply the attendant gives (1–3 short sentences). |
+
+## AI insights and forecasting
+
+Console → **AI insights** (`agent/insights.py`). For every item the kitchen batches (and anything sold recently) the AI suggests how much to make today:
+
+- **Forecast** = average sold per day over the last 7 days × that weekday's pattern over the last 4 weeks × the recent trend (half applied, capped at ±15%), plus a 5% buffer.
+- **Confidence %** = how close that forecast would have been on each of the last 14 days, compared with what actually sold (expected 200, sold 170 = an 85% day). High 95%+, good 85–94%, low below 85%; under 7 days of history is shown as *learning*.
+- **Gap alerts**: made well over the forecast (overproduction), selling slower than forecast by this time of day, about to sell out, or a past day far off the forecast.
+- **Auto-replay**: *Log today's batches* opens with yesterday's quantities filled in; one tap switches to the AI suggestions.
+- The dashboard also shows forecast vs made vs sold, overproduction that could have been avoided, solved vs open orders, waste by reason, and **leakage points**: stock bought vs what recipes say sales used, waste, and losses only stock counts reveal.
+
+## Voice ordering: vehicle, payment memory, sign-up by voice
+
+- A vehicle plate is required for every order, even for known customers (they may be in a different car).
+- The attendant asks how the customer will pay (cash, card or a payment link) and shows the options as buttons on screen. Signed-in members are asked to confirm last time's car and payment method instead ("Card, like last time?"). The choice appears on the kitchen ticket.
+- Guests are offered VoiceBite Rewards once after ordering and can join by voice (name, mobile, 4-digit PIN); the app signs them in automatically.
+
+## Fruit basket and Fruit Rush
+
+Referral points are replaced by a collecting game. Every completed order adds a fruit (orders of 4+ items add two); one of each of the 6 fruits unlocks a voucher (default *Free dessert*) that the cashier redeems in **Loyalty and rewards → Redeem voucher**. After ordering, members can play **Fruit Rush**, a 20-second catch game, once per order; 12+ catches wins a missing fruit. Bringing a friend gives both a fruit. All targets are set in *Programme settings*.

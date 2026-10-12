@@ -52,6 +52,7 @@ try:
         add_to_order, build_custom_burger, cancel_order, get_order_summary, place_order, remove_from_order,
         get_order_state,
     )
+    from agent import order_tools as _order_tools
     from agent.ui_state_manager import set_websocket, clear_websocket, set_ui_state, get_ui_state, reset_ui_state
 except ModuleNotFoundError:
     from menu_tools import (
@@ -61,6 +62,7 @@ except ModuleNotFoundError:
         add_to_order, build_custom_burger, cancel_order, get_order_summary, place_order, remove_from_order,
         get_order_state,
     )
+    import order_tools as _order_tools
     from ui_state_manager import set_websocket, clear_websocket, set_ui_state, get_ui_state, reset_ui_state
 
 
@@ -77,6 +79,9 @@ def _optional(name: str):
 _shop = _optional("shop_config")
 _admin = _optional("admin_api")
 _langs = _optional("voice_languages")  # Arabic and Malayalam voice; without it the attendant is English only
+_rewards = _optional("rewards")        # Rewards members: known name, car and payment method; sign-up by voice
+if _rewards:
+    _order_tools.after_order = _rewards.remember
 
 if _shop:
     VOICES, DEFAULT_LOCATION = _shop.VOICES, _shop.DEFAULT_LOCATION
@@ -205,6 +210,63 @@ def show_products(category_id: str = "", item_ids: list = None) -> dict:
             "next": "The cards are on screen now. If you have NOT spoken yet this turn, say one short sentence such as "
                     "'Here you go, which one would you like?'. If you already said something like that, say nothing more. "
                     "Never read the items or prices out."}
+
+
+@tool
+def show_choices(question: str, options: list) -> dict:
+    """Put a short question with tappable answers on the customer's screen, so they can tap instead of speaking.
+
+    Use it whenever you ask something with a few fixed answers: the payment method, "same car as last time?",
+    yes or no, a size. Ask the question out loud too, in one short sentence.
+
+    Args:
+        question: The question, e.g. "How would you like to pay?"
+        options: 2 to 5 short answers, e.g. ["Cash", "Card", "Payment link"]. Exactly what the customer would say.
+    """
+    clean = [str(o).strip()[:40] for o in (options or []) if str(o).strip()][:5]
+    if len(clean) < 2:
+        return {"error": "Give at least two options."}
+    set_ui_state({"choices": {"question": str(question or "").strip()[:80], "options": clean}})
+    return {"status": "shown", "next": "Ask the question in one short sentence and wait for the answer (spoken or tapped)."}
+
+
+@tool
+def join_rewards(name: str, mobile_number: str, pin: str) -> dict:
+    """Sign a new customer up to VoiceBite Rewards by voice: their name, mobile number and a 4-digit PIN they choose.
+
+    Only for customers who are not members yet (see CUSTOMER in your instructions). Never say the PIN back out loud.
+
+    Args:
+        name: The customer's first name.
+        mobile_number: Their mobile number, digits as spoken, e.g. "0501234567".
+        pin: The 4 digits they chose, e.g. "4826".
+    """
+    if not _rewards:
+        return {"error": "Rewards are not available. Carry on with the order."}
+    if _order_tools.call_customer.get("phone"):
+        return {"error": "This customer is already a member."}
+    result = _rewards.voice_join(name, mobile_number, pin)
+    if result.get("error"):
+        return {"error": result["error"] + " Ask again, and do not repeat the PIN out loud."}
+    _order_tools.set_call_customer({k: result.get(k, "") for k in ("phone", "name", "lastVehicle", "lastPayment")})
+    set_ui_state({"memberToken": result["token"], "choices": None})   # the app signs them in, no typing needed
+    return {"status": "joined", "name": result.get("name", ""), "next": "Welcome them in one sentence, without repeating the number or PIN, then carry on."}
+
+
+def _customer_section(info: dict) -> str:
+    """What the attendant knows about the caller. Members get one-tap confirmations instead of questions."""
+    if info.get("phone"):
+        lines = [f"CUSTOMER: a VoiceBite Rewards member, {info.get('name') or 'name not given'}. Greet them by name once."]
+        if info.get("lastVehicle"):
+            lines.append(f'- Last visit they came in car {info["lastVehicle"]}. When you need the plate, ask "Same car, {info["lastVehicle"]}?" and call show_choices with ["{info["lastVehicle"]}", "Different car"]. If it is a different car, ask for the new plate')
+        if info.get("lastPayment"):
+            label = {"cash": "Cash", "card": "Card", "link": "Payment link"}.get(info["lastPayment"], info["lastPayment"])
+            lines.append(f'- They paid by {label.lower()} last time. Ask only "{label}, like last time?" and call show_choices with ["{label}", "Something else"]. Do not list every option')
+        lines.append("- Never offer to sign them up: they are already a member")
+        return "\n".join(lines) + "\n"
+    return ("CUSTOMER: a guest (not signed in). After the order is placed, offer once, in one sentence: "
+            '"Would you like to join VoiceBite Rewards? I just need your name, mobile number and a 4-digit PIN." '
+            "If they say yes, collect the three, then call join_rewards. Never repeat the PIN out loud. If they say no, do not ask again.\n")
 
 
 def _request_language(language: str) -> dict:
@@ -378,11 +440,16 @@ RULES:
 - If add_to_order says an item is sold out, apologise and suggest something similar
 - When the customer ORDERS an item (e.g. "I'll have the...", "I need that one"): call add_to_order straight away, then confirm in a few words ("Done, one Double Burger. Anything else?")
 - The order and total on screen update automatically from the order tools. Do not pass order_items or order_total to update_ui
-- PLACING THE ORDER: when the customer says that is everything, or asks to place the order, call get_order_summary, read back the items and the totalText, then ask ONE last question: "What is your vehicle plate number, so we can bring your order to your car?" Wait for the answer. Only then call place_order(vehicle_number="<the plate they said>"). Never call place_order without a vehicle plate number
+- PLACING THE ORDER: when the customer says that is everything, or asks to place the order, call get_order_summary and read back the items and the totalText. Then:
+  1. VEHICLE (mandatory for every order, even for members: they may be in a different car): ask for the plate number (or confirm last visit's plate, see CUSTOMER)
+  2. PAYMENT: call show_choices(question="How would you like to pay?", options=["Cash", "Card", "Payment link"]) and ask once (for members, confirm last time's method instead, see CUSTOMER)
+  Then call place_order(vehicle_number="<plate>", payment_method="cash" | "card" | "link"). Never call place_order without both
+- ON-SCREEN CHOICES: whenever you ask a question with a few fixed answers (yes/no, size, payment, same car), call show_choices so the customer can tap instead of speaking
 - After place_order succeeds, confirm with the order number, the vehicle plate number and the totalText, and add: "Let us know when you're five minutes away and we'll have it hot and ready."
+{customer}
 - Special instructions: pass as special_instructions in add_to_order
 
-TOOLS: show_products, update_ui, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, get_categories, get_items_by_category, get_recommendations, get_ui_context, load_menu
+TOOLS: show_products, show_choices, join_rewards, update_ui, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, get_categories, get_items_by_category, get_recommendations, get_ui_context, load_menu
 
 BUILD YOUR OWN BURGER (itemId: custom-burger):
 Walk customer through: patty (beef/chicken), toppings, sauces. Use update_ui(burger_builder={"active":true,"patty":null,"toppings":[],"sauces":[],"price":{base_price}}) to open the builder. Update it as they choose, adding each extra's price in cents to "price" (e.g. burger_builder={"active":true,"patty":"beef patty","toppings":["bacon"],"sauces":[],"price":<running total>}). When done, recap the burger (no prices) and ask "Sound good, or want to change anything?" and only call build_custom_burger AFTER they confirm.
@@ -606,14 +673,22 @@ async def voice_chat(websocket: WebSocket) -> None:
             lang = _langs.pick(websocket.query_params.get("lang", ""))
             resumed = _langs.take_resume(websocket.query_params.get("resume", ""))
 
+        caller = {}
+        if _rewards:   # a signed-in member: the app sends their token with the call
+            member_phone = _rewards.phone_from_token(websocket.query_params.get("member", ""))
+            caller = _rewards.context(member_phone) if member_phone else {}
+        _order_tools.set_call_customer(caller)
+
         if is_open_now(settings):
-            system_prompt = _build_system_prompt(settings, lang, resumed)
+            system_prompt = _build_system_prompt(settings, lang, resumed).replace("{customer}", _customer_section(caller) if _rewards else "")
             tools = [
                 show_products, load_menu,
                 get_categories, get_items_by_category, get_recommendations,
                 add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order,
-                update_ui, get_ui_context, stop_conversation,
+                update_ui, get_ui_context, stop_conversation, show_choices,
             ]
+            if _rewards:
+                tools.append(join_rewards)
             if _langs and len(_langs.available()) > 1:
                 tools.append(switch_language)
         else:

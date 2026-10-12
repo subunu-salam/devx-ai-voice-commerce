@@ -47,11 +47,14 @@ DEFAULT_LOYALTY = {
     "welcomePoints": 50,        # given when a customer joins with a referral code
     "referrerPoints": 100,      # given to the referrer when their friend's first order is completed
     "minRedeem": 100,           # smallest number of points that can be redeemed at once
+    "basketReward": "Free dessert",   # what a full fruit basket (one of each fruit) unlocks
+    "gameTarget": 12,           # Fruit Rush score that wins a bonus fruit
+    "groupItems": 4,            # an order with this many items or more earns a bonus fruit (group visits)
 }
 ITEM_WASTE_REASONS = ["unsold", "dropped", "broken", "burnt", "expired", "returned", "other"]
 
 for name, caps in (("production", ("inventory.view", None)), ("pos_sales", ("inventory.view", None)),
-                   ("alerts", ("inventory.view", None)), ("loyalty_moves", ("crm.view", None))):
+                   ("alerts", ("inventory.view", None)), ("loyalty_moves", ("crm.view", None)), ("vouchers", ("crm.view", None))):
     A.COLLECTIONS.setdefault(name, caps)
 
 router = A.router
@@ -67,7 +70,7 @@ def ops_config() -> dict:
 def loyalty_config() -> dict:
     cfg = _get_config("LOYALTY", DEFAULT_LOYALTY)
     out = {**DEFAULT_LOYALTY, **cfg}
-    for k in ("pointsPerAed", "filsPerPoint", "welcomePoints", "referrerPoints", "minRedeem"):
+    for k in ("pointsPerAed", "filsPerPoint", "welcomePoints", "referrerPoints", "minRedeem", "gameTarget", "groupItems"):
         out[k] = int(float(out.get(k) or 0))
     out["enabled"] = bool(out.get("enabled"))
     return out
@@ -440,6 +443,9 @@ class LoyaltyIn(BaseModel):
     welcomePoints: int = Field(default=50, ge=0, le=100_000)
     referrerPoints: int = Field(default=100, ge=0, le=100_000)
     minRedeem: int = Field(default=100, ge=1, le=1_000_000)
+    basketReward: str = Field(default="Free dessert", min_length=2, max_length=60)
+    gameTarget: int = Field(default=12, ge=1, le=60)
+    groupItems: int = Field(default=4, ge=2, le=50)
 
 
 @router.put("/ops/loyalty/config")
@@ -450,7 +456,7 @@ def save_loyalty(body: LoyaltyIn, user: dict = Depends(A.need("settings.manage")
 
 
 def _public_member(c: dict) -> dict:
-    return {k: c.get(k) for k in ("id", "phone", "name", "points", "referralCode", "referredBy", "joinedAt", "lifetimePoints", "marketingConsent") if k in c} | \
+    return {k: c.get(k) for k in ("id", "phone", "name", "points", "referralCode", "referredBy", "joinedAt", "lifetimePoints", "marketingConsent", "fruits", "baskets", "lastPayment", "lastVehicle") if k in c} | \
         {"member": bool(c.get("pinHash")), "locked": bool(c.get("lockUntil")) and str(c.get("lockUntil")) > A._now()}
 
 
@@ -469,7 +475,14 @@ def loyalty_overview(user: dict = Depends(A.need("crm.view"))):
     moves = sorted(A._records("loyalty_moves"), key=lambda r: r["id"], reverse=True)[:200]
     issued = sum(int(m.get("points") or 0) for m in moves if int(m.get("points") or 0) > 0)
     redeemed = -sum(int(m.get("points") or 0) for m in moves if m.get("kind") == "redeem")
-    return {"config": cfg, "members": members, "moves": moves,
+    vouchers = sorted(A._records("vouchers"), key=lambda v: str(v.get("createdAt", "")), reverse=True)
+    names = {c["id"]: c.get("name", "") for c in A._records("customers")}
+    for v in vouchers:
+        v["name"] = names.get(v.get("phone", ""), "")
+    fruit_moves = [m for m in moves if m.get("kind") == "fruit"]
+    return {"config": cfg, "members": members, "moves": moves, "vouchers": vouchers[:100],
+            "fruits": {"collected": len(fruit_moves), "baskets": sum(int(m.get("baskets") or 0) for m in members),
+                       "openVouchers": len([v for v in vouchers if v.get("status") == "open"]), "games": len([m for m in moves if m.get("kind") == "game"])},
             "stats": {"members": len([m for m in members if m["member"]]), "outstandingPoints": sum(int(m.get("points") or 0) for m in members),
                       "outstandingValue": sum(m["walletValue"] for m in members), "issued": issued, "redeemed": redeemed,
                       "referred": sum(referrals.values())}}
@@ -610,17 +623,21 @@ def load_starter_kit(user: dict = Depends(A.need("settings.manage"))):
             added["recipes"] += 1
     if not any(p.get("sample") for p in A._records("production")):
         costs, today = portion_costs(), datetime.fromisoformat(local_day()).date()
-        for n in range(7, -1, -1):
-            day = (today - timedelta(days=n)).isoformat()
-            for k, (item_id, (made, sells)) in enumerate(STARTER_BATCHES.items()):
+        rhythm = {3: 1.1, 4: 1.35, 5: 1.25}                                # Thursday to Saturday are busier
+        for n in range(27, -1, -1):                                       # four weeks, so the AI forecast has history to learn from
+            day_d = today - timedelta(days=n)
+            day = day_d.isoformat()
+            for k, (item_id, (base_made, sells)) in enumerate(STARTER_BATCHES.items()):
                 if item_id not in menu:
                     continue
-                wobble = ((n * 7 + k * 3) % 5) - 2                         # a little day-to-day variation
-                sold = max(0, sells + wobble * 2 - (0 if n else sells // 3))   # today is still in progress
-                waste = max(0, (made - sells) // 3 + ((n + k) % 3) - 1)
+                noise = 1 + (((n * 37 + k * 11) % 13) - 6) / 100           # about +/-6% day-to-day variation
+                demand = sells * rhythm.get(day_d.weekday(), 1) * noise
+                made = round(base_made * (1.1 if day_d.weekday() in rhythm else 1))   # the kitchen makes a fixed batch, a bit more at weekends
+                sold = min(made, round(demand)) if n else round(demand * 0.6)       # today is still in progress
+                waste = max(0, round((made - sold) * 0.6)) if n else 0
                 unit = costs.get(item_id, 0)
                 A._save("production", f"{day}#sample-{item_id}", {"day": day, "at": A._now(), "itemId": item_id, "name": menu[item_id]["name"], "qty": made,
-                                                                  "portionCost": unit, "note": "Morning batch", "by": "starter-stock", "branchId": A.DEFAULT_LOCATION, "sample": True})
+                                                                  "portionCost": unit, "note": "Morning batch", "by": "starter-stock", "branchId": A.DEFAULT_LOCATION, "sample": True, "at": (datetime.now(timezone.utc) - timedelta(days=n)).isoformat()})
                 A._save("pos_sales", f"{day}#{A.DEFAULT_LOCATION}#sample-{item_id}", {"day": day, "at": A._now(), "ref": "sample", "by": "starter-stock", "branchId": A.DEFAULT_LOCATION,
                                                                                      "lines": [{"itemId": item_id, "qty": sold, "amount": sold * menu[item_id]["price"]}], "sample": True})
                 added["production"] += 1
@@ -658,3 +675,22 @@ def remove_starter_kit(user: dict = Depends(A.need("settings.manage"))):
             A.data_table.delete_item(Key={"c": "alerts", "id": a["id"]})
     A.audit(user, "starter_stock_removed", "", str(dict(removed)))
     return {"removed": dict(removed)}
+
+
+class VoucherIn(BaseModel):
+    code: str = Field(min_length=4, max_length=20)
+    orderId: str = Field(default="", max_length=40)
+
+
+@router.post("/ops/loyalty/voucher")
+def redeem_voucher(body: VoucherIn, user: dict = Depends(A.need("orders.status"))):
+    """At the window: the customer shows a fruit-basket voucher."""
+    code = body.code.strip().upper()
+    v = A._record("vouchers", code)
+    if not v:
+        raise HTTPException(404, "No voucher with that code.")
+    if v.get("status") != "open":
+        raise HTTPException(400, f"This voucher was already used on {str(v.get('redeemedAt', ''))[:10]}.")
+    A._save("vouchers", code, {**v, "status": "redeemed", "redeemedAt": A._now(), "redeemedBy": user["user"], "orderId": body.orderId})
+    A.audit(user, "voucher_redeemed", code, v.get("reward", ""))
+    return {"code": code, "reward": v.get("reward", ""), "phone": v.get("phone", "")}
