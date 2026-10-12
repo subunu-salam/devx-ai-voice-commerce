@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/rewards")
 TOKEN_DAYS = 30
+KIOSK_PASS_SECONDS = 600   # a sign-in on a shared kiosk only lasts for this visit
 MAX_TRIES, LOCK_MINUTES = 5, 15
 WEAK_PINS = {"0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999", "1234", "4321", "1212", "0123"}
 PRIVATE = ("pinHash", "pinSalt", "failedPins", "lockUntil")
@@ -74,8 +75,8 @@ def _secret() -> bytes:
     return hashlib.sha256(("rewards|" + base).encode()).digest()
 
 
-def _token(phone: str) -> str:
-    expires = int(time.time()) + TOKEN_DAYS * 86400
+def _token(phone: str, seconds: int = 0) -> str:
+    expires = int(time.time()) + (seconds or TOKEN_DAYS * 86400)
     sig = hmac.new(_secret(), f"{expires}|{phone}".encode(), hashlib.sha256).hexdigest()
     return f"{expires}.{phone}.{sig}"
 
@@ -359,7 +360,7 @@ def remember(order: dict) -> None:
     A._save("customers", phone, c)
 
 
-def voice_join(name: str, phone: str, pin: str) -> dict:
+def voice_join(name: str, phone: str, pin: str, short: bool = False) -> dict:
     """Sign-up by voice: the same rules as the app. Returns the member token and context, or {"error": ...}."""
     try:
         result = join(JoinIn(phone=str(phone), pin=re.sub(r"\D", "", str(pin)), name=str(name or "")[:60]))
@@ -367,10 +368,10 @@ def voice_join(name: str, phone: str, pin: str) -> dict:
         return {"error": str(e.detail)}
     except Exception:
         return {"error": "That mobile number does not look right. Ask for it again."}
-    return {"token": result["token"], **context(result["phone"])}
+    return {"token": _token(result["phone"], KIOSK_PASS_SECONDS) if short else result["token"], **context(result["phone"])}
 
 
-def voice_login(phone: str, pin: str) -> dict:
+def voice_login(phone: str, pin: str, short: bool = False) -> dict:
     """Sign-in by voice: the same checks (and lockout) as the app. Returns the member token and context, or {"error": ...}."""
     try:
         result = login(LoginIn(phone=str(phone), pin=re.sub(r"\D", "", str(pin))))
@@ -378,7 +379,7 @@ def voice_login(phone: str, pin: str) -> dict:
         return {"error": str(e.detail)}
     except Exception:
         return {"error": "That mobile number or PIN does not look right."}
-    return {"token": result["token"], **context(result["phone"])}
+    return {"token": _token(result["phone"], KIOSK_PASS_SECONDS) if short else result["token"], **context(result["phone"])}
 
 
 class GameIn(BaseModel):

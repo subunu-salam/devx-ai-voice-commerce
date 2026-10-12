@@ -53,6 +53,7 @@ try:
         get_order_state,
     )
     from agent import order_tools as _order_tools
+    from agent import call_context as _calls
     from agent.ui_state_manager import set_websocket, clear_websocket, set_ui_state, get_ui_state, reset_ui_state
 except ModuleNotFoundError:
     from menu_tools import (
@@ -63,6 +64,7 @@ except ModuleNotFoundError:
         get_order_state,
     )
     import order_tools as _order_tools
+    import call_context as _calls
     from ui_state_manager import set_websocket, clear_websocket, set_ui_state, get_ui_state, reset_ui_state
 
 
@@ -109,7 +111,7 @@ else:
     def is_open_now(settings: dict) -> bool:
         return True
 
-    def start_session(location_id: str) -> None:
+    def start_session(location_id: str, lane: str = "") -> None:
         pass
 
     def end_session(error: str = "") -> None:
@@ -126,21 +128,15 @@ CURRENCY = "AED"  # shown and spoken as UAE dirhams
 BEDROCK_REGION = os.getenv("BEDROCK_REGION", "us-east-1")
 MODEL_ID = os.getenv("VOICE_MODEL_ID", "amazon.nova-2-sonic-v1:0")
 
-# Shared UI_State from frontend (what the customer is looking at)
-_current_frontend_state: dict = {
-    "visibleCategory": None,
-    "selectedItem": None,
-}
-
-
-_call_lang = "en"   # the language of the call in progress
-_call_over = None   # set once the call in progress has finished tidying up (see voice_chat)
+# Everything about the customer on a call lives in that call's own object (call_context.Call), never in a
+# variable shared between lanes: see call_context.py.
+_LANE = re.compile(r"[A-Za-z0-9][A-Za-z0-9 _-]{0,39}")
 
 
 @tool
 def get_ui_context() -> dict:
     """Returns what the customer is currently looking at on screen."""
-    return dict(_current_frontend_state)
+    return dict(_calls.current().looking_at)
 
 
 def _push_menu() -> list:
@@ -244,9 +240,9 @@ def join_rewards(name: str, mobile_number: str, pin: str) -> dict:
     """
     if not _rewards:
         return {"error": "Rewards are not available. Carry on with the order."}
-    if _order_tools.call_customer.get("phone"):
+    if _order_tools.customer().get("phone"):
         return {"error": "This customer is already a member."}
-    result = _rewards.voice_join(name, mobile_number, pin)
+    result = _rewards.voice_join(name, mobile_number, pin, short=_calls.current().kiosk)
     if result.get("error"):
         return {"error": result["error"] + " Ask again, and do not repeat the PIN out loud."}
     _order_tools.set_call_customer({k: result.get(k, "") for k in ("phone", "name", "lastVehicle", "lastPayment")})
@@ -279,10 +275,10 @@ def _request_language(language: str) -> dict:
     if not code or code not in _langs.available():
         choices = ", ".join(_langs.name(c) for c in _langs.available()) if _langs else "English"
         return {"error": f"That language is not available. Apologise briefly and carry on. Available: {choices}."}
-    if code == _call_lang:
+    if code == _calls.current().lang:
         return {"status": "already", "next": f"This call is already in {_langs.name(code)}. Carry on."}
-    set_ui_state({"switchLanguage": code, "resumeToken": _langs.issue_resume()})
-    logger.info("language switch: %s -> %s", _call_lang, code)
+    set_ui_state({"switchLanguage": code, "resumeToken": _langs.issue_resume(_calls.current())})
+    logger.info("language switch: %s -> %s", _calls.current().lang, code)
     return {"status": "switching", "next": "A colleague is taking over the call now. Say nothing more."}
 
 
@@ -625,13 +621,12 @@ async def ping():
 async def voice_chat(websocket: WebSocket) -> None:
     import asyncio
     import json as _json
-    global _call_lang, _call_over
 
     agent = None
     session_started = False
     session_error = ""
     lang = "en"
-    call_over = None
+    call = _calls.begin()   # this WebSocket's own call: a fresh, empty customer, order and screen
 
     # --- Per-session rate limiter ---
     message_timestamps: list[float] = []
@@ -663,28 +658,25 @@ async def voice_chat(websocket: WebSocket) -> None:
         if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,39}", location):
             location = DEFAULT_LOCATION
 
-        # A language switch reconnects straight away. Let the call before this one finish tidying up first,
-        # so its clean-up cannot wipe this call's link to the customer's screen.
-        previous, call_over = _call_over, asyncio.Event()
-        _call_over = call_over
-        if previous is not None and not previous.is_set():
-            try:
-                await asyncio.wait_for(previous.wait(), timeout=3)
-            except asyncio.TimeoutError:
-                logger.warning("The previous call is still closing; starting this one anyway")
+        lane = websocket.query_params.get("lane", "").strip()
+        call.lane = lane if _LANE.fullmatch(lane) else ""
+        call.kiosk = websocket.query_params.get("kiosk", "") == "1"
 
         resumed = False   # True when this is the same customer coming back after switching language
         if _langs:
             lang = _langs.pick(websocket.query_params.get("lang", ""))
-            resumed = _langs.take_resume(websocket.query_params.get("resume", ""))
+            before = _langs.take_resume(websocket.query_params.get("resume", ""))
+            if isinstance(before, _calls.Call):
+                call.carry_over_from(before)   # same customer after a language switch: same order and identity
+            resumed = before is not None
 
         caller = {}
         if _rewards:   # a signed-in member: the app sends their token with the call
             member_phone = _rewards.phone_from_token(websocket.query_params.get("member", ""))
             caller = _rewards.context(member_phone) if member_phone else {}
-        _order_tools.set_call_customer(caller)
-        if not resumed:
-            _order_tools.reset_heard()   # the plate must be given again on every visit
+        if caller.get("phone") or not resumed:
+            _order_tools.set_call_customer(caller)   # a language switch keeps who they said they were
+        caller = _order_tools.customer()
 
         if is_open_now(settings):
             system_prompt = _build_system_prompt(settings, lang, resumed).replace("{customer}", _customer_section(caller) if _rewards else "")
@@ -710,9 +702,7 @@ async def voice_chat(websocket: WebSocket) -> None:
 
         set_websocket(websocket, asyncio.get_running_loop())
         reset_ui_state()
-        if not resumed:
-            get_order_state().cancel()  # a new call never inherits the previous caller's unplaced items
-        _call_lang = lang
+        call.lang = lang
         if len(tools) > 1:
             try:
                 logger.info("menu preloaded: %s categories", len(_push_menu()))  # menu goes on screen straight away, so the attendant greets once and has no tool call to make first
@@ -725,7 +715,7 @@ async def voice_chat(websocket: WebSocket) -> None:
                 summary = get_order_state().get_summary()
                 voice.update(orderItems=summary["items"], orderTotal=summary["total"])
             set_ui_state(voice)
-        start_session(location)
+        start_session(location, call.lane)
         session_started = True
         logger.info("WebSocket session started (location=%s, language=%s, resumed=%s)", location, lang, resumed)
 
@@ -798,10 +788,9 @@ async def voice_chat(websocket: WebSocket) -> None:
             except Exception:
                 pass
     finally:
-        if call_over is None or _call_over is call_over:   # skipped if a newer call has already taken over the line
-            clear_websocket()
-            if session_started:
-                end_session(session_error)
+        clear_websocket()
+        if session_started:
+            end_session(session_error)
         logger.info("WebSocket session ended, cleaning up")
         try:
             if websocket.client_state == WebSocketState.CONNECTED:
@@ -810,8 +799,7 @@ async def voice_chat(websocket: WebSocket) -> None:
                 await agent.stop()
         except Exception as cleanup_err:
             logger.warning("Cleanup error: %s", cleanup_err)
-        if call_over is not None:
-            call_over.set()
+        _calls.end(call)   # this customer's order, identity and screen are gone; the next car starts clean
 
 
 if __name__ == "__main__":

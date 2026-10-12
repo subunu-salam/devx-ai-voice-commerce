@@ -27,6 +27,7 @@ VOICES = ["tiffany", "matthew", "amy"]
 DEFAULT_LOCATION = "main"
 
 DEFAULT_SETTINGS = {
+    "kioskLanes": [],   # drive-through kiosks: [{"lane": "Lane 1", "locationId": "main", "idle": 60, "handoff": 20}]
     "greeting": "Welcome to VoiceBite! How can I help you?",
     "voice": "tiffany",
     "upsell": "Suggest combos naturally.",
@@ -142,16 +143,22 @@ def ensure_sessions_table() -> None:
         logger.warning("Could not create %s; call insights will be empty: %s", SESSIONS_TABLE_NAME, e)
 
 
-_session = None  # the agent handles one call at a time, like its order state
+def _rec():
+    """The call record of the call in progress (each lane has its own, see call_context)."""
+    try:
+        from agent.call_context import current
+    except ImportError:
+        from call_context import current
+    return current()
 
 
-def start_session(location_id: str) -> None:
-    global _session
-    _session = {
+def start_session(location_id: str, lane: str = "") -> None:
+    _rec().record = {
         "sessionId": uuid.uuid4().hex[:12],
         "startedAt": datetime.now(timezone.utc).isoformat(),
         "t0": time.time(),
         "locationId": location_id or DEFAULT_LOCATION,
+        "lane": lane,
         "viewed": [], "added": [],
         "orderPlaced": False, "orderId": "", "orderTotal": 0,
         "inputTokens": 0, "outputTokens": 0,
@@ -159,34 +166,39 @@ def start_session(location_id: str) -> None:
 
 
 def current_location() -> str:
+    _session = _rec().record
     return _session["locationId"] if _session else DEFAULT_LOCATION
 
 
 def note_viewed(item_id: str) -> None:
+    _session = _rec().record
     if _session and item_id and item_id not in _session["viewed"]:
         _session["viewed"].append(item_id)
 
 
 def note_added(item_id: str) -> None:
+    _session = _rec().record
     if _session and item_id and item_id not in _session["added"]:
         _session["added"].append(item_id)
 
 
 def note_order(order_id: str, total: int) -> None:
+    _session = _rec().record
     if _session:
         _session.update(orderPlaced=True, orderId=str(order_id), orderTotal=int(total or 0))
 
 
 def note_usage(input_tokens, output_tokens) -> None:
     """The voice model reports running totals, so keep the highest figure seen."""
+    _session = _rec().record
     if _session:
         _session["inputTokens"] = max(_session["inputTokens"], int(input_tokens or 0))
         _session["outputTokens"] = max(_session["outputTokens"], int(output_tokens or 0))
 
 
 def end_session(error: str = "") -> None:
-    global _session
-    record, _session = _session, None
+    call = _rec()
+    record, call.record = call.record, None
     if not record:
         return
     started = record.pop("t0")

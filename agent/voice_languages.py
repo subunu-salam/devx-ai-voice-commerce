@@ -256,22 +256,31 @@ def closed_note(lang: str) -> str:
 
 
 # ---------- carrying the order across a language switch ----------
-# The server takes one call at a time and holds its order in memory. When the customer changes language the
-# app reconnects, and a normal new call starts with an empty order. So a switch hands the app a one-use key:
-# reconnecting with it inside RESUME_SECONDS keeps the order. Any other new call voids the key.
+# Each call holds its own order in memory. When the customer changes language the app reconnects, and a normal new
+# call starts empty. So a switch hands that app a one-use key: reconnecting with it inside RESUME_SECONDS hands the
+# new call the old call's order and customer. Keys are per call, so lanes switching language at once never mix.
 
-_resume = {"token": "", "until": 0.0}
-
-
-def issue_resume() -> str:
-    _resume.update(token=secrets.token_urlsafe(12), until=time.monotonic() + RESUME_SECONDS)
-    return _resume["token"]
+_resume: dict = {}   # token -> (payload, expires at)
 
 
-def take_resume(token) -> bool:
-    """True if this new call is the same customer coming back after a language switch."""
-    saved, until = _resume["token"], _resume["until"]
-    _resume.update(token="", until=0.0)
-    if not saved or not token or time.monotonic() > until:
-        return False
-    return hmac.compare_digest(saved.encode(), str(token).encode())
+def issue_resume(payload=None) -> str:
+    now = time.monotonic()
+    for k in [k for k, (_, until) in _resume.items() if until < now]:
+        _resume.pop(k, None)
+    token = secrets.token_urlsafe(12)
+    _resume[token] = (payload if payload is not None else True, now + RESUME_SECONDS)
+    return token
+
+
+def take_resume(token):
+    """The payload saved with this key if this new call is the same customer back after a language switch, else None."""
+    token = str(token or "")
+    if not token:
+        return None
+    found = None
+    for k in list(_resume):
+        if hmac.compare_digest(k.encode(), token.encode()):
+            found = _resume.pop(k)
+    if not found or time.monotonic() > found[1]:
+        return None
+    return found[0]

@@ -4,29 +4,26 @@
 """Send UI_Events over WebSocket from tools (runs in worker threads)."""
 
 import asyncio
-import json
 
-_event_loop = None
-_websocket = None
+try:
+    from agent.call_context import current
+except ImportError:
+    from call_context import current
 
 
 def set_websocket(ws, loop):
-    global _websocket, _event_loop
-    _websocket = ws
-    _event_loop = loop
-    print(f"[ui_sender] set_websocket: ws={ws is not None}, loop={loop is not None}")
+    call = current()
+    call.ws, call.loop = ws, loop
 
 
 def clear_websocket():
-    global _websocket, _event_loop
-    _websocket = None
-    _event_loop = None
+    call = current()
+    call.ws = call.loop = None
 
 
 def send_ui_event(ui_event: dict, tool_context=None):
-    """Send a UI_Event as JSON over the session WebSocket."""
-    ws = _websocket
-    loop = _event_loop
+    """Send a UI_Event as JSON over this call's WebSocket."""
+    ws, loop = current().ws, current().loop
 
     if ws is None or loop is None:
         print(f"[ui_sender] SKIP: ws={ws is not None}, loop={loop is not None}")
