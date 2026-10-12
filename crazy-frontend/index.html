@@ -452,6 +452,35 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 .rwearned{font-weight:600; color:var(--ok); white-space:nowrap}
 .rwline{display:grid; gap:2px; width:100%; text-align:start; background:var(--citron); color:var(--text); border:0; border-radius:var(--r); padding:14px 16px; margin-top:var(--gap); font-size:.9rem}
 .rwline b{font-weight:600}
+
+/* tappable answers in voice mode */
+.choices{width:100%; text-align:start; animation:rise .35s var(--ease)}
+.choices p{font-size:.85rem; color:#B9CFC4; margin:0 2px 8px}
+.choices div{display:flex; flex-wrap:wrap; gap:8px}
+.choices button{border:0; background:#fff; color:var(--text); border-radius:999px; padding:11px 18px; font-weight:600; font-size:1rem; transition:transform .15s var(--spring), background .2s}
+.choices button:active{transform:scale(.94)} .choices button.picked{background:var(--citron)}
+
+/* fruit basket */
+.basket{background:#fff; border-radius:var(--r); padding:16px; margin-top:var(--gap); display:grid; gap:10px}
+.bhead{display:flex; justify-content:space-between; align-items:baseline} .bhead b{font-weight:600; font-size:1.05rem} .bhead span{font-weight:600; color:var(--soft)}
+.bslots{display:grid; grid-template-columns:repeat(6,1fr); gap:6px}
+.bslot{position:relative; aspect-ratio:1; border-radius:14px; background:var(--bg); display:grid; place-items:center; transition:transform .3s var(--spring)}
+.bslot svg{filter:grayscale(1) opacity(.28)} .bslot.got{background:#FFF4DC} .bslot.got svg{filter:none}
+.bslot i{position:absolute; top:-4px; inset-inline-end:-4px; font-style:normal; font-size:.66rem; font-weight:700; background:var(--palm); color:#fff; border-radius:999px; padding:1px 5px}
+.bnote{font-weight:600} .bhow{font-size:.8rem; color:var(--soft)}
+.voucher{display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--citron); border-radius:14px; padding:10px 14px; border:2px dashed var(--palm)}
+.voucher span{display:grid} .voucher small{font-size:.72rem} .voucher b{font-weight:600} .voucher code{font-size:1.15rem; font-weight:700; letter-spacing:.08em; font-family:inherit}
+.rushbtn{display:flex; align-items:center; gap:12px; width:100%; text-align:start; border:0; border-radius:var(--r); padding:14px 16px; margin-top:var(--gap); background:linear-gradient(120deg,#FF6B3D,#F0462B); color:#fff; animation:rise .4s var(--ease)}
+.rushbtn span:last-child{display:grid} .rushbtn b{font-weight:600; font-size:1.02rem} .rushbtn small{opacity:.88; font-size:.82rem}
+.rushfruits{display:flex} .rushfruits svg{margin-inline-end:-10px; filter:drop-shadow(0 2px 3px rgba(0,0,0,.2))}
+/* Fruit Rush */
+.rush{position:absolute; inset:0; z-index:80; background:linear-gradient(#123F31,#0B2A20 70%,#1C4B35); color:#fff; touch-action:none; animation:rise .3s var(--ease)}
+.rtop{height:56px; display:flex; align-items:center; gap:14px; padding:calc(8px + var(--top)) 16px 0}
+.rtop b{font-size:1.8rem; font-weight:600; flex:1} .rtop span{font-size:1.2rem; font-weight:600; background:rgba(255,255,255,.12); border-radius:999px; padding:4px 14px; font-variant-numeric:tabular-nums} .rtop .x{color:#fff; font-size:1.2rem}
+.rush canvas{display:block}
+.rintro{position:absolute; inset:56px 0 0; display:grid; place-content:center; justify-items:center; gap:12px; text-align:center; padding:24px; background:rgba(7,30,23,.72); animation:rise .3s var(--ease)}
+.rintro h2{font-size:2rem; font-weight:600; letter-spacing:-.03em} .rintro p{color:#C9DDD2; max-width:28ch} .rintro .cta{width:auto; padding:14px 34px; margin-top:6px}
+.rprize{animation:pop .6s var(--spring)}
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
 </head>
@@ -556,6 +585,7 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
         <p class="vnote in" id="vnote" hidden></p>
         <div class="shelfwrap" id="shelfWrap" hidden><div class="shelfhead"><b id="shelfTitle"></b><span data-t="shelfHint"></span></div><div class="shelf" id="shelf"></div></div>
         <div id="spot" style="width:100%"></div>
+        <div class="choices" id="choices" hidden></div>
         <ul class="caps" id="caps" aria-live="polite"></ul>
       </div>
       <div class="vbot in">
@@ -743,7 +773,7 @@ function renderOrder() {
     el.innerHTML = `<div class="totalblock"><span>${esc(t("orderNo"))}</span><p class="bigno">${esc(order.number)}</p>${order.vehicle ? `<span class="plate">${esc(t("vehicle"))} ${esc(order.vehicle)}</span> ` : ""}${order.preview ? `<span class="tag">${esc(t("preview"))}</span>` : ""}${order.cancelled ? `<span class="tag">${esc(t("cancelled"))}</span>` : ""}</div>
       ${arrivalHtml()}<div class="sheet"><ol class="steps">${STEPS.map((s, n) => `<li class="${n < order.status ? "done" : n === order.status ? "now" : ""}">${esc(t(s))}</li>`).join("")}</ol>
       <p class="vat">${esc(t("payAt"))}</p><div class="sum"><span>${esc(t("total"))}</span><span>${money(order.total)}</span></div></div>
-      ${rewardsLine()}<button class="outline" data-act="again">${esc(t("again"))}</button>`;
+      ${rewardsLine()}${gameButton()}<button class="outline" data-act="again">${esc(t("again"))}</button>`;
   } else {
     const ls = lines(), sum = total();
     el.innerHTML = `<h1 class="title">${esc(t("navOrder"))}</h1>` +
@@ -956,18 +986,114 @@ $("langQuick").onclick = () => setLang(lang === "en" ? "ar" : "en");
 addEventListener("resize", renderNav);
 
 
+
+
+/* ================= Fruit basket and Fruit Rush ================= */
+const FRUIT_SVG = {
+  strawberry: `<path d="M20 9c7 0 12 4 12 10 0 9-8 16-12 16S8 28 8 19c0-6 5-10 12-10z" fill="#E8344B"/><path d="M13 9c2-3 5-2 7 0 2-2 5-3 7 0-3 1-4 3-7 3s-4-2-7-3z" fill="#3C9A3C"/><g fill="#FFE3A3"><circle cx="15" cy="18" r="1"/><circle cx="21" cy="17" r="1"/><circle cx="26" cy="19" r="1"/><circle cx="17" cy="24" r="1"/><circle cx="23" cy="25" r="1"/><circle cx="20" cy="30" r="1"/></g>`,
+  orange: `<circle cx="20" cy="22" r="13" fill="#FF8A1F"/><path d="M20 9c1-4 6-5 9-3-2 3-6 4-9 3z" fill="#3C9A3C"/><circle cx="15" cy="17" r="3" fill="#FFB35C" opacity=".7"/><g fill="#E06E0B"><circle cx="24" cy="25" r=".8"/><circle cx="18" cy="28" r=".8"/><circle cx="27" cy="19" r=".8"/></g>`,
+  lemon: `<path d="M5 21c3-8 10-12 15-12s12 4 15 12c-3 8-10 11-15 11S8 29 5 21z" fill="#FFD83A"/><path d="M5 21l-2 0M35 21l2 0" stroke="#E2B800" stroke-width="3" stroke-linecap="round"/><ellipse cx="15" cy="17" rx="4" ry="2" fill="#FFF0A0"/>`,
+  watermelon: `<path d="M4 15h32c0 11-7 19-16 19S4 26 4 15z" fill="#2E9D4F"/><path d="M7 15h26c0 9-6 15-13 15S7 24 7 15z" fill="#FF4D5E"/><g fill="#2A1B1B"><ellipse cx="14" cy="20" rx="1" ry="1.6"/><ellipse cx="20" cy="23" rx="1" ry="1.6"/><ellipse cx="26" cy="20" rx="1" ry="1.6"/><ellipse cx="17" cy="26" rx="1" ry="1.6"/><ellipse cx="23" cy="26" rx="1" ry="1.6"/></g>`,
+  grapes: `<path d="M20 6v6" stroke="#6B4A2B" stroke-width="2.4" stroke-linecap="round"/><path d="M21 9c3-3 7-3 9-1-3 2-6 2-9 1z" fill="#3C9A3C"/><g fill="#7B4BC9"><circle cx="14" cy="16" r="4.5"/><circle cx="23" cy="16" r="4.5"/><circle cx="18.5" cy="23" r="4.5"/><circle cx="27" cy="23" r="4"/><circle cx="12" cy="24" r="4"/><circle cx="16" cy="31" r="4"/><circle cx="23" cy="30" r="4"/></g><g fill="#B48CF0"><circle cx="12.5" cy="14.5" r="1.3"/><circle cx="21.5" cy="14.5" r="1.3"/><circle cx="17" cy="21.5" r="1.3"/></g>`,
+  mango: `<path d="M9 25c-3-9 4-17 13-16s12 9 9 16-17 9-22 0z" fill="#FFB020"/><path d="M24 11c5 2 8 7 7 12-4-1-7-5-7-12z" fill="#FF6B3D" opacity=".75"/><path d="M19 9c0-3 3-5 7-4-1 3-4 4-7 4z" fill="#3C9A3C"/><ellipse cx="14" cy="19" rx="3" ry="2" fill="#FFD27A"/>`,
+};
+const FRUIT_NAME = { en: { strawberry: "Strawberry", orange: "Orange", lemon: "Lemon", watermelon: "Watermelon", grapes: "Grapes", mango: "Mango" },
+  ar: { strawberry: "فراولة", orange: "برتقال", lemon: "ليمون", watermelon: "بطيخ", grapes: "عنب", mango: "مانجو" } };
+const fruitSvg = (f, size = 40) => `<svg viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true">${FRUIT_SVG[f]}</svg>`;
+const fname = f => (FRUIT_NAME[lang] || FRUIT_NAME.en)[f] || f;
+function basketHtml(m) {
+  const have = Object.values(m.fruits).filter(Boolean).length, need = 6 - have;
+  return `<div class="basket"><div class="bhead"><b>${esc(rt("fbTitle"))}</b><span>${have}/6</span></div>
+    <div class="bslots">${Object.entries(m.fruits).map(([f, n]) => `<div class="bslot ${n ? "got" : ""}" title="${esc(fname(f))}">${fruitSvg(f, 34)}${n > 1 ? `<i>×${n}</i>` : ""}</div>`).join("")}</div>
+    <p class="bnote">${need ? esc(rt("fbNeed", { n: need, reward: m.basketReward })) : esc(rt("fbFull"))}</p>
+    ${m.vouchers.map(v => `<div class="voucher"><span><small>${esc(rt("fbVoucher"))}</small><b>${esc(v.reward)}</b></span><code dir="ltr">${esc(v.code)}</code></div>`).join("")}
+    <p class="bhow">${esc(rt("fbHow", { n: m.groupItems }))}</p></div>`;
+}
+function gameButton() {
+  if (!member || !order || order.preview || !member.games || !member.games.includes(order.number)) return "";
+  return `<button class="rushbtn" data-rw="play"><span class="rushfruits">${["strawberry", "orange", "grapes"].map(f => fruitSvg(f, 30)).join("")}</span><span><b>${esc(rt("frPlay"))}</b><small>${esc(rt("frPlaySub", { n: member.gameTarget }))}</small></span></button>`;
+}
+/* Fruit Rush: drag the basket, catch falling fruit for 20 seconds, avoid the burnt buns */
+const fruitImgs = {};
+for (const f of Object.keys(FRUIT_SVG)) { const im = new Image(); im.src = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">${FRUIT_SVG[f]}</svg>`); fruitImgs[f] = im; }
+const burntImg = new Image(); burntImg.src = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path d="M6 24c0-8 6-13 14-13s14 5 14 13z" fill="#3A2A20"/><rect x="6" y="25" width="28" height="7" rx="3" fill="#2A1E17"/><g fill="#6B5444"><circle cx="15" cy="17" r="1"/><circle cx="22" cy="15" r="1"/><circle cx="27" cy="19" r="1"/></g><path d="M14 8c0-3 3-3 3-6M22 8c0-3 3-3 3-6" stroke="#9AA" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`);
+function playRush() {
+  if (!member || !order) return;
+  const app = $("app"), box = document.createElement("div"); box.className = "rush";
+  box.innerHTML = `<div class="rtop"><b id="rScore">0</b><span id="rTime">20</span><button class="x" id="rQuit" aria-label="Close">✕</button></div><canvas id="rCv"></canvas>
+    <div class="rintro" id="rIntro"><h2>${esc(rt("frTitle"))}</h2><p>${esc(rt("frRules", { n: member.gameTarget }))}</p><button class="cta" id="rGo">${esc(rt("frStart"))}</button></div>`;
+  app.appendChild(box);
+  const cv = $("rCv"), cx = cv.getContext("2d"), dpr = Math.min(2, devicePixelRatio || 1);
+  const W = box.clientWidth, H = box.clientHeight - 56; cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + "px"; cv.style.height = H + "px"; cx.scale(dpr, dpr);
+  let bx = W / 2, score = 0, items = [], start = 0, last = 0, spawn = 0, raf = 0, over = false, pops = [];
+  const BW = Math.min(110, W * .28), BH = 34, fruits = Object.keys(FRUIT_SVG);
+  const move = e => { const r = cv.getBoundingClientRect(), x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; bx = Math.max(BW / 2, Math.min(W - BW / 2, x)); };
+  cv.addEventListener("pointermove", move); cv.addEventListener("pointerdown", move); cv.addEventListener("touchmove", e => { e.preventDefault(); move(e); }, { passive: false });
+  const quit = () => { cancelAnimationFrame(raf); over = true; box.remove(); };
+  $("rQuit").onclick = quit;
+  function drawBasket() {
+    cx.save(); cx.translate(bx, H - 20);
+    cx.fillStyle = "#C98A3E"; cx.beginPath(); cx.moveTo(-BW / 2, -BH / 2); cx.lineTo(BW / 2, -BH / 2); cx.lineTo(BW / 2 - 10, BH / 2); cx.lineTo(-BW / 2 + 10, BH / 2); cx.closePath(); cx.fill();
+    cx.strokeStyle = "#A86E2A"; cx.lineWidth = 3; for (let i = -2; i <= 2; i++) { cx.beginPath(); cx.moveTo(i * BW / 6, -BH / 2); cx.lineTo(i * BW / 7, BH / 2); cx.stroke(); }
+    cx.fillStyle = "#E3A95A"; cx.fillRect(-BW / 2 - 4, -BH / 2 - 6, BW + 8, 8); cx.restore();
+  }
+  function frame(t) {
+    if (over) return; const dt = Math.min(.05, (t - last) / 1000 || 0); last = t; const el = (t - start) / 1000, left = Math.max(0, 20 - el);
+    $("rTime").textContent = Math.ceil(left);
+    spawn -= dt; if (spawn <= 0 && left > .6) { const bad = Math.random() < .16; items.push({ x: 24 + Math.random() * (W - 48), y: -30, v: 140 + el * 9 + Math.random() * 60, bad, f: fruits[Math.floor(Math.random() * 6)], r: Math.random() * 6.28, s: (Math.random() - .5) * 3 }); spawn = Math.max(.28, .62 - el * .016); }
+    cx.clearRect(0, 0, W, H);
+    for (const it of items) { it.y += it.v * dt; it.r += it.s * dt;
+      if (!it.done && it.y > H - 20 - BH / 2 - 20 && it.y < H - 10 && Math.abs(it.x - bx) < BW / 2 + 10) { it.done = true; score = Math.max(0, score + (it.bad ? -2 : 1)); pops.push({ x: it.x, y: it.y, t: 0, txt: it.bad ? "−2" : "+1", bad: it.bad }); $("rScore").textContent = score; if (navigator.vibrate && it.bad) try { navigator.vibrate(30); } catch (e) {} }
+      if (!it.done) { cx.save(); cx.translate(it.x, it.y); cx.rotate(it.r); cx.drawImage(it.bad ? burntImg : fruitImgs[it.f], -26, -26, 52, 52); cx.restore(); } }
+    items = items.filter(it => !it.done && it.y < H + 40);
+    for (const p of pops) { p.t += dt; cx.globalAlpha = Math.max(0, 1 - p.t * 1.6); cx.fillStyle = p.bad ? "#FFB4A6" : "#D7F25A"; cx.font = "700 22px " + getComputedStyle(document.body).fontFamily; cx.textAlign = "center"; cx.fillText(p.txt, p.x, p.y - 30 - p.t * 60); cx.globalAlpha = 1; }
+    pops = pops.filter(p => p.t < .7);
+    drawBasket();
+    if (left <= 0) return finish(el);
+    raf = requestAnimationFrame(frame);
+  }
+  async function finish(seconds) {
+    over = true; const msg = document.createElement("div"); msg.className = "rintro"; msg.innerHTML = `<h2>${score}</h2><p>${esc(rt("frSending"))}</p>`; box.appendChild(msg);
+    try { const r = await rwCall("/game", { orderId: order.number, token: order.token, score, seconds }, true); member = r; renderRewards(); renderOrder();
+      msg.innerHTML = r.won ? `<div class="rprize">${fruitSvg(r.prize.fruit, 90)}</div><h2>${esc(rt("frWon", { f: fname(r.prize.fruit) }))}</h2><p>${esc(r.prize.voucher ? rt("frBasket", { reward: r.prize.voucher.reward }) : rt("frWonSub", { n: Object.values(r.fruits).filter(Boolean).length }))}</p><button class="cta" id="rDone">${esc(rt("frDone"))}</button>`
+        : `<h2>${score} / ${r.target}</h2><p>${esc(rt("frLost", { n: r.target }))}</p><button class="cta" id="rDone">${esc(rt("frDone"))}</button>`;
+      if (r.won) celebrateFruit(); }
+    catch (e) { msg.innerHTML = `<h2>${score}</h2><p>${esc(e.message)}</p><button class="cta" id="rDone">${esc(rt("frDone"))}</button>`; }
+    $("rDone").onclick = quit;
+  }
+  $("rGo").onclick = () => { $("rIntro").remove(); start = last = performance.now(); raf = requestAnimationFrame(frame); };
+}
+function celebrateFruit() { if (calm) return; const box = document.createElement("div"); box.className = "party"; box.style.background = "transparent";
+  box.innerHTML = Array.from({ length: 22 }, (_, i) => `<i style="--x:${Math.round(Math.cos(i * 2.4) * (110 + (i * 31) % 90))}px; --y:${Math.round(Math.sin(i * 2.4) * (110 + (i * 47) % 100) - 80)}px; --r:${(i * 83) % 360}deg; --d:${(i % 5) * 40}ms; width:26px; height:26px; background:none">${fruitSvg(Object.keys(FRUIT_SVG)[i % 6], 26)}</i>`).join("");
+  $("app").appendChild(box); setTimeout(() => box.remove(), 2600); }
+
+/* questions with a few answers: shown as buttons, so the customer can tap instead of speaking */
+function renderChoices(c) {
+  const el = $("choices"); if (!el) return;
+  if (!c || !Array.isArray(c.options) || !c.options.length) { el.hidden = true; el.innerHTML = ""; return; }
+  el.innerHTML = `${c.question ? `<p>${esc(c.question)}</p>` : ""}<div>${c.options.map(o => `<button data-choice="${esc(o)}" dir="auto">${esc(o)}</button>`).join("")}</div>`; el.hidden = false;
+}
+$("choices").addEventListener("click", e => { const b = e.target.closest("[data-choice]"); if (!b) return;
+  b.classList.add("picked"); sendText(b.dataset.choice); setTimeout(() => renderChoices(null), 250); if (navigator.vibrate) try { navigator.vibrate(8); } catch (x) {} });
+
 /* ================= VoiceBite Rewards: mobile number + 4-digit PIN, points wallet, referrals ================= */
 const RW = {
   en: { rwTitle: "VoiceBite Rewards", rwLead: "Earn points on every order. Just your mobile number and a 4-digit PIN.", rwPhone: "Mobile number", rwPin: "4-digit PIN", rwName: "Your name (optional)",
     rwRef: "Friend's code (optional)", rwJoin: "Join and start earning", rwSignIn: "Sign in", rwHaveAcc: "Already a member? Sign in", rwNew: "New here? Join", rwPoints: "points", rwWorth: "worth",
     rwCode: "Your code", rwShare: "Share with a friend", rwShareText: "Order by voice at VoiceBite and get {n} bonus points with my code {code}:", rwCopied: "Link copied", rwFriends: "friends joined",
     rwRecent: "Recent orders", rwOut: "Sign out", rwEarn: "You'll earn about {n} points when this order is collected.", rwLinked: "Linked to your Rewards", rwJoinOrder: "Join Rewards to earn {n} points on this order",
-    rwBadPin: "The PIN is 4 digits.", rwRefLine: "Friends get {a} points when they join with your code, you get {b} after their first order." },
+    rwBadPin: "The PIN is 4 digits.", rwJoinedVoice: "You're in! Signed in to VoiceBite Rewards.", rwRefFruit: "Bring a friend: you both get a fruit when they order with your code.",
+    fbTitle: "Fruit basket", fbNeed: "{n} more fruits for a {reward}", fbFull: "Basket full!", fbVoucher: "Show at the window", fbHow: "Every order adds a fruit, orders of {n}+ items add two. Win more in Fruit Rush.",
+    frPlay: "Play Fruit Rush while you wait", frPlaySub: "Catch {n} fruits to win one for your basket", frTitle: "Fruit Rush", frRules: "Drag the basket. Catch {n} fruits in 20 seconds to win one for your basket. Burnt buns cost 2.",
+    frStart: "Start", frSending: "Counting your fruit…", frWon: "You won a {f}!", frWonSub: "{n} of 6 fruits in your basket.", frBasket: "Basket complete: {reward} is yours!", frLost: "So close. You needed {n}. Next order, next try!", frDone: "Done", rwRefLine: "Friends get {a} points when they join with your code, you get {b} after their first order." },
   ar: { rwTitle: "مكافآت VoiceBite", rwLead: "اكسب نقاطاً مع كل طلب. فقط رقم جوالك ورمز من 4 أرقام.", rwPhone: "رقم الجوال", rwPin: "رمز من 4 أرقام", rwName: "اسمك (اختياري)",
     rwRef: "رمز صديق (اختياري)", rwJoin: "انضم وابدأ بجمع النقاط", rwSignIn: "تسجيل الدخول", rwHaveAcc: "عضو بالفعل؟ سجّل الدخول", rwNew: "جديد هنا؟ انضم", rwPoints: "نقطة", rwWorth: "قيمتها",
     rwCode: "رمزك", rwShare: "شارك مع صديق", rwShareText: "اطلب بصوتك من VoiceBite واحصل على {n} نقطة إضافية برمزي {code}:", rwCopied: "تم نسخ الرابط", rwFriends: "أصدقاء انضموا",
     rwRecent: "آخر الطلبات", rwOut: "تسجيل الخروج", rwEarn: "ستكسب حوالي {n} نقطة عند استلام هذا الطلب.", rwLinked: "مرتبط بحساب المكافآت", rwJoinOrder: "انضم إلى المكافآت لتكسب {n} نقطة على هذا الطلب",
-    rwBadPin: "الرمز من 4 أرقام.", rwRefLine: "يحصل أصدقاؤك على {a} نقطة عند الانضمام برمزك، وتحصل أنت على {b} بعد أول طلب لهم." } };
+    rwBadPin: "الرمز من 4 أرقام.", rwJoinedVoice: "تم! أنت الآن عضو في مكافآت VoiceBite.", rwRefFruit: "ادعُ صديقاً: تحصلان كلاكما على فاكهة عند طلبه برمزك.",
+    fbTitle: "سلة الفاكهة", fbNeed: "{n} فواكه أخرى للحصول على {reward}", fbFull: "السلة ممتلئة!", fbVoucher: "أظهره عند النافذة", fbHow: "كل طلب يضيف فاكهة، والطلبات من {n} أصناف أو أكثر تضيف اثنتين. اربح المزيد في Fruit Rush.",
+    frPlay: "العب Fruit Rush أثناء الانتظار", frPlaySub: "التقط {n} فاكهة لتربح واحدة لسلتك", frTitle: "Fruit Rush", frRules: "اسحب السلة. التقط {n} فاكهة في 20 ثانية لتربح واحدة لسلتك. الخبز المحروق يخصم 2.",
+    frStart: "ابدأ", frSending: "نعدّ فاكهتك…", frWon: "ربحت {f}!", frWonSub: "{n} من 6 فواكه في سلتك.", frBasket: "اكتملت السلة: {reward} لك!", frLost: "قريب جداً. كنت تحتاج {n}. حاول في الطلب القادم!", frDone: "تم", rwRefLine: "يحصل أصدقاؤك على {a} نقطة عند الانضمام برمزك، وتحصل أنت على {b} بعد أول طلب لهم." } };
 const rt = (k, v = {}) => String((RW[lang] || RW.en)[k] || RW.en[k]).replace(/\{(\w+)\}/g, (_, x) => v[x] ?? "");
 let member = null, rwMode = params.get("ref") ? "join" : "signin", rwBusy = false;
 const rwToken = () => store.get("memberToken") || "";
@@ -997,7 +1123,8 @@ function renderRewards() {
     el.innerHTML = `<div class="rwcard"><div class="rwtop"><span class="rwbrand">★ ${esc(rt("rwTitle"))}</span><button class="x" data-rw="out" title="${esc(rt("rwOut"))}">${esc(rt("rwOut"))}</button></div>
       <p class="rwpts"><b>${m.points.toLocaleString()}</b> ${esc(rt("rwPoints"))}</p><p class="rwworth">${esc(rt("rwWorth"))} ${money(m.walletValue)}${m.name ? " · " + esc(m.name) : ""}</p>
       <div class="rwcode"><div><span>${esc(rt("rwCode"))}</span><b dir="ltr">${esc(code)}</b></div><button class="solid" data-rw="share">${esc(rt("rwShare"))}</button></div>
-      <p class="rwnote">${esc(rt("rwRefLine", { a: m.program.welcomePoints, b: m.program.referrerPoints }))}${m.friendsJoined ? ` · <b>${m.friendsJoined}</b> ${esc(rt("rwFriends"))}` : ""}</p></div>
+      <p class="rwnote">${esc(rt("rwRefFruit"))}${m.friendsJoined ? ` · <b>${m.friendsJoined}</b> ${esc(rt("rwFriends"))}` : ""}</p></div>
+      ${m.fruits ? basketHtml(m) : ""}
       ${m.orders.length ? `<div class="group"><div class="setting"><b>${esc(rt("rwRecent"))}</b></div>${m.orders.slice(0, 4).map(o => `<div class="setting"><div><b dir="ltr">${esc(o.orderId)}</b><span>${esc(o.items.join(", "))}</span></div><span class="rwearned">${o.points ? "+" + o.points : money(o.total)}</span></div>`).join("")}</div>` : ""}`;
     return;
   }
@@ -1026,7 +1153,7 @@ $("rewards").addEventListener("click", async e => {
     try { if (navigator.share) await navigator.share({ title: "VoiceBite", text, url }); else { await navigator.clipboard.writeText(text + " " + url); toast(rt("rwCopied")); } } catch (x) {}
   }
 });
-$("app").addEventListener("click", e => { if (e.target.closest('[data-rw="goJoin"]')) { rwMode = "join"; renderRewards(); go("more"); } });
+$("app").addEventListener("click", e => { if (e.target.closest('[data-rw="goJoin"]')) { rwMode = "join"; renderRewards(); go("more"); } if (e.target.closest('[data-rw="play"]')) playRush(); });
 
 /* ================= install as an app ================= */
 let installEvent = null;
@@ -1053,6 +1180,7 @@ let accessCode = params.get("code") || store.get("accessCode") || "";
 function lineAddress(resume) {
   const q = new URLSearchParams(); if (STORE_LOCATION) q.set("location", STORE_LOCATION); if (accessCode) q.set("code", accessCode);
   if (voiceLang !== "en") q.set("lang", voiceLang); if (resume) q.set("resume", resume);
+  if (store.get("memberToken")) q.set("member", store.get("memberToken"));   // a signed-in member: the attendant knows their car and payment
   const extra = q.toString(); return wsUrl + (extra ? (wsUrl.includes("?") ? "&" : "?") + extra : "");
 }
 // Free hosting sleeps when idle; wake the kitchen while the customer reads the menu.
@@ -1175,10 +1303,12 @@ function captionPiece(role, raw) {   // Arabic and Malayalam arrive a few words 
   }
   assistantText(raw, true);
 }
-const STATE_KEYS = ["categories", "menuItems", "highlightedCategory", "highlightedItem", "orderItems", "orderTotal", "orderConfirmed", "orderNumber", "burgerBuilder", "vehicleNumber", "shownItems", "trackToken"];
+const STATE_KEYS = ["categories", "menuItems", "highlightedCategory", "highlightedItem", "orderItems", "orderTotal", "orderConfirmed", "orderNumber", "burgerBuilder", "vehicleNumber", "shownItems", "trackToken", "choices", "memberToken"];
 function applyState(s) {
   if (!s || typeof s !== "object" || !STATE_KEYS.some(k => k in s)) return false;
   if (applyVoice(s)) return true;
+  if ("choices" in s) renderChoices(s.choices);
+  if (s.memberToken && s.memberToken !== store.get("memberToken")) { store.set("memberToken", s.memberToken); loadMember().then(claimOrder); toast(rt("rwJoinedVoice")); }
   if (Array.isArray(s.categories) && s.categories.length && s.menuItems) menu = { categories: s.categories, menuItems: s.menuItems };
   if ("highlightedCategory" in s && s.highlightedCategory) { activeCat = s.highlightedCategory; query = ""; $("q").value = ""; lit = null; }
   if ("highlightedItem" in s) { lit = s.highlightedItem || null; const it = lit && findItem(lit); if (it) { activeCat = it.cat; query = ""; $("q").value = ""; } }

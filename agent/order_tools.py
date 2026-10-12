@@ -121,6 +121,17 @@ _menu_table = _dynamodb.Table(os.environ.get("MENU_TABLE_NAME", "DriveThruMenu")
 _orders_table = _dynamodb.Table(os.environ.get("ORDERS_TABLE_NAME", "DriveThruOrders"))
 _order_state = OrderState()
 
+# Who is on this call, when the app says (a signed-in Rewards member) or they join by voice.
+# main.py sets it at the start of each call; after_order (also set by main.py) saves their car and payment choice.
+PAYMENT_METHODS = {"cash": "cash", "card": "card", "link": "link", "payment link": "link", "online": "link", "online link": "link"}
+call_customer: dict = {}
+after_order = None
+
+
+def set_call_customer(info: dict) -> None:
+    call_customer.clear()
+    call_customer.update(info or {})
+
 
 def set_tables(menu_table, orders_table) -> None:
     global _menu_table, _orders_table
@@ -198,13 +209,15 @@ def get_order_summary(tool_context=None) -> dict:
 
 
 @tool
-def place_order(vehicle_number: str = "", user_id: str = "guest") -> dict:
+def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str = "guest") -> dict:
     """Finalizes the order, persists to DynamoDB, returns order number.
 
-    Ask the customer for their vehicle plate number as the LAST question, then call this.
+    Confirm the vehicle plate and the payment method first, then call this.
 
     Args:
-        vehicle_number: The customer's vehicle plate number, e.g. "D 12345". Required: staff use it to bring the order to the right car.
+        vehicle_number: The customer's vehicle plate number for THIS visit, e.g. "D 12345". Required for every order,
+            even for a known customer: they may be in a different car today.
+        payment_method: "cash", "card" or "link" (a payment link sent to their phone), as the customer chose.
         user_id: The customer identifier. Defaults to "guest".
     """
     if _order_state.is_empty():
@@ -213,13 +226,25 @@ def place_order(vehicle_number: str = "", user_id: str = "guest") -> dict:
     vehicle = re.sub(r"\s+", " ", vehicle).strip()[:20]
     if len(vehicle.replace(" ", "")) < 2:
         return {"error": "The vehicle plate number is missing. Ask the customer for their vehicle plate number, then call place_order again with vehicle_number."}
+    method = PAYMENT_METHODS.get(str(payment_method or "").strip().lower(), "")
+    if not method:
+        return {"error": "Ask how the customer will pay (cash, card or a payment link), then call place_order again with payment_method."}
     order_record = _order_state.place_order(user_id)
     order_record["vehicleNumber"] = vehicle          # staff serve the order to this car
+    order_record["paymentPreference"] = method       # shown to the window; the payment itself is taken there
+    if call_customer.get("phone"):
+        order_record["customerPhone"] = call_customer["phone"]
+        order_record["customerName"] = call_customer.get("name", "")
     order_record["locationId"] = current_location()  # which store took the order
     order_record["status"] = "received"              # first step on the kitchen display
     order_record["trackToken"] = secrets.token_urlsafe(16)  # lets this customer's phone, and nobody else, follow the order
     _orders_table.put_item(Item=order_record)
     note_order(order_record["orderId"], order_record["total"])
+    if after_order:
+        try:
+            after_order(order_record)   # remembers this customer's car and payment method for next time
+        except Exception as e:
+            logger.warning("place_order: could not remember the customer's choices: %s", e)
     logger.info(
         "ORDER_PLACED: orderId=%s userId=%s total=%s itemCount=%s",
         order_record["orderId"],
@@ -236,6 +261,8 @@ def place_order(vehicle_number: str = "", user_id: str = "guest") -> dict:
         current["orderNumber"] = order_record["orderId"]
         current["orderTotal"] = order_record["total"]
         current["vehicleNumber"] = vehicle
+        current["paymentPreference"] = method
+        current["choices"] = None
         current["trackToken"] = order_record["trackToken"]
         current["shownItems"] = []
         current["burgerBuilder"] = None
@@ -245,7 +272,7 @@ def place_order(vehicle_number: str = "", user_id: str = "guest") -> dict:
     except Exception as e:
         logger.warning("place_order: failed to update UI: %s", e)
 
-    return _sanitize_result({"status": "confirmed", "orderId": order_record["orderId"], "vehicleNumber": vehicle,
+    return _sanitize_result({"status": "confirmed", "orderId": order_record["orderId"], "vehicleNumber": vehicle, "paymentMethod": method,
                              "total": order_record["total"], "totalText": _spoken(order_record["total"])})
 
 

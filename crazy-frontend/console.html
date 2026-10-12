@@ -292,6 +292,26 @@ tr.click:hover td{background:#F3F7EE}
 @media (max-width:640px){ .sbar,.saxis,.stack{grid-template-columns:90px 1fr 60px; gap:8px} }
 .starter{display:flex; gap:16px; align-items:center; justify-content:space-between; background:var(--citron); flex-wrap:wrap}
 .starter > div{display:grid; gap:4px; flex:1; min-width:240px} .starter b{font-weight:600}
+
+/* AI insights */
+.conf{display:inline-block; min-width:44px; text-align:center; border-radius:999px; padding:2px 9px; font-size:.78rem; font-weight:600; background:var(--canvas)}
+.conf.high{background:#1B8A4B; color:#fff} .conf.good{background:var(--citron); color:var(--text)} .conf.low{background:#FFE9C7; color:#7A4100}
+.dlog{display:grid; gap:8px}
+.dl{display:grid; grid-template-columns:1fr auto 90px; gap:10px; align-items:center; background:#fff; border-radius:14px; padding:10px 12px}
+.dl span:first-child{display:grid} .dl small{color:var(--soft); font-size:.78rem} .aisug{font-size:.85rem; white-space:nowrap} .dl input{text-align:end}
+.aiflow{display:grid; gap:8px} .aiflow div{display:grid; gap:1px; background:var(--canvas); border-radius:14px; padding:10px 12px}
+.aiflow small{color:var(--soft); font-size:.72rem; text-transform:uppercase; letter-spacing:.06em} .aiflow b{font-weight:600} .aiflow span{font-size:.82rem; color:var(--soft)}
+.aiflow div:nth-of-type(2) b{color:#B25E00} .aiflow div:nth-of-type(3) b{color:var(--ok)} .aiflow i{font-style:normal; text-align:center; color:var(--soft); line-height:.6}
+.plan{display:grid; gap:10px}
+.pl{display:grid; grid-template-columns:minmax(110px,1.3fr) 70px 58px 1fr 120px; gap:10px; align-items:center}
+.pl > span:first-child{display:grid} .pl small{color:var(--soft); font-size:.76rem} .plsug{display:grid; text-align:end} .plsug b{font-size:1.3rem; font-weight:600; line-height:1}
+.plbar{position:relative; height:12px; border-radius:6px; background:var(--canvas); overflow:hidden} .plbar i{position:absolute; inset:0 auto 0 0; border-radius:6px} .plbar .m{background:#B9CFC4} .plbar .s{background:var(--palm)}
+.split{display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:center}
+.accs{display:inline-flex; align-items:flex-end; gap:2px; height:22px; vertical-align:middle} .accs i{width:6px; border-radius:2px 2px 0 0}
+@media (max-width:900px){ .pl{grid-template-columns:1fr 60px 52px; } .pl .plbar,.pl > span:last-child{grid-column:1 / -1} .split{grid-template-columns:1fr} }
+.paypref{display:inline-block; margin:6px 0 2px; border-radius:8px; padding:3px 10px; background:var(--citron); font-weight:600; font-size:.9rem}
+.fdots{display:inline-flex; gap:2px; vertical-align:middle} .fdots i{width:9px; height:9px; border-radius:50%; background:var(--line)}
+.fdots i.strawberry{background:#E8344B} .fdots i.orange{background:#FF8A1F} .fdots i.lemon{background:#FFD83A} .fdots i.watermelon{background:#2E9D4F} .fdots i.grapes{background:#7B4BC9} .fdots i.mango{background:#FFB020}
 @media print{ body *{visibility:hidden} .receipt,.receipt *{visibility:visible} .receipt{position:absolute; inset:0 auto auto 0; width:80mm; border-radius:0} }
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
@@ -367,7 +387,7 @@ const NAV = [
   ["Catalogue", [["menu", "Menu", "orders.view"]]],
   ["Stock", [["inventory", "Inventory", "inventory.view"], ["production", "Production and waste", "inventory.view"], ["recipes", "Recipes", "inventory.view"], ["waste", "Ingredient waste", "inventory.view"], ["purchasing", "Purchasing", "inventory.view"], ["assets", "Assets", "inventory.view"]]],
   ["Customers", [["customers", "Customers", "crm.view"], ["loyalty", "Loyalty and rewards", "crm.view"], ["offers", "Offers and campaigns", "crm.view"]]],
-  ["Insights", [["reports", "Reports", "analytics.view"]]],
+  ["Insights", [["ai", "AI insights", "inventory.view"], ["reports", "Reports", "analytics.view"]]],
   ["Admin", [["team", "Team", "team.manage"], ["settings", "Settings", "settings.manage"], ["audit", "Audit log", "audit.view"], ["launch", "Launch check", "settings.manage"]]]
 ];
 const TITLES = Object.fromEntries(NAV.flatMap(g => g[1].map(p => [p[0], p[1]])));
@@ -486,6 +506,7 @@ document.addEventListener("change", e => { const b = e.target.closest("[data-cha
 async function menuData() { if (!S.menuAt || Date.now() - S.menuAt > 60000) { S.menu = await api("/menu"); S.menuAt = Date.now(); } return S.menu; }
 const DEFAULT_STATION = { burgers: "grill", custom: "grill", chicken: "grill", sides: "fryer", drinks: "beverage", desserts: "dessert" };
 function stationOf(itemId) { const id = String(itemId || ""); const it = (S.menu ? S.menu.items : []).find(i => i.itemId === id) || (id.startsWith("custom-burger") ? { categoryId: "custom" } : null); return it ? (it.station || DEFAULT_STATION[it.categoryId] || "packing") : "packing"; }
+const PAY_PREF = { cash: "Pays cash", card: "Pays by card", link: "Send payment link" };
 const STATUS_TONE = { received: "bad", preparing: "warn", ready: "ok", completed: "", cancelled: "" };
 const PAY_TONE = { unpaid: "warn", captured: "ok", partially_refunded: "warn", refunded: "", voided: "" };
 const PAY_LABEL = { unpaid: "Pay at window", captured: "Paid", partially_refunded: "Part refunded", refunded: "Refunded", voided: "Voided" };
@@ -611,7 +632,7 @@ function kdsHtml() {
     <span class="grow"></span><span class="soft small">Target ${sla()} min. Updates every 6 seconds.</span><button class="btn ghost sm" data-act="kdsFull">Full screen</button></div>
     <div class="kds">${lanes.map(([status, label, next, to]) => { const list = S.orders.filter(o => o.status === status).filter(o => st === "all" || (o.items || []).some(i => stationOf(i.itemId) === st)).sort((a, b) => ts(a.createdAt) - ts(b.createdAt));
       return `<section class="lane"><h2><span>${label}</span><span class="soft">${list.length}</span></h2>${list.map(o => `<article class="ticket ${status} ${o.arrivalState === "arrived" ? "here" : ""}" data-ts="${ts(o.createdAt)}" data-status="${status}" data-id="${esc(o.orderId)}">
-        <header><h3>${esc(o.orderId)}</h3><span class="age"></span></header>${o.vehicleNumber ? `<p class="plate" ${tip("Vehicle plate")}>${esc(o.vehicleNumber)}</p>` : ""}${arrHtml(o)}
+        <header><h3>${esc(o.orderId)}</h3><span class="age"></span></header>${o.vehicleNumber ? `<p class="plate" ${tip("Vehicle plate")}>${esc(o.vehicleNumber)}</p>` : ""}${o.paymentPreference ? `<p class="paypref">${esc(PAY_PREF[o.paymentPreference] || o.paymentPreference)}${o.customerName ? " · " + esc(o.customerName) : ""}</p>` : ""}${arrHtml(o)}
         <ul>${(o.items || []).filter(i => st === "all" || stationOf(i.itemId) === st).map(i => `<li>${esc(i.quantity || 1)}× ${esc(i.name)}${i.specialInstructions ? `<small>${esc(i.specialInstructions)}</small>` : ""}</li>`).join("")}</ul>
         ${can("orders.status") ? `<button class="btn ${status === "received" ? "hot" : ""}" data-act="kdsNext" data-id="${esc(o.orderId)}" data-to="${to}">${next}</button>` : ""}</article>`).join("") || `<p class="empty">None</p>`}</section>`; }).join("")}</div>`;
 }
@@ -788,6 +809,68 @@ ACT.starterLoad = d => attempt(async () => { const r = await api("/ops/starter-k
 ACT.starterRemove = () => { if (!confirm("Remove all sample stock, recipes and production? Items you added yourself are kept.")) return;
   attempt(async () => { const r = await api("/ops/starter-kit", "DELETE"); S.ing = await records("ingredients"); await show(page, true); alertBadge(); say("Sample data removed."); }); };
 
+
+/* ================= AI forecasting: pre-filled daily log, insights dashboard ================= */
+const TIER = { high: ["High confidence", "ok"], good: ["Good confidence", "hi"], low: ["Low confidence: check it", "warn"], learning: ["Learning", ""] };
+const confChip = (pct, tier) => pct == null ? pill("Learning") : `<span class="conf ${tier}" ${tip(TIER[tier][0])}>${pct}%</span>`;
+ACT.dailyLog = async () => {
+  const f = await api("/insights/forecast" + bq("day=" + (S.day || today()))); S.fc = f;
+  const rows = f.items.filter(r => r.batch || r.last);
+  if (!rows.length) return say("Log one item first. After that, every morning starts pre-filled.", true);
+  openSheet("Today's batches", `<p class="soft">Quantities are filled in from your last entry. The AI suggestion next to each is based on recent sales and the day of the week.</p>
+    <div class="row" style="margin:6px 0 10px"><button class="btn ghost sm" data-act="fillAi">Use all AI suggestions</button><button class="btn ghost sm" data-act="fillLast">Back to last entries</button></div>
+    <div class="dlog">${rows.map(r => `<div class="dl" data-id="${esc(r.itemId)}"><span><b>${esc(r.name)}</b><small>${r.last ? "Last: " + r.last.qty + " on " + esc(r.last.day.slice(5)) : "Not logged before"}</small></span>
+      <span class="aisug">${r.suggested != null ? `AI: <b>${r.suggested}</b> ${confChip(r.confidence, r.tier)}` : `<span class="soft small">No forecast yet</span>`}</span>
+      <input type="number" min="0" step="any" value="${r.last ? r.last.qty : r.suggested || ""}" data-last="${r.last ? r.last.qty : ""}" data-ai="${r.suggested ?? ""}" aria-label="Quantity for ${esc(r.name)}"></div>`).join("")}</div>
+    <p class="sheetmsg" id="sheetMsg" role="alert"></p><button class="btn hot" data-act="dailySave">Log batches</button>`);
+};
+ACT.fillAi = () => document.querySelectorAll(".dl input").forEach(i => { if (i.dataset.ai !== "") i.value = i.dataset.ai; });
+ACT.fillLast = () => document.querySelectorAll(".dl input").forEach(i => { if (i.dataset.last !== "") i.value = i.dataset.last; });
+ACT.dailySave = async () => { try { const lines = [...document.querySelectorAll(".dl")].map(r => ({ itemId: r.dataset.id, qty: parseFloat(r.querySelector("input").value) })).filter(l => l.qty > 0);
+  if (!lines.length) throw new Error("Enter at least one quantity.");
+  await api("/insights/production/bulk", "POST", { day: S.day || today(), lines }); closeSheet(); await show(page, true); say(`Logged ${lines.length} batches.`); } catch (e) { $("sheetMsg").textContent = e.message; } };
+
+function groupedBars(days) {   // AI forecast vs made vs sold per day
+  const W = 720, H = 230, L = 36, R = 8, T = 12, B = 28, max = niceMax(Math.max(1, ...days.flatMap(d => [d.suggested, d.made, d.sold]))), slot = (W - L - R) / days.length, bw = Math.min(14, slot / 4.2);
+  const y = v => T + (1 - v / max) * (H - T - B), cols = [["suggested", "#D7F25A", "AI forecast"], ["made", "#0E3B2E", "Made"], ["sold", "#3F8468", "Sold"]];
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Forecast vs made vs sold">${[0, .5, 1].map(f => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(max * f)}" y2="${y(max * f)}"/><text x="${L - 8}" y="${y(max * f) + 4}" text-anchor="end">${Math.round(max * f)}</text>`).join("")}
+    ${days.map((d, i) => { const cx = L + slot * i + slot / 2; return cols.map(([k, c, label], j) => { const h = Math.max(d[k] ? 2 : 0, (H - T - B) * d[k] / max), x = cx + (j - 1.5) * (bw + 3);
+      return `<rect x="${x}" y="${H - B - h}" width="${bw}" height="${h}" rx="3" fill="${c}" ${k === "suggested" ? 'stroke="#0E3B2E" stroke-width="1"' : ""} ${tip(`${d.day}: ${label} ${d[k]}`)}/>`; }).join("") + `<text x="${cx}" y="${H - 8}" text-anchor="middle">${esc(d.day.slice(5))}</text>`; }).join("")}</svg>
+    <ul class="legend inline">${cols.map(([, c, l]) => `<li><i style="background:${c}; ${c === "#D7F25A" ? "outline:1px solid #0E3B2E" : ""}"></i>${l}</li>`).join("")}</ul>`;
+}
+function accSpark(back) { return back.length ? `<span class="accs" ${tip(back.map(b => `${b.day.slice(5)}: forecast ${b.suggested}, sold ${b.sold} (${b.accuracy}%)`).join(" · "))}>${back.slice(-10).map(b => `<i style="height:${Math.max(8, b.accuracy)}%; background:${b.accuracy >= 95 ? "#1B8A4B" : b.accuracy >= 85 ? "#3F8468" : "#E3A400"}"></i>`).join("")}</span>` : ""; }
+RENDER.ai = async () => {
+  const r = await api("/insights/overview" + bq("days=" + (S.aiDays || 7))); S.ai = r; const f = r.forecastToday, o = r.orders, t = r.totals;
+  const lost = t.wasteCost + t.missingCost, solvedPct = o.solved + o.open ? Math.round(100 * o.solved / (o.solved + o.open)) : 0;
+  const plan = f.items.filter(x => x.batch);
+  const alerts = f.alerts.length ? `<ul class="feed">${f.alerts.map(a => `<li><span class="dotc" style="background:${a.severity === "bad" ? "#C22E17" : a.severity === "warn" ? "#E3A400" : "#3F8468"}"></span><div>${esc(a.text)}${a.value ? `<span class="small soft">≈ ${money(a.value)} at risk</span>` : ""}</div></li>`).join("")}</ul>` : `<p class="empty">No gaps right now. Production and sales are in line with the forecast.</p>`;
+  return `<div class="tools"><div class="tabs">${[7, 14, 28].map(d => `<button data-act="aiDays" data-d="${d}" aria-pressed="${(S.aiDays || 7) === d}">${d} days</button>`).join("")}</div><span class="grow soft small">The AI learns from your sales history and checks itself every day against what actually sold.</span>
+      ${can("waste.log") ? `<button class="btn hot" data-act="dailyLog">Log today's batches</button>` : ""}</div>
+    <div class="dash">
+      <div class="kpi lead s3"><span>Forecast confidence</span><b>${r.confidence != null ? r.confidence + "%" : "Learning"}</b><em class="delta ${r.tier === "high" ? "up" : ""}" style="font-style:normal">${esc(TIER[r.tier][0])}</em><span style="margin:10px 0 16px">accuracy over the last ${r.days} days</span></div>
+      <div class="kpi s3"><span>Overproduction you could avoid</span><b>${money(r.avoidableCost)}</b><span style="margin:10px 0 16px">made beyond forecast and sales, ${r.days} days</span></div>
+      <div class="kpi s3"><span>Orders today: solved</span><b>${o.solved}<small style="font-size:1rem; opacity:.6"> / ${o.solved + o.open}</small></b><span style="margin:10px 0 16px">${o.open} open${o.late.length ? ` · ${o.late.length} late` : ""} · ${money(o.revenue)}</span></div>
+      <div class="kpi s3"><span>Money lost, ${r.days} days</span><b>${money(lost)}</b><span style="margin:10px 0 16px">waste ${money(t.wasteCost)} · missing ${money(t.missingCost)}</span></div>
+      <div class="panel s8"><h2>AI forecast vs made vs sold<small>batch items, per day</small></h2>${groupedBars(r.perDay)}</div>
+      <div class="panel s4"><h2>How the AI works</h2><div class="aiflow"><div><small>Input</small><b>Sales history</b><span>weekday pattern, last 7 days, trend</span></div><i>→</i><div><small>AI analysis</small><b>Confidence %</b><span>tested daily against what really sold</span></div><i>→</i><div><small>Output</small><b>Production plan & alerts</b><span>how much to make, and gaps as they happen</span></div></div>
+        <p class="soft small" style="margin-top:10px">Example: it expected 200 and 170 sold, so that day scores 85%. The confidence shown is the average of the last 14 days.</p></div>
+      <div class="panel s7"><h2>Today's production plan<small>${f.dayProgress}% of the trading day gone</small></h2>${plan.length ? `<div class="plan">${plan.map(x => `<div class="pl"><span><b>${esc(x.name)}</b><small>${x.trend ? (x.trend > 0 ? "▲ " : "▼ ") + Math.abs(x.trend) + "% trend" : "steady"}</small></span>
+        <span class="plsug"><b>${x.suggested ?? "–"}</b><small>suggested</small></span>${confChip(x.confidence, x.tier)}
+        <span class="plbar" ${tip(`Made ${x.made}, sold ${x.sold}`)}><i class="m" style="width:${Math.min(100, 100 * x.made / Math.max(1, x.suggested || x.made))}%"></i><i class="s" style="width:${Math.min(100, 100 * x.sold / Math.max(1, x.suggested || x.made))}%"></i></span>
+        <span class="small soft">${x.made ? `made ${x.made} · sold ${x.sold}` : "not made yet"}</span></div>`).join("")}</div>` : `<p class="empty">Log production for a few days and the AI will start planning it.</p>`}</div>
+      <div class="panel s5"><h2>Gap alerts<small>AI suggestion vs reality</small></h2>${alerts}</div>
+      <div class="panel s6"><h2>Orders and waste<small>today · ${r.days} days</small></h2><div class="split">
+        ${donut([{ label: "Solved", value: o.solved, color: "#1B8A4B" }, { label: "Open", value: o.open - o.late.length, color: "#E3A400" }, { label: "Late", value: o.late.length, color: "#C22E17" }, { label: "Cancelled", value: o.cancelled, color: "#C9D2C5" }], solvedPct + "%", "solved")}
+        <div>${Object.keys(r.wasteByReason).length ? hbars(Object.entries(r.wasteByReason).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k, v], i, l) => ({ label: k, text: money(v), value: v, max: l[0][1], color: "#F0462B" }))) : `<p class="empty">No waste logged.</p>`}</div></div></div>
+      <div class="panel s6"><h2>Leakage points<small>stock lost vs ${money(r.spendTotal)} spent</small></h2>${r.leakage.filter(x => x.lostValue).length ? hbars(r.leakage.filter(x => x.lostValue).map(x => ({ label: x.name, text: `${money(x.lostValue)}${x.unexplainedValue ? " · " + money(x.unexplainedValue) + " unexplained" : ""}`, value: x.lostValue, max: r.leakage[0].lostValue, color: x.unexplainedValue ? "#C22E17" : "#E3A400" }))) : `<p class="empty">No stock lost beyond what sales used. Log waste and do stock counts to find leaks.</p>`}
+        <p class="soft small" style="margin-top:8px">Compares what you bought with what recipes say your sales used. Red bars include losses only a stock count found: no order or waste log explains them.</p></div>
+      <div class="s12">${table([{ label: "Item", cell: x => `<b style="font-weight:500">${esc(x.name)}</b>${x.batch ? "" : ` <span class="soft small">made to order</span>`}` }, { label: "AI forecast today", cls: "r", cell: x => x.suggested ?? "–" },
+        { label: "Confidence", cell: x => confChip(x.confidence, x.tier) }, { label: "Last 10 days accuracy", cell: x => accSpark(x.backtest) }, { label: "Trend", cls: "r", cell: x => x.trend ? (x.trend > 0 ? "+" : "") + x.trend + "%" : "0%" },
+        { label: "Made today", cls: "r", cell: x => x.made || "" }, { label: "Sold today", cls: "r", cell: x => x.sold || "" }], f.items, "No sales history yet.")}</div>
+    </div>`;
+};
+ACT.aiDays = d => { S.aiDays = +d.d; show("ai", true); };
+
 /* ================= daily production and waste ================= */
 const today = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 function lossBars(items) {
@@ -803,7 +886,7 @@ RENDER.production = async () => { if (!S.ing) S.ing = await records("ingredients
   S.day = S.day || today(); const r = await api("/ops/daily" + bq("day=" + S.day)); S.daily = r; const t = r.totals, log = can("waste.log");
   loadTrend();
   return `<div class="tools"><input type="date" value="${esc(S.day)}" data-change="dayPick" style="width:auto"><span class="grow soft small">Production vs sales vs waste for the day. Money lost = wasted portions + portions made but not sold or logged.</span>
-      ${log ? `<button class="btn" data-act="prodNew">Log production</button><button class="btn hot" data-act="itemWaste">Log unsold or broken</button>` : ""}${can("inventory.edit") ? `<button class="btn ghost sm" data-act="posImport">Import POS sales</button>` : ""}</div>
+      ${log ? `<button class="btn" data-act="dailyLog">Log today's batches</button><button class="btn ghost sm" data-act="prodNew">One item</button><button class="btn hot" data-act="itemWaste">Log unsold or broken</button>` : ""}${can("inventory.edit") ? `<button class="btn ghost sm" data-act="posImport">Import POS sales</button>` : ""}</div>
     <div class="dash" style="margin-bottom:var(--gap)">
       <div class="kpi lead s3"><span>Money lost this day</span><b>${money(t.totalLost || 0)}</b><span style="margin:10px 0 16px">${money(t.sales || 0)} sold</span></div>
       <div class="kpi s3"><span>Wasted portions</span><b>${+(t.wasted || 0).toFixed(1)}</b><span style="margin:10px 0 16px">${money(t.wasteCost || 0)}</span></div>
@@ -832,12 +915,12 @@ ACT.posKey = async () => { const cfg = await api("/ops/config"); const key = cfg
     v => api("/ops/config", "PUT", { lowStockPct: cfg.lowStockPct, criticalStockPct: cfg.criticalStockPct, posApiKey: v.posApiKey }), { save: "Save key" }); };
 
 /* ================= loyalty and rewards ================= */
-const MOVE_LABEL = { earn: "Order", referral: "Referral", welcome: "Welcome", redeem: "Redeemed", adjust: "Adjustment" };
+const MOVE_LABEL = { earn: "Order", referral: "Referral", welcome: "Welcome", redeem: "Redeemed", adjust: "Adjustment", fruit: "Fruit", game: "Fruit Rush" };
 RENDER.loyalty = async () => {
   const r = await api("/ops/loyalty"); S.loy = r; const c = r.config, st = r.stats, edit = can("crm.edit");
   const pointValue = (c.filsPerPoint / 100).toFixed(2);
   return `<div class="tools"><span class="grow soft small">Customers join in the ordering app with their mobile number and a 4-digit PIN. They earn ${c.pointsPerAed} point per ${cur()} 1 when an order is completed; 1 point = ${cur()} ${pointValue}.</span>
-      ${can("orders.status") ? `<button class="btn" data-act="loyRedeem">Redeem at the window</button>` : ""}${can("settings.manage") ? `<button class="btn ghost sm" data-act="loyCfg">Programme settings</button>` : ""}</div>
+      ${can("orders.status") ? `<button class="btn hot" data-act="voucherRedeem">Redeem voucher</button><button class="btn" data-act="loyRedeem">Redeem points</button>` : ""}${can("settings.manage") ? `<button class="btn ghost sm" data-act="loyCfg">Programme settings</button>` : ""}</div>
     <div class="dash" style="margin-bottom:var(--gap)">
       <div class="kpi lead s3"><span>Members</span><b>${st.members}</b><span style="margin:10px 0 16px">${st.referred} joined through a friend</span></div>
       <div class="kpi s3"><span>Points in wallets</span><b>${st.outstandingPoints.toLocaleString()}</b><span style="margin:10px 0 16px">worth ${money(st.outstandingValue)}</span></div>
@@ -846,23 +929,31 @@ RENDER.loyalty = async () => {
       <div class="panel s5"><h2>How it works</h2><ol class="steps">
         <li><b>Join in seconds.</b> Mobile number and a 4-digit PIN in the app. No email.</li>
         <li><b>Earn on every order.</b> ${c.pointsPerAed} point per ${cur()} 1 once the order is completed.</li>
-        <li><b>Refer a friend.</b> They get ${c.welcomePoints} points when they join with your code; you get ${c.referrerPoints} after their first order.</li>
+        <li><b>Fill the fruit basket.</b> Every completed order adds a fruit; orders of ${c.groupItems}+ items add two. One of each of the 6 fruits unlocks: <b>${esc(c.basketReward)}</b>.</li>
+        <li><b>Play Fruit Rush.</b> A 20-second catch game while they wait, once per order. ${c.gameTarget}+ catches wins a missing fruit.</li>
+        <li><b>Bring a friend.</b> Both get a fruit when the friend orders with their code.</li>
         <li><b>Spend at the window.</b> From ${c.minRedeem} points (${money(c.minRedeem * c.filsPerPoint)} off).</li></ol>${c.enabled ? "" : `<p>${pill("The programme is switched off", "warn")}</p>`}</div>
-      <div class="panel s7"><h2>Top members<small>by points</small></h2>${hbars(r.members.slice(0, 6).map(m => ({ label: (m.name || "Member") + " · " + (m.phone || m.id).slice(-4).padStart(8, "•"), text: num(m.points) + " pts", value: num(m.points), max: num((r.members[0] || {}).points) || 1 })), "No members yet.")}</div></div>` +
+      <div class="panel s7"><h2>Fruit game<small>${r.fruits.collected} fruits collected · ${r.fruits.games} games played</small></h2>
+        <div class="tiles" style="margin:0 0 12px">${tile(r.fruits.baskets, "Baskets completed")}${tile(r.fruits.openVouchers, "Vouchers to redeem")}${tile(r.fruits.games, "Fruit Rush games")}</div>
+        ${r.vouchers.filter(v => v.status === "open").slice(0, 5).map(v => `<div class="row" style="justify-content:space-between; padding:6px 0; border-top:1px solid var(--line)"><span><b style="font-weight:600; letter-spacing:.06em">${esc(v.id)}</b> <span class="soft small">${esc(v.name || "")} · ${esc(v.reward)}</span></span><span class="soft small">${esc(when(v.createdAt))}</span></div>`).join("") || `<p class="soft small">No open vouchers.</p>`}</div>
+      <div class="panel s12"><h2>Top members<small>by points</small></h2>${hbars(r.members.slice(0, 6).map(m => ({ label: (m.name || "Member") + " · " + (m.phone || m.id).slice(-4).padStart(8, "•"), text: num(m.points) + " pts", value: num(m.points), max: num((r.members[0] || {}).points) || 1 })), "No members yet.")}</div></div>` +
     table([{ label: "Member", cell: m => `<b style="font-weight:500">${esc(m.name || "No name")}</b><br><span class="soft small">${esc(m.phone || m.id)}</span>` }, { label: "Points", cls: "r", cell: m => `<b style="font-weight:600">${num(m.points)}</b>` },
-      { label: "Wallet", cls: "r", cell: m => money(m.walletValue) }, { label: "Code", cell: m => esc(m.referralCode || "") }, { label: "Friends", cls: "r", cell: m => m.referrals || "" }, { label: "Joined", cell: m => m.joinedAt ? esc(when(m.joinedAt)) : "" },
+      { label: "Wallet", cls: "r", cell: m => money(m.walletValue) }, { label: "Basket", cell: m => { const f = m.fruits || {}, n = Object.values(f).filter(x => num(x) > 0).length; return `<span class="fdots">${["strawberry", "orange", "lemon", "watermelon", "grapes", "mango"].map(k => `<i class="${num(f[k]) ? "on " + k : ""}"></i>`).join("")}</span> ${n}/6${num(m.baskets) ? ` · ${num(m.baskets)} full` : ""}`; } }, { label: "Pays", cell: m => esc({ cash: "Cash", card: "Card", link: "Link" }[m.lastPayment] || "") }, { label: "Code", cell: m => esc(m.referralCode || "") }, { label: "Friends", cls: "r", cell: m => m.referrals || "" }, { label: "Joined", cell: m => m.joinedAt ? esc(when(m.joinedAt)) : "" },
       { label: "", cell: m => m.locked ? pill("Locked: wrong PINs", "bad") : m.member ? pill("Member", "ok") : pill("Points only") },
       { label: "", cls: "a", cell: m => edit ? `<button class="btn ghost sm" data-act="loyAdjust" data-id="${esc(m.id)}">Adjust</button>` : "" }], r.members, "No members yet. Customers join from the More tab in the ordering app.") +
     `<div class="tools" style="margin-top:8px"><h2 class="grow" style="font-size:1.05rem; font-weight:600">Points history</h2></div>` +
     table([{ label: "When", cell: x => esc(when(x.at)) }, { label: "Member", cell: x => esc(String(x.phone).slice(-4).padStart(8, "•")) }, { label: "What", cell: x => pill(MOVE_LABEL[x.kind] || x.kind, x.kind === "redeem" ? "warn" : x.kind === "adjust" ? "" : "ok") },
-      { label: "Points", cls: "r", cell: x => `<b style="font-weight:600; color:${num(x.points) < 0 ? "var(--bad)" : "var(--ok)"}">${num(x.points) > 0 ? "+" : ""}${num(x.points)}</b>` }, { label: "Order", cell: x => esc(x.orderId || "") }, { label: "Note", cell: x => `<span class="small">${esc(x.note || "")}</span>` }, { label: "By", cell: x => esc(x.by || "") }], r.moves, "No points moved yet.");
+      { label: "Points", cls: "r", cell: x => x.kind === "fruit" ? `<span class="fdots"><i class="on ${esc(x.fruit || "")}"></i></span> ${esc(x.fruit || "")}` : x.kind === "game" ? "" : `<b style="font-weight:600; color:${num(x.points) < 0 ? "var(--bad)" : "var(--ok)"}">${num(x.points) > 0 ? "+" : ""}${num(x.points)}</b>` }, { label: "Order", cell: x => esc(x.orderId || "") }, { label: "Note", cell: x => `<span class="small">${esc(x.note || "")}</span>` }, { label: "By", cell: x => esc(x.by || "") }], r.moves, "No points moved yet.");
 };
 ACT.loyCfg = () => form("Loyalty programme", [{ key: "enabled", label: "Programme is on", type: "checkbox" }, { key: "pointsPerAed", label: "Points per " + cur() + " 1 spent", type: "number", req: true },
   { key: "filsPerPoint", label: "Value of 1 point in fils (5 = " + cur() + " 0.05)", type: "number", req: true }, { key: "welcomePoints", label: "Welcome points for a friend who joins with a code", type: "number" },
-  { key: "referrerPoints", label: "Referral reward after the friend's first order", type: "number" }, { key: "minRedeem", label: "Smallest redemption (points)", type: "number", req: true }],
+  { key: "referrerPoints", label: "Referral reward after the friend's first order", type: "number" }, { key: "minRedeem", label: "Smallest redemption (points)", type: "number", req: true },
+  { key: "basketReward", label: "Full fruit basket unlocks", req: true, placeholder: "Free dessert" }, { key: "gameTarget", label: "Fruit Rush: catches needed to win a fruit", type: "number", req: true }, { key: "groupItems", label: "Group order: items for a bonus fruit", type: "number", req: true }],
   S.loy.config, v => api("/ops/loyalty/config", "PUT", Object.fromEntries(Object.entries(v).map(([k, x]) => [k, typeof x === "number" ? Math.round(x) : x]))));
 ACT.loyAdjust = d => { const m = S.loy.members.find(x => x.id === d.id); form("Adjust points for " + (m.name || m.phone), [{ key: "points", label: "Points to add (use − to remove)", type: "number", req: true }, { key: "note", label: "Reason", req: true, placeholder: "Goodwill for a late order" }],
   {}, v => api("/ops/loyalty/adjust", "POST", { phone: m.phone || m.id, points: Math.round(v.points), note: v.note }), { before: `<p class="soft">Balance now: ${num(m.points)} points</p>` }); };
+ACT.voucherRedeem = () => form("Redeem a fruit-basket voucher", [{ key: "code", label: "Voucher code", req: true, placeholder: "FB7K2M9Q" }, { key: "orderId", label: "Order number" }], {},
+  async v => { const r = await api("/ops/loyalty/voucher", "POST", v); setTimeout(() => say(`Voucher ${r.code}: give the customer ${r.reward}.`), 50); }, { save: "Redeem" });
 ACT.loyRedeem = () => form("Redeem points at the window", [{ key: "phone", label: "Customer's mobile number", req: true, placeholder: "050 123 4567" }, { key: "points", label: "Points to redeem", type: "number", req: true }, { key: "orderId", label: "Order number" }],
   {}, async v => { const r = await api("/ops/loyalty/redeem", "POST", { ...v, points: Math.round(v.points) }); setTimeout(() => say(`Take ${money(r.discount)} off the bill. ${r.points} points left.`), 50); }, { save: "Redeem" });
 
