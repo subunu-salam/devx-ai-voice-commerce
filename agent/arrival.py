@@ -81,6 +81,8 @@ def _view(order: dict) -> dict:
         "etaMinutes": int(eta) if eta is not None else None,
         "distanceM": int(dist) if dist is not None else None,
         "store": _store(),
+        "total": int(order.get("total") or 0),             # a phone that opened the order from the kiosk's QR code
+        "vehicleNumber": str(order.get("vehicleNumber") or ""),
     }
 
 

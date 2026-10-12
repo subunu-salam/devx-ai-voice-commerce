@@ -16,9 +16,11 @@ from strands import tool
 try:
     from agent.order_state import OrderState
     from agent.ui_state_manager import set_ui_state, get_ui_state
+    from agent.call_context import current as _call
 except ModuleNotFoundError:
     from order_state import OrderState
     from ui_state_manager import set_ui_state, get_ui_state
+    from call_context import current as _call
 
 CURRENCY = "AED"  # shown and spoken as UAE dirhams
 _SAUCES = ("ketchup", "mustard", "mayo", "bbq sauce", "chipotle mayo", "special sauce")
@@ -83,7 +85,7 @@ def _spoken(amount: int) -> str:
 
 def _show_order_on_screen() -> dict:
     """Push the real order and its total to the customer's screen; returns the summary."""
-    summary = _order_state.get_summary()
+    summary = get_order_state().get_summary()
     try:
         current = get_ui_state()
         current["orderItems"] = summary["items"]
@@ -119,41 +121,42 @@ _REGION = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "us-
 _dynamodb = boto3.resource("dynamodb", region_name=_REGION)
 _menu_table = _dynamodb.Table(os.environ.get("MENU_TABLE_NAME", "DriveThruMenu"))
 _orders_table = _dynamodb.Table(os.environ.get("ORDERS_TABLE_NAME", "DriveThruOrders"))
-_order_state = OrderState()
 
 # Who is on this call, when the app says (a signed-in Rewards member) or they join by voice.
 # main.py sets it at the start of each call; after_order (also set by main.py) saves their car and payment choice.
 PAYMENT_METHODS = {"cash": "cash", "card": "card", "link": "link", "payment link": "link", "online": "link", "online link": "link"}
-call_customer: dict = {}
 after_order = None
 rewards_on = False   # main.py turns this on when VoiceBite Rewards is set up
 
 # What the customer has said or tapped during this order. The plate passed to place_order must be one the
 # customer actually gave (spoken or tapped), so the attendant can never fill it in from memory or an example.
-heard: list = []
-_transcripts = {"on": False}   # True once any customer line reached us in this call
 _NUM_WORDS = {"zero": "0", "oh": "0", "o": "0", "one": "1", "two": "2", "three": "3", "four": "4", "for": "4", "five": "5",
               "six": "6", "seven": "7", "eight": "8", "ate": "8", "nine": "9"}
 _YES = re.compile(r"\b(yes|yeah|yep|yup|same car|same one|same vehicle|correct|that's right|sure|that one|نعم|أيوه|ايوه|اي|صحيح|نفس|അതെ|ശരി|അതേ)\b|^\s*(نعم|اي|അതെ)", re.I)
 
 
+def customer() -> dict:
+    """The Rewards member (or declined flag) for the call in progress. Empty for a guest."""
+    return _call().customer
+
+
 def set_call_customer(info: dict) -> None:
-    call_customer.clear()
-    call_customer.update(info or {})
+    _call().customer = dict(info or {})
 
 
 def reset_heard() -> None:
-    heard.clear()
-    _transcripts["on"] = False
+    call = _call()
+    call.heard, call.heard_any = [], False
 
 
 def note_heard(text: str) -> None:
     """main.py passes every line the customer speaks or taps."""
     t = str(text or "").strip()
     if t:
-        heard.append(t[:300])
-        _transcripts["on"] = True
-        del heard[:-40]
+        call = _call()
+        call.heard.append(t[:300])
+        call.heard_any = True
+        del call.heard[:-40]
 
 
 def _digits_spoken(text: str) -> str:
@@ -165,7 +168,9 @@ def _digits_spoken(text: str) -> str:
 
 def _plate_from_customer(vehicle: str) -> bool:
     """True when the customer said or tapped this plate in this order (or confirmed last visit's plate)."""
-    if not _transcripts["on"]:
+    call = _call()
+    heard = call.heard
+    if not call.heard_any:
         return True   # no transcript reaches us (text-only test calls): nothing to check against
     said = re.sub(r"\D", "", "".join(_digits_spoken(h) for h in heard))
     digits = re.sub(r"\D", "", vehicle)
@@ -173,7 +178,7 @@ def _plate_from_customer(vehicle: str) -> bool:
         return True
     if not digits and vehicle.replace(" ", "").lower() in re.sub(r"\W", "", " ".join(heard).lower()):
         return True
-    last = re.sub(r"\W", "", str(call_customer.get("lastVehicle", ""))).upper()
+    last = re.sub(r"\W", "", str(customer().get("lastVehicle", ""))).upper()
     return bool(last) and last == vehicle.replace(" ", "") and any(_YES.search(h) for h in heard[-4:])
 
 
@@ -187,10 +192,10 @@ def sign_in_rewards(mobile_number: str, pin: str) -> dict:
     """
     if not rewards_on:
         return {"error": "Rewards are not available. Carry on with the order."}
-    if call_customer.get("phone"):
-        return {"status": "already signed in", "name": call_customer.get("name", "")}
+    if customer().get("phone"):
+        return {"status": "already signed in", "name": customer().get("name", "")}
     from rewards import voice_login   # loaded only when Rewards is on
-    result = voice_login(mobile_number, pin)
+    result = voice_login(mobile_number, pin, short=_call().kiosk)
     if result.get("error"):
         return {"error": result["error"] + " Ask for the number and PIN again (offer to join instead if they are not a member). Never repeat the PIN."}
     set_call_customer({k: result.get(k, "") for k in ("phone", "name", "lastVehicle", "lastPayment")})
@@ -202,7 +207,7 @@ def sign_in_rewards(mobile_number: str, pin: str) -> dict:
 @tool
 def skip_rewards() -> dict:
     """The customer said they do not want to sign in or join VoiceBite Rewards for this order."""
-    call_customer["declined"] = True
+    customer()["declined"] = True
     current = get_ui_state(); current["choices"] = None; set_ui_state(current)
     return {"status": "skipped", "next": "Carry on: ask for the vehicle plate."}
 
@@ -214,12 +219,12 @@ def set_tables(menu_table, orders_table) -> None:
 
 
 def set_order_state(state: OrderState) -> None:
-    global _order_state
-    _order_state = state
+    _call().order = state
 
 
 def get_order_state() -> OrderState:
-    return _order_state
+    """The unplaced order of the call in progress."""
+    return _call().order
 
 
 @tool
@@ -241,9 +246,9 @@ def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_inst
         return {"error": f"Item '{item_id}' not found in category '{category_id}'."}
     if menu_item.get("available") is False:
         return {"error": f"'{menu_item.get('name', item_id)}' is sold out right now. Apologise and offer something else."}
-    _order_state.add_item(item_id, menu_item.get("name", ""), quantity, int(menu_item.get("price", 0)), special_instructions)
+    get_order_state().add_item(item_id, menu_item.get("name", ""), quantity, int(menu_item.get("price", 0)), special_instructions)
     note_added(item_id)
-    summary = _order_state.get_summary()
+    summary = get_order_state().get_summary()
 
     # Auto-update the UI: refresh the order display (don't highlight — that opens the modal)
     try:
@@ -268,7 +273,7 @@ def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_inst
 @tool
 def remove_from_order(item_id: str, quantity: int = 1) -> dict:
     """Removes a menu item from the current order."""
-    if not _order_state.remove_item(item_id, quantity):
+    if not get_order_state().remove_item(item_id, quantity):
         return {"error": f"Item '{item_id}' is not in the current order."}
     summary = _show_order_on_screen()
     return _sanitize_result(_while_choosing({"status": "removed", "item": item_id, "total": summary["total"], "totalText": _spoken(summary["total"]), "itemCount": len(summary["items"])}))
@@ -294,11 +299,11 @@ def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str
         payment_method: "cash", "card" or "link" (a payment link sent to their phone), as the customer chose.
         user_id: The customer identifier. Defaults to "guest".
     """
-    if _order_state.is_empty():
+    if get_order_state().is_empty():
         return {"error": "Cannot place an empty order."}
     vehicle = re.sub(r"[^A-Za-z0-9 ]", " ", str(vehicle_number or "")).upper()
     vehicle = re.sub(r"\s+", " ", vehicle).strip()[:20]
-    if rewards_on and not call_customer.get("phone") and not call_customer.get("declined"):
+    if rewards_on and not customer().get("phone") and not customer().get("declined"):
         return {"error": "First ask who is ordering: \"Are you a VoiceBite Rewards member?\" with show_choices([\"I'm a member\", \"Join now\", \"No thanks\"]). "
                          "Member: ask for their mobile number and PIN, call sign_in_rewards. Join: name, mobile number and a 4-digit PIN, call join_rewards. "
                          "No thanks: call skip_rewards. Then call place_order again."}
@@ -309,12 +314,12 @@ def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str
     method = PAYMENT_METHODS.get(str(payment_method or "").strip().lower(), "")
     if not method:
         return {"error": "Ask how the customer will pay (cash, card or a payment link), then call place_order again with payment_method."}
-    order_record = _order_state.place_order(user_id)
+    order_record = get_order_state().place_order(user_id)
     order_record["vehicleNumber"] = vehicle          # staff serve the order to this car
     order_record["paymentPreference"] = method       # shown to the window; the payment itself is taken there
-    if call_customer.get("phone"):
-        order_record["customerPhone"] = call_customer["phone"]
-        order_record["customerName"] = call_customer.get("name", "")
+    if customer().get("phone"):
+        order_record["customerPhone"] = customer()["phone"]
+        order_record["customerName"] = customer().get("name", "")
     order_record["locationId"] = current_location()  # which store took the order
     order_record["status"] = "received"              # first step on the kitchen display
     order_record["trackToken"] = secrets.token_urlsafe(16)  # lets this customer's phone, and nobody else, follow the order
@@ -332,8 +337,8 @@ def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str
         order_record["total"],
         len(order_record["items"]),
     )
-    _order_state.cancel()
-    heard.clear()   # a second order in the same call asks for the plate again
+    get_order_state().cancel()
+    _call().heard = []   # a second order in the same call asks for the plate again
 
     # Update UI to show order confirmation page
     try:
@@ -360,8 +365,8 @@ def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str
 @tool
 def cancel_order(tool_context=None) -> dict:
     """Clears all items from the current order."""
-    logger.info("ORDER_CANCELLED: itemCount=%s", len(_order_state.items))
-    _order_state.cancel()
+    logger.info("ORDER_CANCELLED: itemCount=%s", len(get_order_state().items))
+    get_order_state().cancel()
     _show_order_on_screen()
     return _sanitize_result({"status": "cancelled"})
 
@@ -471,9 +476,9 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
 
     logger.info("build_custom_burger: %s toppings=%s sauces=%s price=%s", patty, selected_toppings, selected_sauces, total_price)
 
-    _order_state.add_item(item_id, name, quantity, total_price, description)
+    get_order_state().add_item(item_id, name, quantity, total_price, description)
     note_added("custom-burger")
-    summary = _order_state.get_summary()
+    summary = get_order_state().get_summary()
 
     # Auto-update the UI: close burger builder, update order
     try:

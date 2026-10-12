@@ -509,6 +509,35 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 .smini{display:flex; gap:6px; background:rgba(255,255,255,.08); border-radius:16px; padding:8px 10px} .smini i{opacity:.28; filter:grayscale(1)} .smini i.got{opacity:1; filter:none} .smini i.new{animation:pop .6s .4s var(--spring) both}
 .sbtn{margin-top:8px; border:0; border-radius:999px; padding:14px 38px; font-weight:700; font-size:1rem; background:#D7F25A; color:#0B2A20}
 .rprize{animation:pop .6s var(--spring)}
+/* Kiosk mode: one customer at a time on a shared screen */
+body.kiosk .tab[data-go="more"], body.kiosk #installCard{display:none !important}
+.kiosk{position:absolute; inset:0; z-index:90; color:#fff; animation:rise .3s var(--ease)}
+.k-idle{display:grid; grid-template-rows:auto 1fr auto; padding:calc(22px + var(--top)) 24px calc(22px + var(--bottom)); text-align:center;
+  background:radial-gradient(circle at 50% 46%,rgba(215,242,90,.16),transparent 55%),linear-gradient(170deg,#0B2E22,#0F3F2D 55%,#145A3E)}
+.k-top{display:flex; justify-content:space-between; align-items:center} .k-brand{font-size:1.25rem; font-weight:700; letter-spacing:-.02em}
+.k-lane{font-size:.82rem; font-weight:600; color:#0B2A20; background:#D7F25A; border-radius:999px; padding:5px 12px}
+.k-mid{display:grid; place-content:center; justify-items:center; gap:14px}
+.k-mid h1{font-size:2.6rem; font-weight:700; letter-spacing:-.04em; line-height:1.05} .k-mid p{color:#C9DDD2; max-width:28ch; font-size:1.02rem}
+.k-mic{position:relative; width:150px; height:150px; margin-top:18px; border-radius:50%; border:0; background:#D7F25A; color:#0B2A20; display:grid; place-items:center; box-shadow:0 18px 50px rgba(215,242,90,.35)}
+.k-ring{position:absolute; inset:-14px; border-radius:50%; border:2px solid rgba(215,242,90,.5); animation:kring 2.2s ease-out infinite} .k-ring.r2{animation-delay:1.1s}
+@keyframes kring{from{transform:scale(.85); opacity:1} to{transform:scale(1.35); opacity:0}}
+.k-tap{font-size:1.1rem; color:#D7F25A; margin-top:6px}
+.k-langs{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; justify-content:center}
+.k-langs button{border:1px solid rgba(255,255,255,.22); background:rgba(255,255,255,.06); color:#fff; border-radius:999px; padding:9px 16px; font-weight:600; font-size:.92rem}
+.k-langs button[aria-pressed="true"]{background:#fff; color:#0B2A20; border-color:#fff}
+.k-privacy{font-size:.82rem; color:#9FBFB0}
+.k-ask,.k-handoff{display:grid; place-items:center; padding:24px; background:rgba(5,25,18,.72); backdrop-filter:blur(6px)}
+.k-card{width:min(100%,380px); background:#fff; color:var(--text); border-radius:28px; padding:28px 22px 22px; text-align:center; display:grid; justify-items:center; gap:10px; box-shadow:0 30px 80px rgba(0,0,0,.35); animation:pop .45s var(--spring)}
+.k-card h2{font-size:1.6rem; font-weight:700; letter-spacing:-.03em} .k-card p{color:var(--soft)}
+.k-btn{width:100%; border:0; border-radius:999px; padding:15px; font-weight:700; font-size:1.05rem; background:#0F3F2D; color:#fff; margin-top:6px}
+.k-link{border:0; background:none; color:var(--soft); font-weight:600; padding:6px}
+.k-check{width:62px; height:62px; border-radius:50%; background:#D7F25A; color:#0B2A20; display:grid; place-items:center}
+.k-order{display:grid; line-height:1} .k-order span{font-size:.8rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--soft)} .k-order b{font-size:3.2rem; font-weight:700; letter-spacing:-.04em}
+.k-facts{display:flex; gap:8px; align-items:center; font-weight:600} .k-plate{background:#0F3F2D; color:#fff; border-radius:8px; padding:4px 10px; letter-spacing:.06em}
+.k-qrbox{display:flex; align-items:center; gap:12px; text-align:start; background:#F2F6EE; border-radius:18px; padding:10px 12px; margin-top:4px}
+.k-qr{width:96px; height:96px; flex:none; background:#fff; border-radius:10px; overflow:hidden; font-size:.6rem; word-break:break-all} .k-qr svg{width:100%; height:100%; display:block}
+.k-qrbox small{font-size:.84rem; color:var(--text); font-weight:500}
+.k-next{font-size:.85rem}
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
 </head>
@@ -716,7 +745,12 @@ const T = {
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const params = new URLSearchParams(location.search);
-const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+/* Kiosk mode (?kiosk=1&lane=Lane 1): a shared screen outside the restaurant. Nothing is ever written to the device:
+   the store below lives in memory only, and the page reloads between customers, so the next car starts from nothing. */
+const KIOSK = params.get("kiosk") === "1", LANE = (params.get("lane") || "").slice(0, 40);
+const kioskMemory = {};
+const store = KIOSK ? { get: k => kioskMemory[k] ?? null, set: (k, v) => { kioskMemory[k] = v; } }
+  : { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
 const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const VIEWS = ["home", "menu", "order", "more"];
 
@@ -893,6 +927,8 @@ function applyTrack(r) {   // the kitchen's view of the order, from the server
   if (!order || !r) return;
   const before = JSON.stringify(order), step = STEPS.indexOf(r.status);
   if (step >= 0) order.status = Math.max(order.status, step);
+  if (r.total && !order.total) order.total = r.total;
+  if (r.vehicleNumber && !order.vehicle) order.vehicle = r.vehicleNumber;
   order.cancelled = r.status === "cancelled"; order.arrival = r.arrivalState || order.arrival || ""; order.store = r.store || null;
   if (order.status >= 3 || order.cancelled || order.arrival === "arrived") stopGeo();
   if (JSON.stringify(order) !== before) { saveOrder(); renderOrder(); renderNav(); }
@@ -1038,6 +1074,7 @@ function basketHtml(m) {
     <p class="bhow">${esc(rt("fbHow", { n: m.groupItems }))}</p></div>`;
 }
 function gameButton() {
+  if (KIOSK) return "";   // the next car is waiting: the game is on the customer's own phone, via the QR code
   if (!member || !order || order.preview || !member.games || !member.games.includes(order.number)) return "";
   return `<button class="rushbtn" data-rw="play"><span class="rushfruits">${[0, 1, 2].map(i => meteorIcon(i, 30)).join("")}</span><span><b>${esc(rt("frPlay"))}</b><small>${esc(rt("frPlaySub", { n: member.gameTarget }))}</small></span></button>`;
 }
@@ -1196,6 +1233,7 @@ async function rwCall(path, body, auth) {
 async function loadMember() { if (!rwToken()) return; try { member = await rwCall("/me", null, true); } catch (e) {} renderRewards(); renderOrder(); }
 function rewardsLine() {
   if (!order || order.preview) return "";
+  if (KIOSK) return member ? `<div class="rwline"><b>★ ${esc(rt("rwLinked"))} ✓</b></div>` : "";   // a shared screen shows no wallet
   const prog = member && member.program, n = Math.floor((order.total || 0) / 100) * ((prog && prog.pointsPerAed) || 1);
   if (member && order.claimed) return `<div class="rwline"><b>★ ${esc(rt("rwLinked"))}</b><span>${esc(rt("rwEarn", { n }))}</span></div>`;
   if (!member && n > 0) return `<button class="rwline cta2" data-rw="goJoin"><b>★ ${esc(rt("rwJoinOrder", { n }))}</b></button>`;
@@ -1269,7 +1307,8 @@ let accessCode = params.get("code") || store.get("accessCode") || "";
 function lineAddress(resume) {
   const q = new URLSearchParams(); if (STORE_LOCATION) q.set("location", STORE_LOCATION); if (accessCode) q.set("code", accessCode);
   if (voiceLang !== "en") q.set("lang", voiceLang); if (resume) q.set("resume", resume);
-  if (store.get("memberToken")) q.set("member", store.get("memberToken"));   // a signed-in member: the attendant knows their car and payment
+  if (store.get("memberToken")) q.set("member", store.get("memberToken"));
+  if (KIOSK) { q.set("kiosk", "1"); if (LANE) q.set("lane", LANE); }   // the kitchen keeps this lane's call apart from the others   // a signed-in member: the attendant knows their car and payment
   const extra = q.toString(); return wsUrl + (extra ? (wsUrl.includes("?") ? "&" : "?") + extra : "");
 }
 // Free hosting sleeps when idle; wake the kitchen while the customer reads the menu.
@@ -1549,6 +1588,7 @@ function endCall(key, bad) {
   micStream && micStream.getTracks().forEach(tr => tr.stop()); micStream = null;
   try { ctx && ctx.close(); } catch (e) {} ctx = null; micAn = outAn = null;
   $("talk").classList.remove("live"); $("orb").style.setProperty("--lvl", 0); setState(key || "idle", bad); renderCart();
+  if (KIOSK) kioskCallEnded();
 }
 
 /* the rings and bars move with whoever is speaking */
@@ -1557,6 +1597,7 @@ function level(an) { if (!an) return 0; an.getByteTimeDomainData(tmp); let s = 0
 let smooth = 0, lastTick = 0;
 (function tick(now) {
   paceCaption(); lastTick = now; if (live) noteOutput(now);
+  if (KIOSK && live && (level(micAn) > .12 || level(outAn) > .04)) kioskSeen = performance.now();   // someone is talking
   if (dropAudio && now - lastDropped > 700) dropAudio = false;   // the cut-off reply has stopped arriving
   if (live && !calm) { smooth += (Math.max(level(micAn), level(outAn)) - smooth) * 0.35; $("orb").style.setProperty("--lvl", smooth.toFixed(3));
     barSets.forEach(set => { const max = set[0].parentElement.clientHeight || 28; set.forEach((b, n) => b.style.height = (max * (0.2 + smooth * 0.8 * (0.55 + 0.45 * Math.sin(now / 130 + n * 1.3)))).toFixed(0) + "px"); }); }
@@ -1566,8 +1607,159 @@ let smooth = 0, lastTick = 0;
 try { const saved = JSON.parse(store.get("order") || "null");   // a placed order survives closing and reopening the app
   if (saved && saved.number && saved.token && Date.now() - (saved.placedAt || 0) < 6 * 36e5 && saved.status < 3 && !saved.cancelled) { order = saved; view = "order"; $("v-home").hidden = true; $("v-order").hidden = false; }
 } catch (e) {}
+/* A phone that scanned the kiosk's QR code: follow that order here (and earn points by signing in). */
+if (!KIOSK && /^[A-Za-z0-9-]{1,20}\.[A-Za-z0-9_-]{8,64}$/.test(params.get("track") || "")) {
+  const [num, tok] = params.get("track").split(".");
+  order = { number: num, token: tok, status: 0, total: 0, preview: false, vehicle: "", placedAt: Date.now() }; saveOrder();
+  view = "order"; $("v-home").hidden = true; $("v-order").hidden = false;
+  params.delete("track"); history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : ""));
+}
 render();
 if (order) startTracking();
+
+/* ================= kiosk mode =================
+   One customer at a time on a shared screen. The flow for every car:
+   idle screen -> tap -> voice call (who is ordering, items, plate, payment) -> order saved in the CRM by the server
+   -> handoff screen with a QR code (the customer carries on on their own phone) -> reset: the call is closed, which
+   drops everything about this customer on the server, and the page reloads, which drops everything here. */
+let kioskSeen = performance.now(), kioskStage = "idle", kioskTimer = null, kioskResetting = false;
+const KIOSK_IDLE = Math.max(20, +params.get("idle") || 60), KIOSK_HANDOFF = Math.max(8, +params.get("handoff") || 20), KIOSK_ASK = 15;
+const KT = {
+  en: { brand: "VoiceBite", title: "Order by voice", sub: "Tap the mic and tell us what you'd like. We'll bring it to your car.", tap: "Tap to start", privacy: "Your details are cleared after every order.",
+    stillT: "Are you still there?", stillS: "This screen starts over in {s} seconds.", stillYes: "I'm still here", over: "Start over",
+    thanks: "Thank you!", orderNo: "Order", drive: "Please drive to the window.", scan: "Scan to follow your order and collect your Rewards on your phone", next: "Next customer in {s}s", done: "Done",
+    ended: "The call ended", endedS: "Starting over for the next customer…", lane: "Lane" },
+  ar: { brand: "VoiceBite", title: "اطلب بصوتك", sub: "اضغط على الميكروفون وأخبرنا بما تريد. سنحضره إلى سيارتك.", tap: "اضغط للبدء", privacy: "تُحذف بياناتك بعد كل طلب.",
+    stillT: "هل ما زلت هنا؟", stillS: "ستبدأ الشاشة من جديد خلال {s} ثانية.", stillYes: "ما زلت هنا", over: "ابدأ من جديد",
+    thanks: "شكراً لك!", orderNo: "الطلب", drive: "يرجى التوجه إلى النافذة.", scan: "امسح الرمز لمتابعة طلبك وجمع مكافآتك على هاتفك", next: "العميل التالي خلال {s} ث", done: "تم",
+    ended: "انتهت المكالمة", endedS: "نبدأ من جديد للعميل التالي…", lane: "المسار" } };
+const kt = (k, v = {}) => ((KT[lang] || KT.en)[k] || KT.en[k]).replace(/\{(\w+)\}/g, (_, n) => v[n] ?? "");
+const MIC_SVG = `<svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>`;
+function kioskLayer(cls, html) {
+  let el = $("kiosk"); if (!el) { el = document.createElement("div"); el.id = "kiosk"; $("app").appendChild(el); }
+  el.className = "kiosk " + cls; el.innerHTML = html; el.hidden = false; return el;
+}
+function kioskHide() { const el = $("kiosk"); if (el) el.hidden = true; }
+function kioskIdle() {
+  kioskStage = "idle";
+  const langs = [["en", "English"], ["ar", "العربية"], ["ml", "മലയാളം"]];
+  kioskLayer("k-idle", `<div class="k-top"><b class="k-brand">${kt("brand")}</b>${LANE ? `<span class="k-lane">${/lane|مسار/i.test(LANE) ? "" : esc(kt("lane")) + " · "}${esc(LANE)}</span>` : ""}</div>
+    <div class="k-mid"><h1>${esc(kt("title"))}</h1><p>${esc(kt("sub"))}</p>
+      <button class="k-mic" id="kStart" aria-label="${esc(kt("tap"))}"><span class="k-ring"></span><span class="k-ring r2"></span>${MIC_SVG}</button><b class="k-tap">${esc(kt("tap"))}</b>
+      <div class="k-langs">${langs.map(([c, n]) => `<button data-kl="${c}" aria-pressed="${voiceLang === c}">${n}</button>`).join("")}</div></div>
+    <p class="k-privacy">🔒 ${esc(kt("privacy"))}</p>`);
+  $("kStart").onclick = () => { kioskHide(); kioskStage = "active"; kioskSeen = performance.now(); startCall(); };
+  document.querySelectorAll("[data-kl]").forEach(b => b.onclick = () => { const c = b.dataset.kl; if (c !== "ml") setLang(c); voiceLang = c; store.set("voiceLang", c); kioskIdle(); });
+}
+function kioskAsk() {
+  kioskStage = "ask"; let left = KIOSK_ASK;
+  const draw = () => kioskLayer("k-ask", `<div class="k-card"><h2>${esc(kt("stillT"))}</h2><p>${esc(kt("stillS", { s: left }))}</p>
+    <button class="k-btn" id="kYes">${esc(kt("stillYes"))}</button><button class="k-link" id="kOver">${esc(kt("over"))}</button></div>`);
+  draw(); $("kYes").onclick = () => { clearInterval(kioskTimer); kioskHide(); kioskStage = "active"; kioskSeen = performance.now(); }; $("kOver").onclick = kioskReset;
+  clearInterval(kioskTimer); kioskTimer = setInterval(() => { if (--left <= 0) return kioskReset(); const p = document.querySelector(".k-ask p"); if (p) p.textContent = kt("stillS", { s: left }); }, 1000);
+}
+function trackLink() {
+  const q = new URLSearchParams({ track: order.number + "." + order.token });
+  for (const k of ["ws", "location", "code"]) if (params.get(k)) q.set(k, params.get(k));
+  if (lang !== "en") q.set("lang", lang);
+  return location.origin + location.pathname + "?" + q;
+}
+/* Built-in QR code drawing (byte mode, error correction M), so a kiosk never depends on a CDN to show its code. */
+function qrMatrix(text) {
+  const ECC = [-1, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26, 30, 22, 22, 24, 24, 28, 28, 26, 26, 26, 26, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28];
+  const BLOCKS = [-1, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5, 5, 8, 9, 9, 10, 10, 11, 13, 14, 16, 17, 17, 18, 20, 21, 23, 25, 26, 28, 29, 31, 33, 35, 37, 38, 40, 43, 45, 47, 49];
+  const bytes = [...new TextEncoder().encode(text)];
+  const rawModules = v => { let r = (16 * v + 128) * v + 64; if (v >= 2) { const n = Math.floor(v / 7) + 2; r -= (25 * n - 10) * n - 55; if (v >= 7) r -= 36; } return r; };
+  const dataCodewords = v => Math.floor(rawModules(v) / 8) - ECC[v] * BLOCKS[v];
+  let ver = 1; while (ver <= 40 && 4 + (ver <= 9 ? 8 : 16) + 8 * bytes.length > dataCodewords(ver) * 8) ver++;
+  if (ver > 40) throw new Error("Text too long for a QR code");
+  const bits = [], put = (val, n) => { for (let i = n - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+  put(4, 4); put(bytes.length, ver <= 9 ? 8 : 16); bytes.forEach(b => put(b, 8));
+  const cap = dataCodewords(ver) * 8; put(0, Math.min(4, cap - bits.length)); put(0, (8 - bits.length % 8) % 8);
+  for (let pad = 0xEC; bits.length < cap; pad ^= 0xEC ^ 0x11) put(pad, 8);
+  const data = []; for (let i = 0; i < bits.length; i += 8) data.push(parseInt(bits.slice(i, i + 8).join(""), 2));
+  const mul = (x, y) => { let z = 0; for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11D); z ^= ((y >>> i) & 1) * x; } return z; };
+  const deg = ECC[ver], div = Array(deg - 1).fill(0).concat([1]); let root = 1;
+  for (let i = 0; i < deg; i++) { for (let j = 0; j < div.length; j++) { div[j] = mul(div[j], root); if (j + 1 < div.length) div[j] ^= div[j + 1]; } root = mul(root, 2); }
+  const rem = d => { const r = div.map(() => 0); for (const b of d) { const f = b ^ r.shift(); r.push(0); div.forEach((c, i) => r[i] ^= mul(c, f)); } return r; };
+  const nb = BLOCKS[ver], raw = Math.floor(rawModules(ver) / 8), nShort = nb - raw % nb, shortLen = Math.floor(raw / nb), blocks = [];
+  for (let i = 0, k = 0; i < nb; i++) { const len = shortLen - deg + (i < nShort ? 0 : 1), d = data.slice(k, k += len), e = rem(d); if (i < nShort) d.push(0); blocks.push(d.concat(e)); }
+  const words = []; for (let i = 0; i < blocks[0].length; i++) blocks.forEach((b, j) => { if (i !== shortLen - deg || j >= nShort) words.push(b[i]); });
+  const size = ver * 4 + 17, mod = [...Array(size)].map(() => Array(size).fill(false)), fn = [...Array(size)].map(() => Array(size).fill(false));
+  const set = (x, y, dark) => { mod[y][x] = dark; fn[y][x] = true; };
+  for (let i = 0; i < size; i++) { set(6, i, i % 2 === 0); set(i, 6, i % 2 === 0); }
+  for (const [cx, cy] of [[3, 3], [size - 4, 3], [3, size - 4]]) for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+    const x = cx + dx, y = cy + dy, d = Math.max(Math.abs(dx), Math.abs(dy)); if (x >= 0 && x < size && y >= 0 && y < size) set(x, y, d !== 2 && d !== 4); }
+  if (ver > 1) { const n = Math.floor(ver / 7) + 2, step = ver === 32 ? 26 : Math.ceil((ver * 4 + 4) / (n * 2 - 2)) * 2, pos = [6];
+    for (let p = size - 7; pos.length < n; p -= step) pos.splice(1, 0, p);
+    pos.forEach((a, i) => pos.forEach((b, j) => { if ((i === 0 && j === 0) || (i === 0 && j === n - 1) || (i === n - 1 && j === 0)) return;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) set(a + dx, b + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1); })); }
+  const format = mask => { const d = mask; let r = d; for (let i = 0; i < 10; i++) r = (r << 1) ^ ((r >>> 9) * 0x537); const b = ((d << 10) | r) ^ 0x5412, g = i => ((b >>> i) & 1) === 1;   // level M = 00
+    for (let i = 0; i <= 5; i++) set(8, i, g(i)); set(8, 7, g(6)); set(8, 8, g(7)); set(7, 8, g(8)); for (let i = 9; i < 15; i++) set(14 - i, 8, g(i));
+    for (let i = 0; i < 8; i++) set(size - 1 - i, 8, g(i)); for (let i = 8; i < 15; i++) set(8, size - 15 + i, g(i)); set(8, size - 8, true); };
+  format(0);
+  if (ver >= 7) { let r = ver; for (let i = 0; i < 12; i++) r = (r << 1) ^ ((r >>> 11) * 0x1F25); const b = (ver << 12) | r;
+    for (let i = 0; i < 18; i++) { const bit = ((b >>> i) & 1) === 1, a = size - 11 + i % 3, c = Math.floor(i / 3); set(a, c, bit); set(c, a, bit); } }
+  for (let right = size - 1, i = 0; right >= 1; right -= 2) { if (right === 6) right = 5;
+    for (let v = 0; v < size; v++) for (let j = 0; j < 2; j++) { const x = right - j, y = ((right + 1) & 2) === 0 ? size - 1 - v : v;
+      if (!fn[y][x] && i < words.length * 8) { mod[y][x] = ((words[i >>> 3] >>> (7 - (i & 7))) & 1) === 1; i++; } } }
+  const MASKS = [(x, y) => (x + y) % 2 === 0, (x, y) => y % 2 === 0, x => x % 3 === 0, (x, y) => (x + y) % 3 === 0, (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0,
+    (x, y) => x * y % 2 + x * y % 3 === 0, (x, y) => (x * y % 2 + x * y % 3) % 2 === 0, (x, y) => ((x + y) % 2 + x * y % 3) % 2 === 0];
+  const flip = m => { for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (!fn[y][x] && MASKS[m](x, y)) mod[y][x] = !mod[y][x]; };
+  const penalty = () => { let p = 0, dark = 0;   // runs of 5+, 2x2 blocks and dark/light balance (enough to pick a clean mask)
+    for (let a = 0; a < size; a++) for (const row of [true, false]) { let run = 1; for (let b = 1; b <= size; b++) { const prev = row ? mod[a][b - 1] : mod[b - 1][a], cur = b < size ? (row ? mod[a][b] : mod[b][a]) : null;
+      if (cur === prev) run++; else { if (run >= 5) p += run - 2; run = 1; } } }
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) { if (mod[y][x]) dark++; if (x && y && mod[y][x] === mod[y - 1][x] && mod[y][x] === mod[y][x - 1] && mod[y][x] === mod[y - 1][x - 1]) p += 3; }
+    return p + Math.floor(Math.abs(dark * 20 - size * size * 10) / (size * size)) * 10; };
+  let best = 0, low = Infinity;
+  for (let m = 0; m < 8; m++) { flip(m); format(m); const s = penalty(); if (s < low) { low = s; best = m; } flip(m); }
+  flip(best); format(best);
+  return mod;
+}
+function qrSvg(text, quiet = 3) {
+  const m = qrMatrix(text), n = m.length + quiet * 2; let d = "";
+  m.forEach((row, y) => row.forEach((on, x) => { if (on) d += `M${x + quiet} ${y + quiet}h1v1h-1z`; }));
+  return `<svg viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges" role="img" aria-label="QR code"><rect width="${n}" height="${n}" fill="#fff"/><path d="${d}" fill="#0B2A20"/></svg>`;
+}
+function kioskQR(el, text) { try { el.innerHTML = qrSvg(text); } catch (e) { el.textContent = text; } }
+function kioskHandoff() {
+  if (kioskStage === "handoff" || !order || order.preview) return;
+  kioskStage = "handoff"; let left = KIOSK_HANDOFF;
+  kioskLayer("k-handoff", `<div class="k-card">
+      <div class="k-check" aria-hidden="true"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <h2>${esc(kt("thanks"))}</h2>
+      <div class="k-order"><span>${esc(kt("orderNo"))}</span><b>${esc(order.number)}</b></div>
+      <div class="k-facts">${order.vehicle ? `<span class="k-plate">${esc(order.vehicle)}</span>` : ""}<span>${esc(money(order.total))}</span></div>
+      <p>${esc(kt("drive"))}</p>
+      <div class="k-qrbox"><div class="k-qr" id="kQR"></div><small>${esc(kt("scan"))}</small></div>
+      <button class="k-btn" id="kDone">${esc(kt("done"))}</button><p class="k-next" id="kNext">${esc(kt("next", { s: left }))}</p></div>`);
+  kioskQR($("kQR"), trackLink());
+  $("kDone").onclick = kioskReset;
+  clearInterval(kioskTimer); kioskTimer = setInterval(() => { if (--left <= 0) return kioskReset(); const n = $("kNext"); if (n) n.textContent = kt("next", { s: left }); }, 1000);
+}
+function kioskCallEnded() {   // the line dropped or the attendant hung up
+  if (kioskResetting || kioskStage === "handoff" || kioskStage === "idle") return;
+  if (order && !order.preview) return kioskHandoff();
+  kioskStage = "ended";
+  kioskLayer("k-ask", `<div class="k-card"><h2>${esc(kt("ended"))}</h2><p>${esc(kt("endedS"))}</p></div>`);
+  clearTimeout(kioskTimer); kioskTimer = setTimeout(kioskReset, 4000);
+}
+function kioskReset() {   // close the call (the server forgets this customer) and reload (this screen forgets them too)
+  if (kioskResetting) return; kioskResetting = true;
+  clearInterval(kioskTimer); clearTimeout(kioskTimer); stopTracking();
+  if (live) endCall("idle");
+  setTimeout(() => location.replace(location.href.split("#")[0]), 250);
+}
+if (KIOSK) {
+  document.body.classList.add("kiosk");
+  ["pointerdown", "keydown"].forEach(ev => addEventListener(ev, () => { kioskSeen = performance.now(); }, { passive: true, capture: true }));
+  const heard = onMessage; onMessage = m => { if (m && m.type !== "bidi_usage") kioskSeen = performance.now(); return heard(m); };
+  setInterval(() => {
+    if (kioskStage === "active" && order && !order.preview) { kioskStage = "placing"; setTimeout(kioskHandoff, 2500); return; }   // let the attendant finish the confirmation first
+    if (kioskStage === "active" && performance.now() - kioskSeen > KIOSK_IDLE * 1000) kioskAsk();
+  }, 1000);
+  kioskIdle();
+}
 loadMember();
 requestAnimationFrame(renderNav);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderNav);

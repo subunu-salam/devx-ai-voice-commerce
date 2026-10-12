@@ -777,6 +777,13 @@ def save_burger(body: BurgerIn, user: dict = Depends(need("menu.edit"))):
 
 # ---------- settings ----------
 
+class KioskLaneIn(BaseModel):
+    lane: str = Field(min_length=1, max_length=40, pattern=r"^[A-Za-z0-9][A-Za-z0-9 _-]*$")
+    locationId: str = Field(default="main", max_length=40)
+    idle: int = Field(default=60, ge=20, le=600)        # seconds of silence before "Are you still there?"
+    handoff: int = Field(default=20, ge=8, le=120)      # seconds the order number and QR code stay up
+
+
 class SettingsIn(BaseModel):
     greeting: str = Field(min_length=1, max_length=200)
     voice: str
@@ -798,6 +805,7 @@ class SettingsIn(BaseModel):
     prepSlaMinutes: int = Field(default=8, ge=1, le=240)
     storeLat: Optional[float] = Field(default=None, ge=-90, le=90)
     storeLng: Optional[float] = Field(default=None, ge=-180, le=180)
+    kioskLanes: List[KioskLaneIn] = Field(default_factory=list, max_length=30)
 
     @field_validator("storeLat", "storeLng", mode="before")
     @classmethod
@@ -829,9 +837,39 @@ def save_settings(body: SettingsIn, user: dict = Depends(need("settings.manage")
         value[key] = "" if value[key] is None else repr(value[key])
     if bool(value["storeLat"]) != bool(value["storeLng"]):
         raise HTTPException(400, "Enter both the latitude and the longitude of the restaurant, or leave both empty.")
+    names = [k["lane"].strip().lower() for k in value["kioskLanes"]]
+    if len(set(names)) != len(names):
+        raise HTTPException(400, "Each kiosk lane needs its own name.")
+    for k in value["kioskLanes"]:
+        k["lane"] = k["lane"].strip()
+        if not _SLUG.match(k["locationId"]):
+            raise HTTPException(400, "Choose a branch for every kiosk lane.")
     put_config("SETTINGS", value)
     audit(user, "settings_saved")
     return value
+
+
+# ---------- drive-through kiosks ----------
+
+@router.get("/kiosks")
+def kiosks(user: dict = Depends(need("settings.manage"))):
+    """Each kiosk lane: whether a customer is on it right now, and today's calls and orders."""
+    try:
+        from agent import call_context
+    except ImportError:
+        import call_context
+    live = call_context.live_lanes()
+    since = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    today = defaultdict(lambda: {"calls": 0, "orders": 0, "last": ""})
+    for c in _scan_all(sessions_table):
+        lane = str(c.get("lane") or "")
+        if lane and str(c.get("startedAt", "")) >= since:
+            row = today[lane]
+            row["calls"] += 1
+            row["orders"] += 1 if c.get("orderPlaced") else 0
+            row["last"] = max(row["last"], str(c.get("startedAt", "")))
+    lanes = get_settings().get("kioskLanes") or []
+    return {"lanes": [{**k, "liveNow": live.get(k["lane"], 0), **today.get(k["lane"], {"calls": 0, "orders": 0, "last": ""})} for k in lanes]}
 
 
 # ---------- analytics ----------

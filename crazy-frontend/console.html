@@ -1126,7 +1126,36 @@ RENDER.settings = async () => { S.set = await api("/settings"); SET_VOICE[1].opt
     <div class="tools"><h2 class="grow" style="font-size:1.05rem; font-weight:600">Branches</h2><button class="btn" data-act="branchNew">Add branch</button></div>` +
     table([{ label: "Branch", cell: l => `<b style="font-weight:500">${esc(l.name)}</b>` }, { label: "Ordering link for QR codes and signage", cell: l => `<a href="${esc(site)}?location=${esc(l.locationId)}" target="_blank" rel="noopener">${esc(site)}?location=${esc(l.locationId)}</a>` },
       { label: "", cls: "a", cell: l => `<button class="btn ghost sm" data-act="branchEdit" data-id="${esc(l.locationId)}">Rename</button>` }], me.locations, "") +
+    await kioskSection(site) +
     `<p class="soft small">VAT and receipt settings should be checked with your tax advisor before going live.</p>`; };
+/* Drive-through kiosks: one shared screen per lane. Each link opens the ordering app in kiosk mode, which keeps
+   nothing on the device and resets itself between customers; every order still lands here in the CRM. */
+const kioskLink = (site, k) => `${site}?${new URLSearchParams({ kiosk: "1", lane: k.lane, location: k.locationId, idle: k.idle, handoff: k.handoff })}`;
+async function kioskSection(site) {
+  const live = await api("/kiosks").catch(() => ({ lanes: [] })), lanes = live.lanes || [];
+  if (!timers.some(t => t.kiosk)) { const t = setInterval(() => page === "settings" && $("scrim").hidden && show("settings", true), 15000); t.kiosk = true; timers.push(t); }
+  const branch = id => (me.locations.find(l => l.locationId === id) || {}).name || id;
+  return `<div class="tools"><h2 class="grow" style="font-size:1.05rem; font-weight:600">Drive-through kiosks</h2><button class="btn" data-act="laneNew">Add lane</button></div>` +
+    table([{ label: "Lane", cell: k => `<b style="font-weight:500">${esc(k.lane)}</b><div class="soft small">${esc(branch(k.locationId))}</div>` },
+      { label: "Now", cell: k => k.liveNow ? pill("Customer ordering", "ok") : pill("Waiting for a car") },
+      { label: "Last 24 hours", cell: k => `${k.calls} calls · ${k.orders} orders${k.last ? `<div class="soft small">Last ${esc(when(k.last))}</div>` : ""}` },
+      { label: "Resets", cell: k => `<span class="small">after ${k.handoff}s on the order number, or ${k.idle}s of silence</span>` },
+      { label: "Kiosk link (open it on the lane's screen)", cell: k => `<a href="${esc(kioskLink(site, k))}" target="_blank" rel="noopener" class="small">${esc(kioskLink(site, k))}</a>` },
+      { label: "", cls: "a", cell: k => `<button class="btn ghost sm" data-act="laneCopy" data-l="${esc(k.lane)}">Copy link</button> <button class="btn ghost sm" data-act="laneEdit" data-l="${esc(k.lane)}">Edit</button>` }],
+      lanes, "No kiosk lanes yet. Add one for each screen customers order from.") +
+    `<p class="soft small">Each customer's details are saved to Customers and Orders as they order. The kiosk itself keeps nothing: it starts over after every car.</p>`;
+}
+const LANE_FIELDS = () => [{ key: "lane", label: "Lane name", req: true, hint: "Shown on the kiosk, e.g. Lane 1" },
+  { key: "locationId", label: "Branch", type: "select", options: me.locations.map(l => [l.locationId, l.name]) },
+  { key: "idle", label: "Seconds of silence before \"Are you still there?\"", type: "number" },
+  { key: "handoff", label: "Seconds the order number and QR code stay on screen", type: "number" }];
+const lanesSave = list => setSave({ kioskLanes: list.map(k => ({ lane: String(k.lane).trim(), locationId: k.locationId || "main", idle: Math.round(num(k.idle)) || 60, handoff: Math.round(num(k.handoff)) || 20 })) });
+ACT.laneNew = () => form("Add kiosk lane", LANE_FIELDS(), { lane: `Lane ${(S.set.kioskLanes || []).length + 1}`, locationId: me.locations[0] && me.locations[0].locationId, idle: 60, handoff: 20 },
+  v => lanesSave([...(S.set.kioskLanes || []), v]));
+ACT.laneEdit = d => { const list = S.set.kioskLanes || [], i = list.findIndex(k => k.lane === d.l);
+  form("Edit kiosk lane", LANE_FIELDS(), list[i], v => lanesSave(list.map((k, n) => n === i ? v : k)), { onDelete: () => lanesSave(list.filter((_, n) => n !== i)) }); };
+ACT.laneCopy = async d => { const k = (S.set.kioskLanes || []).find(x => x.lane === d.l), site = location.origin + location.pathname.replace(/console\.html$/, "");
+  try { await navigator.clipboard.writeText(kioskLink(site, k)); say("Kiosk link copied."); } catch (e) { prompt("Copy this kiosk link:", kioskLink(site, k)); } };
 const setSave = async v => { const all = { ...S.set, ...v }; ["costPer1kInput", "costPer1kOutput", "vatRate"].forEach(k => all[k] = parseFloat(all[k]) || 0); all.prepSlaMinutes = Math.round(num(all.prepSlaMinutes)) || 8;
   ["storeLat", "storeLng"].forEach(k => { const n = parseFloat(all[k]); all[k] = n || null; });   /* empty or 0 means not set */ await api("/settings", "PUT", all); me = await api("/me"); };
 ACT.setEdit = d => form(d.g === "business" ? "Business and tax" : "Voice attendant", d.g === "business" ? SET_BUSINESS : SET_VOICE, S.set, setSave);
