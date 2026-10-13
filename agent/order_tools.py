@@ -196,6 +196,21 @@ def _plate_from_customer(vehicle: str, lines=None) -> bool:
 _WHO_Q = "Are you a VoiceBite Rewards member, or is this your first order with us?"
 _WHO_OPTIONS = ["I'm a member", "First order"]
 _DETAILS_Q = "Welcome! Could I have your name and mobile number? We'll use it to reach you when you arrive."
+_NUMBER_Q = "Could you say your mobile number again, one digit at a time? You can also type it on your screen."
+
+
+def _said_something() -> bool:
+    """The customer answered the current question at all. Speech-to-text often splits or drops digits, so the exact
+    number is never checked against it: the customer confirms what we read back instead."""
+    call = _call()
+    return (not call.heard_any) or bool(_since())
+
+
+def _grouped(digits: str) -> str:
+    """'0508989797' -> '0 5 0, 8 9 8, 9 7 9 7': how a number is read back."""
+    d = re.sub(r"\D", "", digits)
+    parts = [d[:3], d[3:6], d[6:]] if len(d) > 6 else [d]
+    return ", ".join(" ".join(p) for p in parts if p)
 _GUEST = re.compile(r"\b(guest|no thanks|no thank you|not now|skip|without|don'?t want|continue)\b|لا شكر|ضيف|بدون|വേണ്ട|ഗസ്റ്റ്", re.I)
 _YES = re.compile(r"\b(yes|yeah|yep|yup|correct|that's right|that is right|right|sure|ok|okay|go ahead|place( it| the order| order)?|confirm|perfect|exactly)\b"
                   r"|نعم|أيوه|ايوه|صحيح|تمام|أكد|اطلب|അതെ|ശരി|ഓക്കെ", re.I)
@@ -229,11 +244,14 @@ def _flow_screen(step_no: int, choices=None) -> None:
     set_ui_state(current)
 
 
-def _ask(step: str, step_no: int, question: str, options=None) -> dict:
-    """Move to `step`, put the question (and tap answers) on screen, and tell the attendant to ask it and wait."""
+def _ask(step: str, step_no: int, question: str, options=None, typing: str = "") -> dict:
+    """Move to `step`, put the question (tap answers, or a box to type into) on screen, and tell the attendant to ask it and wait."""
     call = _call()
     call.step, call.mark = step, len(call.heard)
-    _flow_screen(step_no, {"question": question, "options": options} if options else None)
+    box = {"question": question, "options": options or []}
+    if typing:
+        box["input"] = typing   # "tel" or "text": the customer can type the answer instead of saying it
+    _flow_screen(step_no, box if (options or typing) else None)
     return {"next": f'Say exactly: "{question}" Then stop and wait for the customer to answer. Do not call another checkout tool until they do.'}
 
 
@@ -292,25 +310,54 @@ def sign_in_rewards(mobile_number: str, pin: str) -> dict:
 
 @tool
 def quick_details(name: str, mobile_number: str) -> dict:
-    """A first-time customer: save their name and mobile number (required to order; no PIN needed).
+    """A first-time customer said (or typed) their name and mobile number. Reads the number back for them to confirm.
 
     Args:
         name: Their first name, as they said it.
-        mobile_number: Their mobile number, digits as spoken, e.g. "0501234567".
+        mobile_number: Their mobile number, all the digits they gave, e.g. "0501234567".
     """
     if not rewards_on:
         return {"error": "Not available. Carry on with the order."}
     if customer().get("phone"):
         return {"status": "already known", "name": customer().get("name", "")}
+    if not _said_something():
+        return {"error": "Wait for the customer to say their name and mobile number."}
     digits = re.sub(r"\D", "", _digits_spoken(mobile_number))
-    if _call().heard_any and (len(digits) < 7 or digits[-7:] not in re.sub(r"\D", "", "".join(_digits_spoken(h) for h in _since()))):
-        return {"error": "The customer has not said that number. Ask for their mobile number and wait for it."}
+    name = re.sub(r"\s+", " ", str(name or "")).strip()[:60]
+    if not name:
+        return {"error": "Ask for their first name too.", **_ask("identify", 1, "And your first name, please?", None, "text")}
+    if not 7 <= len(digits) <= 15:
+        return {"status": "number unclear", **_ask("identify", 1, _NUMBER_Q, None, "tel")}
+    call = _call()
+    call.pending = {"name": name, "phone": digits}
+    return {"status": "read back", **_ask("identify_ok", 1, f"Thanks, {name}. I have {_grouped(digits)}. Is that right?", [digits, "Change number"], "tel")}
+
+
+@tool
+def confirm_details(is_correct: bool) -> dict:
+    """The customer answered whether the mobile number you read back is right.
+
+    Args:
+        is_correct: true if they said yes / tapped the number, false if it is wrong.
+    """
+    call = _call()
+    pending = getattr(call, "pending", None)
+    if call.step != "identify_ok" or not pending:
+        return {"error": "No number to confirm. Ask for their name and mobile number first."}
+    tapped = any(re.sub(r"\D", "", h) == pending["phone"] for h in _since())
+    said_no = call.heard_any and not tapped and any(_NO.search(h) for h in _since())
+    if not is_correct or said_no:
+        call.pending = {"name": pending["name"], "phone": ""}
+        return {"status": "change", **_ask("identify", 1, _NUMBER_Q, None, "tel")}
+    if not (tapped or _answered(_YES)):
+        return {"error": "The customer has not confirmed the number yet. Wait for their answer."}
     from rewards import voice_quick   # loaded only when Rewards is on
-    result = voice_quick(name, mobile_number)
+    result = voice_quick(pending["name"], pending["phone"])
     if result.get("error"):
         if "PIN" in result["error"]:
-            return {"error": "This number already has a Rewards account. Ask for their 4-digit PIN and call sign_in_rewards."}
-        return {"error": result["error"]}
+            return {"error": "This number already has a Rewards account.", **_ask("identify", 1, "That number has a VoiceBite Rewards account. What's your 4-digit PIN?", None, "tel")}
+        return {"error": result["error"], **_ask("identify", 1, _NUMBER_Q, None, "tel")}
+    call.pending = None
     set_call_customer({k: result.get(k, "") for k in ("phone", "name", "lastVehicle", "lastPayment", "member")})
     current = get_ui_state(); current.update(customerToken=result["token"], customerName=result.get("name", ""), customerPhone=result.get("phone", "")); set_ui_state(current)
     return {"status": "saved", **identity_done(result.get("name", ""))}
@@ -319,7 +366,7 @@ def quick_details(name: str, mobile_number: str) -> dict:
 @tool
 def skip_rewards() -> dict:
     """The customer does not want to sign in. Their name and mobile number are still needed to order."""
-    return {"status": "details needed", **_ask("identify", 1, _DETAILS_Q, None)}
+    return {"status": "details needed", **_ask("identify", 1, _DETAILS_Q, None, "tel")}
 
 
 @tool
@@ -333,7 +380,7 @@ def checkout() -> dict:
     summary = _show_order_on_screen()
     said = ", ".join(f"{i['quantity']} {i['name']}" for i in summary["items"])
     call.plate = call.pay = ""
-    return {"status": "checkout", **_ask("plate", 3, f"That's {said}, {_spoken(summary['total'])}. What's your vehicle plate number?")}
+    return {"status": "checkout", **_ask("plate", 3, f"That's {said}, {_spoken(summary['total'])}. What's your vehicle plate number?", None, "text")}
 
 
 @tool
@@ -348,9 +395,9 @@ def set_vehicle(plate_number: str) -> dict:
         return {"error": "Not at the car step. If they are done ordering, call checkout first."}
     vehicle = re.sub(r"\s+", " ", re.sub(r"[^A-Za-z0-9 ]", " ", str(plate_number or "")).upper()).strip()[:20]
     if not re.search(r"\d", vehicle):
-        return {"error": "A plate needs its number.", **_ask("plate", 3, "Sorry, I didn't catch that. What's your vehicle plate number?")}
-    if not _plate_from_customer(vehicle, _since()):
-        return {"error": f"The customer has not said {vehicle}. Wait for them to say their plate number. Never guess or reuse a plate."}
+        return {"error": "A plate needs its number.", **_ask("plate", 3, "Sorry, I didn't catch that. What's your vehicle plate number? You can also type it on your screen.", None, "text")}
+    if not _said_something():
+        return {"error": "Wait for the customer to say their plate number. Never guess or reuse a plate."}
     call.plate = vehicle
     return {"status": "heard", **_ask("plate_ok", 3, f"I have {_spell(vehicle)}. Is that right?", [vehicle, "Change plate"])}
 
@@ -377,7 +424,7 @@ def confirm_vehicle(is_correct: bool) -> dict:
         q = f"How would you like to pay? {PAY_LABEL[last]} like last time, or something else?" if last in PAY_LABEL else "How would you like to pay: cash, card or a payment link?"
         return {"status": "plate confirmed", **_ask("pay", 4, q, options)}
     call.plate = ""
-    return {"status": "change", **_ask("plate", 3, "Sorry about that. What's your vehicle plate number?")}
+    return {"status": "change", **_ask("plate", 3, "Sorry about that. What's your vehicle plate number? You can also type it on your screen.", None, "text")}
 
 
 @tool

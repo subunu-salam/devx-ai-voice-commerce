@@ -258,7 +258,8 @@ def _customer_section(info: dict) -> str:
     return ("CUSTOMER: not identified yet. Step 1 comes first, before taking the order: your opening sentence already asks it. "
             "VoiceBite is ordered on the way to the restaurant: the mobile number is how the restaurant reaches them when they arrive, so it is required.\n"
             "- \"I'm a member\": ask for their mobile number, then their 4-digit PIN, and call sign_in_rewards\n"
-            "- \"First order\": ask for their first name and mobile number and call quick_details. No PIN needed\n"
+            "- \"First order\": ask for their first name and mobile number and call quick_details with ALL the digits they said (numbers often come in pieces: put the pieces together). "
+            "It reads the number back; then call confirm_details with their yes or no. No PIN needed. If they type it on screen, use what they typed\n"
             "- If they do not want to give a number, explain kindly that the restaurant needs it to reach them on arrival, and ask again. Never place an order without it\n"
             "- Never say a PIN back out loud\n")
 
@@ -435,7 +436,7 @@ RULES:
 - When the customer ORDERS an item (e.g. "I'll have the...", "I need that one"): call add_to_order straight away, then confirm in a few words ("Done, one Double Burger. Anything else?")
 - The order and total on screen update automatically from the order tools. Do not pass order_items or order_total to update_ui
 - THE DRIVE-THROUGH FLOW is run by the tools, step by step. Every step tool returns "next": say exactly that sentence and then WAIT for the customer. Never skip a step, never answer for the customer, never call the next step's tool before they have answered:
-  1. YOUR DETAILS (see CUSTOMER), required for every order. Member: sign_in_rewards. First order: their name and mobile number, then quick_details. Wants Rewards with a PIN: join_rewards
+  1. YOUR DETAILS (see CUSTOMER), required for every order. Member: sign_in_rewards. First order: their name and mobile number, then quick_details (it reads the number back), then confirm_details with their answer. Wants Rewards with a PIN: join_rewards
   2. THE ORDER: show_products, add_to_order, remove_from_order. When they say that's everything: call checkout
   3. THE CAR: after checkout, when they say their plate: set_vehicle(plate_number). Then they confirm: confirm_vehicle(true) or confirm_vehicle(false)
   4. PAYMENT: when they say or tap cash, card or payment link: set_payment(method)
@@ -445,7 +446,7 @@ RULES:
 {customer}
 - Special instructions: pass as special_instructions in add_to_order
 
-TOOLS: show_products, show_choices, join_rewards, sign_in_rewards, quick_details, checkout, set_vehicle, confirm_vehicle, set_payment, update_ui, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, get_categories, get_items_by_category, get_recommendations, get_ui_context, load_menu
+TOOLS: show_products, show_choices, join_rewards, sign_in_rewards, quick_details, confirm_details, checkout, set_vehicle, confirm_vehicle, set_payment, update_ui, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, get_categories, get_items_by_category, get_recommendations, get_ui_context, load_menu
 
 BUILD YOUR OWN BURGER (itemId: custom-burger):
 Walk customer through: patty (beef/chicken), toppings, sauces. Use update_ui(burger_builder={"active":true,"patty":null,"toppings":[],"sauces":[],"price":{base_price}}) to open the builder. Update it as they choose, adding each extra's price in cents to "price" (e.g. burger_builder={"active":true,"patty":"beef patty","toppings":["bacon"],"sauces":[],"price":<running total>}). When done, recap the burger (no prices) and ask "Sound good, or want to change anything?" and only call build_custom_burger AFTER they confirm.
@@ -687,7 +688,7 @@ async def voice_chat(websocket: WebSocket) -> None:
                 _order_tools.checkout, _order_tools.set_vehicle, _order_tools.confirm_vehicle, _order_tools.set_payment,
             ]
             if _rewards:
-                tools += [join_rewards, _order_tools.sign_in_rewards, _order_tools.quick_details, _order_tools.skip_rewards]
+                tools += [join_rewards, _order_tools.sign_in_rewards, _order_tools.quick_details, _order_tools.confirm_details, _order_tools.skip_rewards]
             if _langs and len(_langs.available()) > 1:
                 tools.append(switch_language)
         else:

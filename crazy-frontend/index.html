@@ -455,6 +455,8 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 
 /* tappable answers in voice mode */
 .choices{width:100%; text-align:start; animation:rise .35s var(--ease)}
+.chtype{display:flex; gap:8px; margin-top:10px} .chtype input{flex:1; min-width:0; border:0; border-radius:999px; padding:12px 16px; font:inherit; font-size:1.02rem; background:rgba(255,255,255,.95); color:#0B2A20}
+.chtype button{border:0; border-radius:999px; padding:0 18px; font-weight:700; background:#D7F25A; color:#0B2A20}
 .flow{list-style:none; display:flex; gap:4px; width:100%; margin:2px 0 4px; padding:0}
 .flow li{flex:1; display:grid; justify-items:center; gap:4px; font-size:.68rem; font-weight:600; color:rgba(255,255,255,.5); text-align:center; line-height:1.15}
 .flow li i{width:24px; height:24px; border-radius:50%; display:grid; place-items:center; font-style:normal; font-size:.75rem; background:rgba(255,255,255,.1); color:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.18)}
@@ -1219,24 +1221,36 @@ function celebrateFruit() { if (calm) return; const box = document.createElement
   $("app").appendChild(box); setTimeout(() => box.remove(), 2600); }
 
 /* questions with a few answers: shown as buttons, so the customer can tap instead of speaking */
+const prettyNum = o => /^\d{9,15}$/.test(o) ? o.replace(/^(\d{3})(\d{3})(\d+)$/, "$1 $2 $3") : o;
 function renderChoices(c) {
   const el = $("choices"); if (!el) return;
-  if (!c || !Array.isArray(c.options) || !c.options.length) { el.hidden = true; el.innerHTML = ""; return; }
-  el.innerHTML = `${c.question ? `<p>${esc(c.question)}</p>` : ""}<div>${c.options.map(o => `<button data-choice="${esc(o)}" dir="auto">${esc(o)}</button>`).join("")}</div>`; el.hidden = false;
+  const opts = c && Array.isArray(c.options) ? c.options : [];
+  if (!c || (!opts.length && !c.input)) { el.hidden = true; el.innerHTML = ""; return; }
+  el.innerHTML = `${c.question ? `<p>${esc(c.question)}</p>` : ""}${opts.length ? `<div>${opts.map(o => `<button data-choice="${esc(o)}" dir="ltr">${esc(prettyNum(o))}</button>`).join("")}</div>` : ""}
+    ${c.input ? `<form class="chtype" id="chType"><input id="chIn" type="${c.input === "tel" ? "tel" : "text"}" inputmode="${c.input === "tel" ? "tel" : "text"}" dir="ltr" autocomplete="${c.input === "tel" ? "tel" : "off"}"
+      placeholder="${esc(c.input === "tel" ? rt("typeNum") : rt("typePlate"))}"><button type="submit">${esc(rt("typeSend"))}</button></form>` : ""}`;
+  el.hidden = false;
 }
+$("choices").addEventListener("submit", e => {   // typed instead of said: sent to the attendant as the customer's answer
+  if (e.target.id !== "chType") return; e.preventDefault();
+  const v = $("chIn").value.trim(); if (!v) return;
+  const step = +(document.querySelector("#flow li.now i") || {}).textContent || 0;
+  sendText(step === 3 ? `My vehicle plate number is ${v}` : /^[\d\s+()-]+$/.test(v) ? `My mobile number is ${v.replace(/[^\d+]/g, "")}` : v);
+  $("chIn").value = ""; renderChoices(null);
+});
 $("choices").addEventListener("click", e => { const b = e.target.closest("[data-choice]"); if (!b) return;
   b.classList.add("picked"); sendText(b.dataset.choice); setTimeout(() => renderChoices(null), 250); if (navigator.vibrate) try { navigator.vibrate(8); } catch (x) {} });
 
 /* ================= VoiceBite Rewards: mobile number + 4-digit PIN, points wallet, referrals ================= */
 const RW = {
-  en: { obTitle: "Before you order", obSub: "We use your mobile number to reach you when you arrive, and to send your order updates.", obFirst: "First order", obMember: "I'm a member", obName: "Your name", obPhone: "Mobile number", obOffers: "Send me offers and rewards", obGo: "Continue", obSignIn: "Sign in and continue", obNeedName: "Please enter your name.", obPrivacy: "We never share your number.", rwUnlock: "Unlock your wallet", rwUnlockLead: "Hi {name}! Your points are saved on {phone}. Choose a 4-digit PIN to see your wallet, use your points and play Meteor Slice.", rwUnlockGo: "Set PIN", pickupFor: "Pickup for", pickupCall: "We'll call {phone} when you arrive.", rwChange: "Not you?", frCoins: "+{n} coins · {v} added to your wallet", rwTitle: "VoiceBite Rewards", rwLead: "Earn points on every order. Just your mobile number and a 4-digit PIN.", rwPhone: "Mobile number", rwPin: "4-digit PIN", rwName: "Your name (optional)",
+  en: { typeNum: "Or type your mobile number", typePlate: "Or type your plate, e.g. D 12345", typeSend: "Send", obTitle: "Before you order", obSub: "We use your mobile number to reach you when you arrive, and to send your order updates.", obFirst: "First order", obMember: "I'm a member", obName: "Your name", obPhone: "Mobile number", obOffers: "Send me offers and rewards", obGo: "Continue", obSignIn: "Sign in and continue", obNeedName: "Please enter your name.", obPrivacy: "We never share your number.", rwUnlock: "Unlock your wallet", rwUnlockLead: "Hi {name}! Your points are saved on {phone}. Choose a 4-digit PIN to see your wallet, use your points and play Meteor Slice.", rwUnlockGo: "Set PIN", pickupFor: "Pickup for", pickupCall: "We'll call {phone} when you arrive.", rwChange: "Not you?", frCoins: "+{n} coins · {v} added to your wallet", rwTitle: "VoiceBite Rewards", rwLead: "Earn points on every order. Just your mobile number and a 4-digit PIN.", rwPhone: "Mobile number", rwPin: "4-digit PIN", rwName: "Your name (optional)",
     rwRef: "Friend's code (optional)", rwJoin: "Join and start earning", rwSignIn: "Sign in", rwHaveAcc: "Already a member? Sign in", rwNew: "New here? Join", rwPoints: "points", rwWorth: "worth",
     rwCode: "Your code", rwShare: "Share with a friend", rwShareText: "Order by voice at VoiceBite and get {n} bonus points with my code {code}:", rwCopied: "Link copied", rwFriends: "friends joined",
     rwRecent: "Recent orders", rwOut: "Sign out", rwEarn: "You'll earn about {n} points when this order is collected.", rwLinked: "Linked to your Rewards", rwJoinOrder: "Join Rewards to earn {n} points on this order",
     rwBadPin: "The PIN is 4 digits.", rwJoinedVoice: "You're in! Signed in to VoiceBite Rewards.", rwRefFruit: "Bring a friend: you both get a fruit when they order with your code.",
     fbTitle: "Fruit basket", fbNeed: "{n} more fruits for a {reward}", fbFull: "Basket full!", fbVoucher: "Show at the window", fbHow: "Every order adds a fruit, orders of {n}+ items add two. Win more in Meteor Slice.",
     frPlay: "Play Meteor Slice, win coins", frPlaySub: "Every meteor is a coin for your wallet. Slice {n} for a bonus fruit", frKick: "VoiceBite Rewards", frTitle: "Meteor Slice", frSwipe: "swipe the meteor to begin", frRules2: "Slice {n} meteors in 30 seconds. Miss 3 or touch a mine and it's over.", frReady: "Meteors incoming…", frSending: "Counting your meteors…", frWon: "You won a {f}!", frWonSub: "A new fruit landed in your basket: {n} of 6.", frBasket: "Basket complete: {reward} is yours!", frScore: "{n} meteors sliced", frCollect: "Add to my basket", frLostT: "You lost", frMissed: "You missed too many meteors.", frTime: "{s} of {n} before the timer ran out.", frBomb: "Boom!", frBombSub: "You sliced a space mine.", frNext: "Play again on your next order", frDone: "Done", rwRefLine: "Friends get {a} points when they join with your code, you get {b} after their first order." },
-  ar: { obTitle: "قبل أن تطلب", obSub: "نستخدم رقم جوالك للتواصل معك عند وصولك ولإرسال تحديثات طلبك.", obFirst: "أول طلب", obMember: "أنا عضو", obName: "اسمك", obPhone: "رقم الجوال", obOffers: "أرسلوا لي العروض والمكافآت", obGo: "متابعة", obSignIn: "سجّل الدخول وتابع", obNeedName: "يرجى إدخال اسمك.", obPrivacy: "لا نشارك رقمك أبداً.", rwUnlock: "افتح محفظتك", rwUnlockLead: "مرحباً {name}! نقاطك محفوظة على {phone}. اختر رمزاً من 4 أرقام لترى محفظتك وتستخدم نقاطك وتلعب قطّع النيازك.", rwUnlockGo: "تعيين الرمز", pickupFor: "الاستلام باسم", pickupCall: "سنتصل بـ {phone} عند وصولك.", rwChange: "لست أنت؟", frCoins: "+{n} عملة · {v} أضيفت إلى محفظتك", rwTitle: "مكافآت VoiceBite", rwLead: "اكسب نقاطاً مع كل طلب. فقط رقم جوالك ورمز من 4 أرقام.", rwPhone: "رقم الجوال", rwPin: "رمز من 4 أرقام", rwName: "اسمك (اختياري)",
+  ar: { typeNum: "أو اكتب رقم جوالك", typePlate: "أو اكتب رقم اللوحة، مثل D 12345", typeSend: "إرسال", obTitle: "قبل أن تطلب", obSub: "نستخدم رقم جوالك للتواصل معك عند وصولك ولإرسال تحديثات طلبك.", obFirst: "أول طلب", obMember: "أنا عضو", obName: "اسمك", obPhone: "رقم الجوال", obOffers: "أرسلوا لي العروض والمكافآت", obGo: "متابعة", obSignIn: "سجّل الدخول وتابع", obNeedName: "يرجى إدخال اسمك.", obPrivacy: "لا نشارك رقمك أبداً.", rwUnlock: "افتح محفظتك", rwUnlockLead: "مرحباً {name}! نقاطك محفوظة على {phone}. اختر رمزاً من 4 أرقام لترى محفظتك وتستخدم نقاطك وتلعب قطّع النيازك.", rwUnlockGo: "تعيين الرمز", pickupFor: "الاستلام باسم", pickupCall: "سنتصل بـ {phone} عند وصولك.", rwChange: "لست أنت؟", frCoins: "+{n} عملة · {v} أضيفت إلى محفظتك", rwTitle: "مكافآت VoiceBite", rwLead: "اكسب نقاطاً مع كل طلب. فقط رقم جوالك ورمز من 4 أرقام.", rwPhone: "رقم الجوال", rwPin: "رمز من 4 أرقام", rwName: "اسمك (اختياري)",
     rwRef: "رمز صديق (اختياري)", rwJoin: "انضم وابدأ بجمع النقاط", rwSignIn: "تسجيل الدخول", rwHaveAcc: "عضو بالفعل؟ سجّل الدخول", rwNew: "جديد هنا؟ انضم", rwPoints: "نقطة", rwWorth: "قيمتها",
     rwCode: "رمزك", rwShare: "شارك مع صديق", rwShareText: "اطلب بصوتك من VoiceBite واحصل على {n} نقطة إضافية برمزي {code}:", rwCopied: "تم نسخ الرابط", rwFriends: "أصدقاء انضموا",
     rwRecent: "آخر الطلبات", rwOut: "تسجيل الخروج", rwEarn: "ستكسب حوالي {n} نقطة عند استلام هذا الطلب.", rwLinked: "مرتبط بحساب المكافآت", rwJoinOrder: "انضم إلى المكافآت لتكسب {n} نقطة على هذا الطلب",
