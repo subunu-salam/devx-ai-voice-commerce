@@ -423,15 +423,17 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 .cat:first-child b{font-size:1.2rem}
 
 /* voice screen: the conversation scrolls on its own, pinned to the newest line, so nothing hides behind the receipt */
-.vmid{display:flex; flex-direction:column; align-items:center; justify-content:flex-start; overflow:hidden; min-height:0}
+.vmid{display:flex; flex-direction:column; align-items:center; justify-content:flex-start; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; min-height:0}
+.vmid::-webkit-scrollbar{display:none}
 .vmid > *{flex:none}
 .voice:not(.shelf-on) .orb{margin-top:auto}
-.caps{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; display:flex; flex-direction:column; gap:8px; padding:4px 2px 6px; scrollbar-width:none;
+.caps{flex:1 0 150px; min-height:150px; overflow-y:auto; overscroll-behavior:contain; display:flex; flex-direction:column; gap:8px; padding:4px 2px 6px; scrollbar-width:none;
   -webkit-mask:linear-gradient(transparent 0, #000 18px); mask:linear-gradient(transparent 0, #000 18px)}
 .caps::-webkit-scrollbar{display:none}
 .caps li:first-child{margin-top:auto}
 .caps .user{align-self:flex-end} .caps .assistant{align-self:flex-start}
 .voice.shelf-on .caps li:nth-last-child(n+3){display:block}
+.voice.asking .orb{width:84px; height:84px; margin:8px 0 6px}   /* a question is on screen: make room for it and the captions */
 .voice:has(.vsum:not([hidden])) .shelf .card .pic{height:76px} .shelf .card .pic{display:block} .shelf .card .pic img{width:100%; height:100%; object-fit:contain}
 .voice:has(.vsum:not([hidden])) .shelf .card h3{min-height:0; margin-top:4px}
 .voice:has(.vsum:not([hidden])) .orb{margin-top:4px; margin-bottom:4px}
@@ -1238,6 +1240,7 @@ const prettyNum = o => /^\d{9,15}$/.test(o) ? o.replace(/^(\d{3})(\d{3})(\d+)$/,
 function renderChoices(c) {
   const el = $("choices"); if (!el) return;
   const opts = c && Array.isArray(c.options) ? c.options : [];
+  $("voice").classList.toggle("asking", !!(c && (opts.length || c.input)));
   if (!c || (!opts.length && !c.input)) { el.hidden = true; el.innerHTML = ""; return; }
   el.innerHTML = `${c.question ? `<p>${esc(c.question)}</p>` : ""}${opts.length ? `<div>${opts.map(o => `<button data-choice="${esc(o)}" dir="ltr">${esc(prettyNum(o))}</button>`).join("")}</div>` : ""}
     ${c.input ? `<form class="chtype" id="chType"><input id="chIn" type="${c.input === "tel" ? "tel" : "text"}" inputmode="${c.input === "tel" ? "tel" : "text"}" dir="ltr" autocomplete="${c.input === "tel" ? "tel" : "off"}"
@@ -1441,7 +1444,8 @@ function addLine(role, text) {
   while ($("caps").children.length > 6) $("caps").firstChild.remove();
   pinCaps(); return li;
 }
-function pinCaps() { const c = $("caps"); if (c.scrollHeight - c.scrollTop - c.clientHeight < 80 || c.dataset.pin !== "off") c.scrollTop = c.scrollHeight; }
+function pinCaps() { const c = $("caps"); if (c.scrollHeight - c.scrollTop - c.clientHeight < 80 || c.dataset.pin !== "off") c.scrollTop = c.scrollHeight;
+  const m = document.querySelector(".vmid"); if (m && m.scrollHeight > m.clientHeight) c.getBoundingClientRect().bottom > m.getBoundingClientRect().bottom && (m.scrollTop = m.scrollHeight); }
 const sameWords = t => String(t || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 function overlap(a, b) { const A = new Set(a.split(" ")), B = new Set(b.split(" ")); if (!A.size || !B.size) return 0; let n = 0; B.forEach(w => A.has(w) && n++); return n / Math.min(A.size, B.size); }
 const heardAt = () => ctx ? ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0) : 0;   // what has reached the speaker

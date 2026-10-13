@@ -71,8 +71,11 @@ _MID_ORDER_PRICES = ("itemPriceText", "total", "totalText", "price", "priceText"
 
 def _who_first(result: dict) -> dict:
     """Until we know who is ordering, every tool result reminds the attendant to settle it (the drive-through flow)."""
-    if _identity_open():
-        result["first"] = f'Before anything else, say exactly: "{_WHO_Q}" and wait for the answer.'
+    call = _call()
+    if _identity_open() and not getattr(call, "who_reminded", False):   # remind once, not on every item
+        call.who_reminded = True
+        result["first"] = (f'They have not said who is ordering yet. After confirming the item, ask once: "{_WHO_Q}" '
+                           "Do not repeat this question again until they answer; carry on with the order meanwhile.")
     call = _call()
     if call.step in ("plate", "plate_ok", "pay", "review"):   # the order changed during checkout: checkout starts again
         call.step, call.plate, call.pay = "order", "", ""
