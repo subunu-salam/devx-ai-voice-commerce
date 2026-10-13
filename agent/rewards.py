@@ -81,6 +81,26 @@ def _token(phone: str, seconds: int = 0) -> str:
     return f"{expires}.{phone}.{sig}"
 
 
+def _guest_token(phone: str) -> str:
+    """Pass for someone who gave only their name and mobile number: it identifies them when they order,
+    but opens nothing PIN-protected (wallet, game, history)."""
+    expires = int(time.time()) + TOKEN_DAYS * 86400
+    sig = hmac.new(_secret(), f"g|{expires}|{phone}".encode(), hashlib.sha256).hexdigest()
+    return f"g{expires}.{phone}.{sig}"
+
+
+def _customer_from(token: str) -> str:
+    """The phone behind a member pass or a name-and-mobile pass, or ""."""
+    parts = str(token or "").split(".")
+    if len(parts) == 3 and parts[0].startswith("g") and parts[0][1:].isdigit() and int(parts[0][1:]) >= time.time():
+        expected = hmac.new(_secret(), f"g|{parts[0][1:]}|{parts[1]}".encode(), hashlib.sha256).hexdigest()
+        return parts[1] if hmac.compare_digest(parts[2], expected) else ""
+    try:
+        return _member_from("Bearer " + str(token or ""))
+    except HTTPException:
+        return ""
+
+
 def _member_from(authorization: str) -> str:
     parts = (authorization[7:].strip() if authorization.startswith("Bearer ") else "").split(".")
     if len(parts) != 3 or not parts[0].isdigit() or int(parts[0]) < time.time():
@@ -156,8 +176,8 @@ def award_for_order(order: dict) -> int:
     if not cfg["enabled"] or not phone or order.get("pointsAwarded") or order.get("status") == "cancelled":
         return 0
     customer = A._record("customers", phone)
-    if not customer or not customer.get("pinHash"):
-        return 0                                     # only members who joined Rewards collect points
+    if not customer:
+        return 0                                     # points wait on the mobile number; setting a PIN unlocks the wallet
     paid = max(0, int(order.get("total") or 0) - int(order.get("refundedTotal") or 0))
     points = paid // 100 * cfg["pointsPerAed"]
     order_id = str(order.get("orderId", ""))
@@ -197,6 +217,12 @@ def _missing(phone: str) -> str:
 
 
 # ---------- routes ----------
+
+class QuickIn(BaseModel):
+    phone: str = Field(min_length=6, max_length=20)
+    name: str = Field(min_length=1, max_length=60)
+    marketingConsent: bool = False
+
 
 class JoinIn(BaseModel):
     phone: str = Field(min_length=6, max_length=20)
@@ -285,6 +311,29 @@ def join(body: JoinIn):
     return {"token": _token(phone), **_view(phone)}
 
 
+def quick_profile(name: str, phone_raw: str, consent: bool = False, source: str = "app") -> dict:
+    """Name + mobile: the minimum to order. Creates or updates the customer in the CRM, keyed by mobile number."""
+    phone = norm_phone(phone_raw)
+    name = re.sub(r"\s+", " ", str(name or "")).strip()[:60]
+    if not name:
+        raise HTTPException(400, "Please enter your name.")
+    existing = A._record("customers", phone) or {}
+    if existing.get("pinHash"):
+        raise HTTPException(409, "This number has a VoiceBite Rewards account. Sign in with your PIN.")
+    record = {**existing, "phone": phone, "name": name, "createdAt": existing.get("createdAt") or A._now(),
+              "source": existing.get("source") or source, "lastSeenAt": A._now()}
+    if consent and not existing.get("marketingConsent"):
+        record.update(marketingConsent=True, consentAt=A._now())
+    A._save("customers", phone, record)
+    return {"token": _guest_token(phone), "phone": phone, "name": name, "member": False}
+
+
+@router.post("/quick")
+def quick(body: QuickIn):
+    """Order without a PIN: name and mobile number, so the restaurant can reach you when you arrive."""
+    return quick_profile(body.name, body.phone, body.marketingConsent)
+
+
 @router.post("/login")
 def login(body: LoginIn):
     _check_pin_format(body.pin)
@@ -334,27 +383,24 @@ def claim(body: ClaimIn, authorization: str = Header(default="")):
 # ---------- used by the voice attendant (main.py) ----------
 
 def phone_from_token(token: str) -> str:
-    """The member behind a token the app sent with the call, or "" if it is missing, expired or forged."""
-    try:
-        return _member_from("Bearer " + str(token or ""))
-    except HTTPException:
-        return ""
+    """The customer behind a pass the app sent with the call (member or name-and-mobile), or "" if missing or forged."""
+    return _customer_from(token)
 
 
 def context(phone: str) -> dict:
     """What the attendant may know about a member: name, the car and payment method they used last time."""
     c = A._record("customers", phone) or {}
-    if not c.get("pinHash"):
+    if not c:
         return {}
     return {"phone": phone, "name": c.get("name", ""), "lastVehicle": c.get("lastVehicle", ""), "lastPayment": c.get("lastPayment", ""),
-            "points": int(c.get("points") or 0)}
+            "points": int(c.get("points") or 0), "member": bool(c.get("pinHash"))}
 
 
 def remember(order: dict) -> None:
     """After a voice order: keep the member's car and payment method, so next time it is one quick confirmation."""
     phone = str(order.get("customerPhone") or "")
     c = A._record("customers", phone) if phone else None
-    if not c or not c.get("pinHash"):
+    if not c:
         return
     c.update(lastVehicle=order.get("vehicleNumber", ""), lastPayment=order.get("paymentPreference", ""), lastOrderAt=A._now())
     A._save("customers", phone, c)
@@ -369,6 +415,17 @@ def voice_join(name: str, phone: str, pin: str, short: bool = False) -> dict:
     except Exception:
         return {"error": "That mobile number does not look right. Ask for it again."}
     return {"token": _token(result["phone"], KIOSK_PASS_SECONDS) if short else result["token"], **context(result["phone"])}
+
+
+def voice_quick(name: str, phone: str) -> dict:
+    """Name + mobile by voice. Returns the pass and context, or {"error": ...}."""
+    try:
+        result = quick_profile(name, phone, source="voice")
+    except HTTPException as e:
+        return {"error": str(e.detail)}
+    except Exception:
+        return {"error": "That mobile number does not look right. Ask for it again."}
+    return {"token": result["token"], **context(result["phone"])}
 
 
 def voice_login(phone: str, pin: str, short: bool = False) -> dict:
@@ -391,7 +448,8 @@ class GameIn(BaseModel):
 
 @router.post("/game")
 def play_game(body: GameIn, authorization: str = Header(default="")):
-    """Fruit Slice: one game per order, while the customer waits. A good score wins a fruit they are missing."""
+    """Meteor Slice: one game per order, while the customer is on the way. Every meteor pays coins (points) into the
+    wallet, worth real money at the window; reaching the target also wins a fruit they are missing."""
     phone = _member_from(authorization)
     item = orders_table.get_item(Key={"orderId": body.orderId}).get("Item")
     saved = str((item or {}).get("trackToken") or "")
@@ -401,17 +459,21 @@ def play_game(body: GameIn, authorization: str = Header(default="")):
     if order.get("customerPhone") and order["customerPhone"] != phone:
         raise HTTPException(409, "This order belongs to another customer.")
     if not _game_open(order):
-        raise HTTPException(409, "Fruit Rush was already played for this order.")
+        raise HTTPException(409, "Meteor Slice was already played for this order.")
     # The game can end early (three missed fruits, or slicing the burnt bun), so the score is capped by how long it ran:
     # nobody slices more than about 3 fruits a second.
     score = min(body.score, GAME_MAX_SCORE, int(max(0.0, min(body.seconds, GAME_SECONDS + 5)) * 2))
     A._set_order(body.orderId, gamePlayed=True, gameScore=score)
     cfg = ops.loyalty_config()
     won = score >= cfg["gameTarget"]
-    A._save("loyalty_moves", A._new_id(), {"at": A._now(), "phone": phone, "points": 0, "kind": "game", "orderId": body.orderId,
-                                           "note": f"Fruit Slice {score}" + (" (won a fruit)" if won else ""), "by": "system"})
-    prize = add_fruit(phone, _missing(phone) or _pick(body.orderId + "#game"), "Fruit Slice win", body.orderId) if won else {}
-    return {"score": score, "target": cfg["gameTarget"], "won": won, "prize": prize, **_view(phone)}
+    coins = score * cfg["gameCoins"] if cfg["enabled"] else 0
+    note = f"Meteor Slice: {score} meteors" + (" (won a fruit)" if won else "")
+    if coins:
+        add_points(phone, coins, "game", order_id=body.orderId, note=note)
+    else:
+        A._save("loyalty_moves", A._new_id(), {"at": A._now(), "phone": phone, "points": 0, "kind": "game", "orderId": body.orderId, "note": note, "by": "system"})
+    prize = add_fruit(phone, _missing(phone) or _pick(body.orderId + "#game"), "Meteor Slice win", body.orderId) if won else {}
+    return {"score": score, "target": cfg["gameTarget"], "won": won, "prize": prize, "coins": coins, "coinsValue": coins * cfg["filsPerPoint"], **_view(phone)}
 
 
 def setup_rewards(app) -> None:

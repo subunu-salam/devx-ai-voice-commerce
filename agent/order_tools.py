@@ -193,9 +193,9 @@ def _plate_from_customer(vehicle: str, lines=None) -> bool:
 # Each step tool only moves on when the customer has actually answered the question it asked (spoken or tapped),
 # and tells the attendant the exact next sentence. The attendant cannot skip a step or answer for the customer.
 
-_WHO_Q = "Are you a VoiceBite Rewards member, would you like to join, or continue as a guest?"
-_WHO_OPTIONS = ["I'm a member", "Join now", "Continue as guest"]
-_OFFER_Q = "No problem. Would you like to join VoiceBite Rewards now? It's free and takes a few seconds. Or continue as a guest?"
+_WHO_Q = "Are you a VoiceBite Rewards member, or is this your first order with us?"
+_WHO_OPTIONS = ["I'm a member", "First order"]
+_DETAILS_Q = "Welcome! Could I have your name and mobile number? We'll use it to reach you when you arrive."
 _GUEST = re.compile(r"\b(guest|no thanks|no thank you|not now|skip|without|don'?t want|continue)\b|لا شكر|ضيف|بدون|വേണ്ട|ഗസ്റ്റ്", re.I)
 _YES = re.compile(r"\b(yes|yeah|yep|yup|correct|that's right|that is right|right|sure|ok|okay|go ahead|place( it| the order| order)?|confirm|perfect|exactly)\b"
                   r"|نعم|أيوه|ايوه|صحيح|تمام|أكد|اطلب|അതെ|ശരി|ഓക്കെ", re.I)
@@ -204,12 +204,12 @@ _PAY_WORDS = {"cash": re.compile(r"\bcash\b|كاش|نقد|ക്യാഷ്|പ
               "card": re.compile(r"\bcard\b|credit|debit|visa|master|بطاقة|كارت|കാർഡ്", re.I),
               "link": re.compile(r"\blink\b|online|apple ?pay|رابط|اونلاين|ലിങ്ക്", re.I)}
 PAY_LABEL = {"cash": "Cash", "card": "Card", "link": "Payment link"}
-FLOW_STEPS = ["Who's ordering", "Your order", "Car", "Payment", "Confirm"]
+FLOW_STEPS = ["Your details", "Your order", "Car", "Payment", "Confirm"]
 
 
 def _identity_open() -> bool:
-    c = customer()
-    return rewards_on and not c.get("phone") and not c.get("declined")
+    """Every order needs the customer's mobile number: the restaurant calls it on arrival, and it is their CRM record."""
+    return rewards_on and not customer().get("phone")
 
 
 def _since() -> list:
@@ -285,20 +285,41 @@ def sign_in_rewards(mobile_number: str, pin: str) -> dict:
     result = voice_login(mobile_number, pin, short=_call().kiosk)
     if result.get("error"):
         return {"error": result["error"] + " Ask for the number and PIN again, or offer to join or continue as a guest. Never repeat the PIN."}
-    set_call_customer({k: result.get(k, "") for k in ("phone", "name", "lastVehicle", "lastPayment")})
-    current = get_ui_state(); current.update(memberToken=result["token"]); set_ui_state(current)
+    set_call_customer({k: result.get(k, "") for k in ("phone", "name", "lastVehicle", "lastPayment", "member")})
+    current = get_ui_state(); current.update(memberToken=result["token"], customerName=result.get("name", "")); set_ui_state(current)
     return {"status": "signed in", **identity_done(result.get("name", ""))}
 
 
 @tool
+def quick_details(name: str, mobile_number: str) -> dict:
+    """A first-time customer: save their name and mobile number (required to order; no PIN needed).
+
+    Args:
+        name: Their first name, as they said it.
+        mobile_number: Their mobile number, digits as spoken, e.g. "0501234567".
+    """
+    if not rewards_on:
+        return {"error": "Not available. Carry on with the order."}
+    if customer().get("phone"):
+        return {"status": "already known", "name": customer().get("name", "")}
+    digits = re.sub(r"\D", "", _digits_spoken(mobile_number))
+    if _call().heard_any and (len(digits) < 7 or digits[-7:] not in re.sub(r"\D", "", "".join(_digits_spoken(h) for h in _since()))):
+        return {"error": "The customer has not said that number. Ask for their mobile number and wait for it."}
+    from rewards import voice_quick   # loaded only when Rewards is on
+    result = voice_quick(name, mobile_number)
+    if result.get("error"):
+        if "PIN" in result["error"]:
+            return {"error": "This number already has a Rewards account. Ask for their 4-digit PIN and call sign_in_rewards."}
+        return {"error": result["error"]}
+    set_call_customer({k: result.get(k, "") for k in ("phone", "name", "lastVehicle", "lastPayment", "member")})
+    current = get_ui_state(); current.update(customerToken=result["token"], customerName=result.get("name", ""), customerPhone=result.get("phone", "")); set_ui_state(current)
+    return {"status": "saved", **identity_done(result.get("name", ""))}
+
+
+@tool
 def skip_rewards() -> dict:
-    """The customer is not a member. Call it when they say they are not a member or want to continue as a guest."""
-    call = _call()
-    if call.heard_any and not any(_GUEST.search(h) for h in _since()):
-        call.join_offered = True   # "I'm not a member": offer to join before going on as a guest
-        return {"status": "offer join", **_ask("identify", 1, _OFFER_Q, ["Join now", "Continue as guest"])}
-    customer()["declined"] = True
-    return {"status": "guest", **identity_done()}
+    """The customer does not want to sign in. Their name and mobile number are still needed to order."""
+    return {"status": "details needed", **_ask("identify", 1, _DETAILS_Q, None)}
 
 
 @tool

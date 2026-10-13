@@ -48,7 +48,8 @@ DEFAULT_LOYALTY = {
     "referrerPoints": 100,      # given to the referrer when their friend's first order is completed
     "minRedeem": 100,           # smallest number of points that can be redeemed at once
     "basketReward": "Free dessert",   # what a full fruit basket (one of each fruit) unlocks
-    "gameTarget": 12,           # Fruit Rush score that wins a bonus fruit
+    "gameTarget": 12,           # Meteor Slice score that also wins a bonus fruit
+    "gameCoins": 1,             # Meteor Slice: points (coins) per meteor sliced, paid into the wallet every round
     "groupItems": 4,            # an order with this many items or more earns a bonus fruit (group visits)
 }
 ITEM_WASTE_REASONS = ["unsold", "dropped", "broken", "burnt", "expired", "returned", "other"]
@@ -70,7 +71,7 @@ def ops_config() -> dict:
 def loyalty_config() -> dict:
     cfg = _get_config("LOYALTY", DEFAULT_LOYALTY)
     out = {**DEFAULT_LOYALTY, **cfg}
-    for k in ("pointsPerAed", "filsPerPoint", "welcomePoints", "referrerPoints", "minRedeem", "gameTarget", "groupItems"):
+    for k in ("pointsPerAed", "filsPerPoint", "welcomePoints", "referrerPoints", "minRedeem", "gameTarget", "groupItems", "gameCoins"):
         out[k] = int(float(out.get(k) or 0))
     out["enabled"] = bool(out.get("enabled"))
     return out
@@ -445,6 +446,7 @@ class LoyaltyIn(BaseModel):
     minRedeem: int = Field(default=100, ge=1, le=1_000_000)
     basketReward: str = Field(default="Free dessert", min_length=2, max_length=60)
     gameTarget: int = Field(default=12, ge=1, le=60)
+    gameCoins: int = Field(default=1, ge=0, le=100)
     groupItems: int = Field(default=4, ge=2, le=50)
 
 

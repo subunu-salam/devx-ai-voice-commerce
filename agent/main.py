@@ -245,7 +245,7 @@ def join_rewards(name: str, mobile_number: str, pin: str) -> dict:
     result = _rewards.voice_join(name, mobile_number, pin, short=_calls.current().kiosk)
     if result.get("error"):
         return {"error": result["error"] + " Ask again, and do not repeat the PIN out loud."}
-    _order_tools.set_call_customer({k: result.get(k, "") for k in ("phone", "name", "lastVehicle", "lastPayment")})
+    _order_tools.set_call_customer({k: result.get(k, "") for k in ("phone", "name", "lastVehicle", "lastPayment", "member")})
     set_ui_state({"memberToken": result["token"]})   # the app signs them in, no typing needed
     return {"status": "joined", "welcome": "Welcome them to VoiceBite Rewards in a few words, without repeating the number or PIN.", **_order_tools.identity_done(result.get("name", ""))}
 
@@ -253,12 +253,13 @@ def join_rewards(name: str, mobile_number: str, pin: str) -> dict:
 def _customer_section(info: dict) -> str:
     """What the attendant knows about the caller."""
     if info.get("phone"):
-        return (f"CUSTOMER: a VoiceBite Rewards member, {info.get('name') or 'name not given'}, already signed in. Greet them by name once. "
-                "Skip step 1 and never offer to sign them up. The car is still asked on every visit.\n")
-    return ("CUSTOMER: not identified yet. Step 1 comes first, before taking the order: your opening sentence already asks it.\n"
+        return (f"CUSTOMER: {info.get('name') or 'name not given'}, already identified by their mobile number"
+                + (" (a VoiceBite Rewards member)" if info.get("member") else "") + ". Greet them by name once. Skip step 1. The car is still asked on every order.\n")
+    return ("CUSTOMER: not identified yet. Step 1 comes first, before taking the order: your opening sentence already asks it. "
+            "VoiceBite is ordered on the way to the restaurant: the mobile number is how the restaurant reaches them when they arrive, so it is required.\n"
             "- \"I'm a member\": ask for their mobile number, then their 4-digit PIN, and call sign_in_rewards\n"
-            "- \"Join now\": ask for their first name, mobile number and a 4-digit PIN they choose, and call join_rewards\n"
-            "- \"I'm not a member\", \"guest\", \"no thanks\": call skip_rewards and say its next sentence\n"
+            "- \"First order\": ask for their first name and mobile number and call quick_details. No PIN needed\n"
+            "- If they do not want to give a number, explain kindly that the restaurant needs it to reach them on arrival, and ask again. Never place an order without it\n"
             "- Never say a PIN back out loud\n")
 
 
@@ -434,7 +435,7 @@ RULES:
 - When the customer ORDERS an item (e.g. "I'll have the...", "I need that one"): call add_to_order straight away, then confirm in a few words ("Done, one Double Burger. Anything else?")
 - The order and total on screen update automatically from the order tools. Do not pass order_items or order_total to update_ui
 - THE DRIVE-THROUGH FLOW is run by the tools, step by step. Every step tool returns "next": say exactly that sentence and then WAIT for the customer. Never skip a step, never answer for the customer, never call the next step's tool before they have answered:
-  1. WHO IS ORDERING (see CUSTOMER). Member: sign_in_rewards. Join: join_rewards. "Not a member", "guest", "no thanks": skip_rewards (it offers to join once, then continues as a guest)
+  1. YOUR DETAILS (see CUSTOMER), required for every order. Member: sign_in_rewards. First order: their name and mobile number, then quick_details. Wants Rewards with a PIN: join_rewards
   2. THE ORDER: show_products, add_to_order, remove_from_order. When they say that's everything: call checkout
   3. THE CAR: after checkout, when they say their plate: set_vehicle(plate_number). Then they confirm: confirm_vehicle(true) or confirm_vehicle(false)
   4. PAYMENT: when they say or tap cash, card or payment link: set_payment(method)
@@ -444,7 +445,7 @@ RULES:
 {customer}
 - Special instructions: pass as special_instructions in add_to_order
 
-TOOLS: show_products, show_choices, join_rewards, sign_in_rewards, skip_rewards, checkout, set_vehicle, confirm_vehicle, set_payment, update_ui, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, get_categories, get_items_by_category, get_recommendations, get_ui_context, load_menu
+TOOLS: show_products, show_choices, join_rewards, sign_in_rewards, quick_details, checkout, set_vehicle, confirm_vehicle, set_payment, update_ui, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, get_categories, get_items_by_category, get_recommendations, get_ui_context, load_menu
 
 BUILD YOUR OWN BURGER (itemId: custom-burger):
 Walk customer through: patty (beef/chicken), toppings, sauces. Use update_ui(burger_builder={"active":true,"patty":null,"toppings":[],"sauces":[],"price":{base_price}}) to open the builder. Update it as they choose, adding each extra's price in cents to "price" (e.g. burger_builder={"active":true,"patty":"beef patty","toppings":["bacon"],"sauces":[],"price":<running total>}). When done, recap the burger (no prices) and ask "Sound good, or want to change anything?" and only call build_custom_burger AFTER they confirm.
@@ -686,7 +687,7 @@ async def voice_chat(websocket: WebSocket) -> None:
                 _order_tools.checkout, _order_tools.set_vehicle, _order_tools.confirm_vehicle, _order_tools.set_payment,
             ]
             if _rewards:
-                tools += [join_rewards, _order_tools.sign_in_rewards, _order_tools.skip_rewards]
+                tools += [join_rewards, _order_tools.sign_in_rewards, _order_tools.quick_details, _order_tools.skip_rewards]
             if _langs and len(_langs.available()) > 1:
                 tools.append(switch_language)
         else:

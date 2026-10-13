@@ -309,6 +309,7 @@ tr.click:hover td{background:#F3F7EE}
 .split{display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:center}
 .accs{display:inline-flex; align-items:flex-end; gap:2px; height:22px; vertical-align:middle} .accs i{width:6px; border-radius:2px 2px 0 0}
 @media (max-width:900px){ .pl{grid-template-columns:1fr 60px 52px; } .pl .plbar,.pl > span:last-child{grid-column:1 / -1} .split{grid-template-columns:1fr} }
+.who{margin:4px 0 2px; font-size:.92rem} .who a{color:inherit; font-weight:600; text-decoration:none; white-space:nowrap}
 .paypref{display:inline-block; margin:6px 0 2px; border-radius:8px; padding:3px 10px; background:var(--citron); font-weight:600; font-size:.9rem}
 .fdots{display:inline-flex; gap:2px; vertical-align:middle} .fdots i{width:9px; height:9px; border-radius:50%; background:var(--line)}
 .fdots i.strawberry{background:#E8344B} .fdots i.orange{background:#FF8A1F} .fdots i.lemon{background:#FFD83A} .fdots i.watermelon{background:#2E9D4F} .fdots i.grapes{background:#7B4BC9} .fdots i.mango{background:#FFB020}
@@ -632,7 +633,7 @@ function kdsHtml() {
     <span class="grow"></span><span class="soft small">Target ${sla()} min. Updates every 6 seconds.</span><button class="btn ghost sm" data-act="kdsFull">Full screen</button></div>
     <div class="kds">${lanes.map(([status, label, next, to]) => { const list = S.orders.filter(o => o.status === status).filter(o => st === "all" || (o.items || []).some(i => stationOf(i.itemId) === st)).sort((a, b) => ts(a.createdAt) - ts(b.createdAt));
       return `<section class="lane"><h2><span>${label}</span><span class="soft">${list.length}</span></h2>${list.map(o => `<article class="ticket ${status} ${o.arrivalState === "arrived" ? "here" : ""}" data-ts="${ts(o.createdAt)}" data-status="${status}" data-id="${esc(o.orderId)}">
-        <header><h3>${esc(o.orderId)}</h3><span class="age"></span></header>${o.vehicleNumber ? `<p class="plate" ${tip("Vehicle plate")}>${esc(o.vehicleNumber)}</p>` : ""}${o.paymentPreference ? `<p class="paypref">${esc(PAY_PREF[o.paymentPreference] || o.paymentPreference)}${o.customerName ? " · " + esc(o.customerName) : ""}</p>` : ""}${arrHtml(o)}
+        <header><h3>${esc(o.orderId)}</h3><span class="age"></span></header>${o.vehicleNumber ? `<p class="plate" ${tip("Vehicle plate")}>${esc(o.vehicleNumber)}</p>` : ""}${o.paymentPreference ? `<p class="paypref">${esc(PAY_PREF[o.paymentPreference] || o.paymentPreference)}</p>` : ""}${o.customerPhone ? `<p class="who"><b>${esc(o.customerName || "Customer")}</b> <a href="tel:${esc(o.customerPhone)}" ${tip("Call the customer")}>📞 ${esc(o.customerPhone)}</a></p>` : ""}${arrHtml(o)}
         <ul>${(o.items || []).filter(i => st === "all" || stationOf(i.itemId) === st).map(i => `<li>${esc(i.quantity || 1)}× ${esc(i.name)}${i.specialInstructions ? `<small>${esc(i.specialInstructions)}</small>` : ""}</li>`).join("")}</ul>
         ${can("orders.status") ? `<button class="btn ${status === "received" ? "hot" : ""}" data-act="kdsNext" data-id="${esc(o.orderId)}" data-to="${to}">${next}</button>` : ""}</article>`).join("") || `<p class="empty">None</p>`}</section>`; }).join("")}</div>`;
 }
@@ -927,10 +928,10 @@ RENDER.loyalty = async () => {
       <div class="kpi s3"><span>Points given</span><b>${st.issued.toLocaleString()}</b><span style="margin:10px 0 16px">orders, referrals, welcome</span></div>
       <div class="kpi s3"><span>Points redeemed</span><b>${st.redeemed.toLocaleString()}</b><span style="margin:10px 0 16px">${money(st.redeemed * c.filsPerPoint)} in discounts</span></div>
       <div class="panel s5"><h2>How it works</h2><ol class="steps">
-        <li><b>Join in seconds.</b> Mobile number and a 4-digit PIN in the app. No email.</li>
+        <li><b>Name and mobile to order.</b> Every order needs them, so you can call the customer when they arrive. Points collect on the number; a 4-digit PIN unlocks the wallet.</li>
         <li><b>Earn on every order.</b> ${c.pointsPerAed} point per ${cur()} 1 once the order is completed.</li>
         <li><b>Fill the fruit basket.</b> Every completed order adds a fruit; orders of ${c.groupItems}+ items add two. One of each of the 6 fruits unlocks: <b>${esc(c.basketReward)}</b>.</li>
-        <li><b>Play Fruit Rush.</b> A 20-second catch game while they wait, once per order. ${c.gameTarget}+ catches wins a missing fruit.</li>
+        <li><b>Play Meteor Slice.</b> A 30-second game on the way, once per order. Every meteor pays ${c.gameCoins} coin${c.gameCoins === 1 ? "" : "s"} (${money(c.gameCoins * c.filsPerPoint)}) into the wallet; ${c.gameTarget}+ also wins a missing fruit.</li>
         <li><b>Bring a friend.</b> Both get a fruit when the friend orders with their code.</li>
         <li><b>Spend at the window.</b> From ${c.minRedeem} points (${money(c.minRedeem * c.filsPerPoint)} off).</li></ol>${c.enabled ? "" : `<p>${pill("The programme is switched off", "warn")}</p>`}</div>
       <div class="panel s7"><h2>Fruit game<small>${r.fruits.collected} fruits collected · ${r.fruits.games} games played</small></h2>
@@ -948,7 +949,7 @@ RENDER.loyalty = async () => {
 ACT.loyCfg = () => form("Loyalty programme", [{ key: "enabled", label: "Programme is on", type: "checkbox" }, { key: "pointsPerAed", label: "Points per " + cur() + " 1 spent", type: "number", req: true },
   { key: "filsPerPoint", label: "Value of 1 point in fils (5 = " + cur() + " 0.05)", type: "number", req: true }, { key: "welcomePoints", label: "Welcome points for a friend who joins with a code", type: "number" },
   { key: "referrerPoints", label: "Referral reward after the friend's first order", type: "number" }, { key: "minRedeem", label: "Smallest redemption (points)", type: "number", req: true },
-  { key: "basketReward", label: "Full fruit basket unlocks", req: true, placeholder: "Free dessert" }, { key: "gameTarget", label: "Fruit Rush: catches needed to win a fruit", type: "number", req: true }, { key: "groupItems", label: "Group order: items for a bonus fruit", type: "number", req: true }],
+  { key: "basketReward", label: "Full fruit basket unlocks", req: true, placeholder: "Free dessert" }, { key: "gameTarget", label: "Meteor Slice: meteors needed for a bonus fruit", type: "number", req: true }, { key: "gameCoins", label: "Meteor Slice: coins (points) per meteor", type: "number", req: true }, { key: "groupItems", label: "Group order: items for a bonus fruit", type: "number", req: true }],
   S.loy.config, v => api("/ops/loyalty/config", "PUT", Object.fromEntries(Object.entries(v).map(([k, x]) => [k, typeof x === "number" ? Math.round(x) : x]))));
 ACT.loyAdjust = d => { const m = S.loy.members.find(x => x.id === d.id); form("Adjust points for " + (m.name || m.phone), [{ key: "points", label: "Points to add (use − to remove)", type: "number", req: true }, { key: "note", label: "Reason", req: true, placeholder: "Goodwill for a late order" }],
   {}, v => api("/ops/loyalty/adjust", "POST", { phone: m.phone || m.id, points: Math.round(v.points), note: v.note }), { before: `<p class="soft">Balance now: ${num(m.points)} points</p>` }); };
@@ -1050,11 +1051,11 @@ RENDER.customers = async () => {
     c.orders++; c.spend += num(x.total); c.last = Math.max(c.last, ts(x.createdAt)); (x.items || []).forEach(i => c.items[i.name] = (c.items[i.name] || 0) + (i.quantity || 1)); });
   S.cust = Object.values(by).map(c => ({ ...c, seg: segment(c), usual: Object.entries(c.items).sort((a, b) => b[1] - a[1]).map(e => e[0])[0] || "" })).sort((a, b) => b.spend - a.spend);
   const count = s => S.cust.filter(c => c.seg === s).length, tone = { Champion: "hi", Frequent: "ok", New: "", Lapsing: "warn", Inactive: "bad" };
-  return `<div class="tools"><span class="soft small grow">Customers are added when staff link a phone number to an order, with the customer's consent recorded.</span><button class="btn ghost sm" data-act="custCsv">Export CSV</button></div>
+  return `<div class="tools"><span class="soft small grow">Every customer gives their name and mobile number before ordering, so each order is linked here. Offers go only to customers who consented.</span><button class="btn ghost sm" data-act="custCsv">Export CSV</button></div>
     <div class="tiles">${["Champion", "Frequent", "New", "Lapsing", "Inactive"].map(s => tile(count(s), s)).join("")}</div>` +
     table([{ label: "Customer", cell: c => `<b style="font-weight:500">${esc(c.name || "No name")}</b><br><span class="soft small">${esc(c.phone || c.id)}</span>` }, { label: "Segment", cell: c => pill(c.seg, tone[c.seg]) }, { label: "Orders", cls: "r", cell: c => c.orders },
       { label: "Spend", cls: "r", cell: c => money(c.spend) }, { label: "Average", cls: "r", cell: c => c.orders ? money(c.spend / c.orders) : "" }, { label: "Last order", cell: c => c.last ? esc(when(new Date(c.last).toISOString())) : "" },
-      { label: "Usual", cell: c => esc(c.usual) }, { label: "Offers", cell: c => c.marketingConsent ? pill("Consented", "ok") : pill("No consent") }], S.cust, "No customers yet. Open an order and link the customer's phone number to start building profiles.");
+      { label: "Usual", cell: c => esc(c.usual) }, { label: "Rewards", cell: c => c.joinedAt ? pill("Member", "ok") : pill("Name + mobile") }, { label: "Offers", cell: c => c.marketingConsent ? pill("Consented", "ok") : pill("No consent") }], S.cust, "No customers yet. Open an order and link the customer's phone number to start building profiles.");
 };
 ACT.custCsv = () => download("customers.csv", [["Name", "Phone", "Segment", "Orders", "Spend", "Last order", "Marketing consent"], ...S.cust.map(c => [c.name, c.phone || c.id, c.seg, c.orders, (c.spend / 100).toFixed(2), c.last ? new Date(c.last).toISOString() : "", c.marketingConsent ? "yes" : "no"])]);
 const COUPON_FIELDS = [{ key: "code", label: "Code", req: true, placeholder: "KARAK10" }, { key: "kind", label: "Discount type", type: "select", options: [["percent", "Percent off"], ["amount", "Amount off"]] }, { key: "value", label: "Value (percent, or amount in currency)", type: "number", req: true },
