@@ -1351,8 +1351,7 @@ try { fetch(wsUrl.replace(/^ws/, "http").replace(/\/ws(\?.*)?$/, "/ping"), { mod
 let ctx, micStream, proc, micAn, outAn, outGain, ws, openedAt = 0, gotAnything = false, playHead = 0, lastLine = null;
 const playing = new Set();
 
-function openVoice() {   // every order needs who is ordering first (phones; a kiosk asks by voice)
-  if (!KIOSK && !identified()) return showOnboarding(openVoiceNow);
+function openVoice() {   // who is ordering is step 1 of the call itself: the attendant asks for name + mobile (or mobile + PIN) by voice
   openVoiceNow();
 }
 let obMode = "first", obNext = null;
@@ -1517,7 +1516,7 @@ function applyState(s) {
   if ("choices" in s) renderChoices(s.choices);
   if ("flowStep" in s) renderFlow(s.flowStep, s.flowSteps);
   if (s.customerToken && !KIOSK) { store.set("customerToken", s.customerToken); setProfile({ name: s.customerName || "", phone: s.customerPhone || "" }); renderRewards(); }
-  if (s.memberToken && s.memberToken !== store.get("memberToken")) { store.set("memberToken", s.memberToken); loadMember().then(claimOrder); toast(rt("rwJoinedVoice")); }
+  if (s.memberToken && s.memberToken !== store.get("memberToken")) { store.set("memberToken", s.memberToken); store.set("customerToken", ""); loadMember().then(() => { if (member) setProfile({ name: member.name, phone: member.phone }); renderOrder(); claimOrder(); }); toast(rt("rwJoinedVoice")); }
   if (Array.isArray(s.categories) && s.categories.length && s.menuItems) menu = { categories: s.categories, menuItems: s.menuItems };
   if ("highlightedCategory" in s && s.highlightedCategory) { activeCat = s.highlightedCategory; query = ""; $("q").value = ""; lit = null; }
   if ("highlightedItem" in s) { lit = s.highlightedItem || null; const it = lit && findItem(lit); if (it) { activeCat = it.cat; query = ""; $("q").value = ""; } }
