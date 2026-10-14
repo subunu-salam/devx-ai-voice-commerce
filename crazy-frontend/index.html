@@ -223,6 +223,12 @@ ul,ol{list-style:none}
 .spot .pic{width:60px; height:60px; border-radius:16px; font-size:1.8rem; flex:none}
 .spot b{font-weight:500; display:block; line-height:1.2}
 .vbot{display:grid; gap:10px}
+.vtools{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.vtools button{display:flex; align-items:center; justify-content:center; gap:7px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.07); color:#fff; border-radius:14px; padding:10px 6px; font:inherit; font-size:.88rem}
+.vtools button b{font-weight:600} .vtools button[aria-pressed="true"]{background:#fff; color:var(--text); border-color:#fff}
+.vtools .ico-phn{display:none} .vtools .phone .ico-spk{display:none} .vtools .phone .ico-phn{display:inline-flex} .vtools span{display:inline-flex}
+.vcompose{display:flex; gap:8px} .vcompose input{flex:1; min-width:0; border:0; border-radius:999px; padding:12px 16px; font:inherit; font-size:1rem; background:#fff; color:var(--text)}
+.vcompose button{border:0; border-radius:999px; padding:0 18px; font-weight:700; background:var(--citron); color:var(--text)}
 .vsum{justify-content:space-between; width:100%; border-radius:18px; padding:14px 16px}
 .endbtn{border:0; background:var(--tomato); color:#fff; border-radius:18px; padding:16px; font-weight:500; font-size:1.02rem}
 .voice .in{opacity:0; transform:translateY(12px); transition:opacity .5s var(--ease) .18s, transform .5s var(--ease) .18s}
@@ -417,15 +423,17 @@ button.b:active,.cat:active,.rowitem:active{transform:scale(.975)}
 .cat:first-child b{font-size:1.2rem}
 
 /* voice screen: the conversation scrolls on its own, pinned to the newest line, so nothing hides behind the receipt */
-.vmid{display:flex; flex-direction:column; align-items:center; justify-content:flex-start; overflow:hidden; min-height:0}
+.vmid{display:flex; flex-direction:column; align-items:center; justify-content:flex-start; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; min-height:0}
+.vmid::-webkit-scrollbar{display:none}
 .vmid > *{flex:none}
 .voice:not(.shelf-on) .orb{margin-top:auto}
-.caps{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; display:flex; flex-direction:column; gap:8px; padding:4px 2px 6px; scrollbar-width:none;
+.caps{flex:1 0 150px; min-height:150px; overflow-y:auto; overscroll-behavior:contain; display:flex; flex-direction:column; gap:8px; padding:4px 2px 6px; scrollbar-width:none;
   -webkit-mask:linear-gradient(transparent 0, #000 18px); mask:linear-gradient(transparent 0, #000 18px)}
 .caps::-webkit-scrollbar{display:none}
 .caps li:first-child{margin-top:auto}
 .caps .user{align-self:flex-end} .caps .assistant{align-self:flex-start}
 .voice.shelf-on .caps li:nth-last-child(n+3){display:block}
+.voice.asking .orb{width:84px; height:84px; margin:8px 0 6px}   /* a question is on screen: make room for it and the captions */
 .voice:has(.vsum:not([hidden])) .shelf .card .pic{height:76px} .shelf .card .pic{display:block} .shelf .card .pic img{width:100%; height:100%; object-fit:contain}
 .voice:has(.vsum:not([hidden])) .shelf .card h3{min-height:0; margin-top:4px}
 .voice:has(.vsum:not([hidden])) .orb{margin-top:4px; margin-bottom:4px}
@@ -668,6 +676,12 @@ body.kiosk .tab[data-go="more"], body.kiosk #installCard{display:none !important
       </div>
       <div class="vbot in">
         <div class="vlang" id="vLang" role="group"><button data-vlang="en" lang="en">English</button><button data-vlang="ar" lang="ar">العربية</button><button data-vlang="ml" lang="ml">മലയാളം</button></div>
+        <div class="vtools" id="vTools" role="group">
+          <button type="button" id="vOut" aria-pressed="false"><span class="ico-spk"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></span><span class="ico-phn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg></span><b></b></button>
+          <button type="button" id="vMute" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><b></b></button>
+          <button type="button" id="vType" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg><b></b></button>
+        </div>
+        <form class="vcompose" id="vCompose" hidden><input id="vText" type="text" autocomplete="off" dir="auto"><button type="submit"></button></form>
         <button class="glass vsum" id="vSum" hidden></button>
         <button class="endbtn" id="vEnd"></button>
       </div>
@@ -1052,6 +1066,7 @@ function placeOrder() {
 function newOrder() { clearInterval(previewTimer); stopTracking(); order = null; saveOrder(); agentCart = null; agentTotal = 0; builder = null; renderCart(); go("menu"); }
 function renderVoiceLang() { document.querySelectorAll("[data-vlang]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vlang === voiceLang)); }
 function setLang(l) {
+  setTimeout(() => typeof renderTools === "function" && renderTools(), 0);
   lang = l; store.set("lang", l);
   if (!live && !store.get("voiceLang")) voiceLang = l === "ar" && !(voiceOk && !voiceOk.includes("ar")) ? "ar" : "en";   // the voice follows the screen language until the customer picks one
   render();
@@ -1225,6 +1240,7 @@ const prettyNum = o => /^\d{9,15}$/.test(o) ? o.replace(/^(\d{3})(\d{3})(\d+)$/,
 function renderChoices(c) {
   const el = $("choices"); if (!el) return;
   const opts = c && Array.isArray(c.options) ? c.options : [];
+  $("voice").classList.toggle("asking", !!(c && (opts.length || c.input)));
   if (!c || (!opts.length && !c.input)) { el.hidden = true; el.innerHTML = ""; return; }
   el.innerHTML = `${c.question ? `<p>${esc(c.question)}</p>` : ""}${opts.length ? `<div>${opts.map(o => `<button data-choice="${esc(o)}" dir="ltr">${esc(prettyNum(o))}</button>`).join("")}</div>` : ""}
     ${c.input ? `<form class="chtype" id="chType"><input id="chIn" type="${c.input === "tel" ? "tel" : "text"}" inputmode="${c.input === "tel" ? "tel" : "text"}" dir="ltr" autocomplete="${c.input === "tel" ? "tel" : "off"}"
@@ -1243,14 +1259,14 @@ $("choices").addEventListener("click", e => { const b = e.target.closest("[data-
 
 /* ================= VoiceBite Rewards: mobile number + 4-digit PIN, points wallet, referrals ================= */
 const RW = {
-  en: { typeNum: "Or type your mobile number", typePlate: "Or type your plate, e.g. D 12345", typeSend: "Send", obTitle: "Before you order", obSub: "We use your mobile number to reach you when you arrive, and to send your order updates.", obFirst: "First order", obMember: "I'm a member", obName: "Your name", obPhone: "Mobile number", obOffers: "Send me offers and rewards", obGo: "Continue", obSignIn: "Sign in and continue", obNeedName: "Please enter your name.", obPrivacy: "We never share your number.", rwUnlock: "Unlock your wallet", rwUnlockLead: "Hi {name}! Your points are saved on {phone}. Choose a 4-digit PIN to see your wallet, use your points and play Meteor Slice.", rwUnlockGo: "Set PIN", pickupFor: "Pickup for", pickupCall: "We'll call {phone} when you arrive.", rwChange: "Not you?", frCoins: "+{n} coins · {v} added to your wallet", rwTitle: "VoiceBite Rewards", rwLead: "Earn points on every order. Just your mobile number and a 4-digit PIN.", rwPhone: "Mobile number", rwPin: "4-digit PIN", rwName: "Your name (optional)",
+  en: { outSpeaker: "Speaker", outPhone: "Phone", outPhoneTip: "Hold the phone to your ear", outPhoneLow: "Quieter, for holding to your ear", mute: "Mute", muted: "Muted", typeBtn: "Type", typeHint: "Type a message to the attendant", typeNum: "Or type your mobile number", typePlate: "Or type your plate, e.g. D 12345", typeSend: "Send", obTitle: "Before you order", obSub: "We use your mobile number to reach you when you arrive, and to send your order updates.", obFirst: "First order", obMember: "I'm a member", obName: "Your name", obPhone: "Mobile number", obOffers: "Send me offers and rewards", obGo: "Continue", obSignIn: "Sign in and continue", obNeedName: "Please enter your name.", obPrivacy: "We never share your number.", rwUnlock: "Unlock your wallet", rwUnlockLead: "Hi {name}! Your points are saved on {phone}. Choose a 4-digit PIN to see your wallet, use your points and play Meteor Slice.", rwUnlockGo: "Set PIN", pickupFor: "Pickup for", pickupCall: "We'll call {phone} when you arrive.", rwChange: "Not you?", frCoins: "+{n} coins · {v} added to your wallet", rwTitle: "VoiceBite Rewards", rwLead: "Earn points on every order. Just your mobile number and a 4-digit PIN.", rwPhone: "Mobile number", rwPin: "4-digit PIN", rwName: "Your name (optional)",
     rwRef: "Friend's code (optional)", rwJoin: "Join and start earning", rwSignIn: "Sign in", rwHaveAcc: "Already a member? Sign in", rwNew: "New here? Join", rwPoints: "points", rwWorth: "worth",
     rwCode: "Your code", rwShare: "Share with a friend", rwShareText: "Order by voice at VoiceBite and get {n} bonus points with my code {code}:", rwCopied: "Link copied", rwFriends: "friends joined",
     rwRecent: "Recent orders", rwOut: "Sign out", rwEarn: "You'll earn about {n} points when this order is collected.", rwLinked: "Linked to your Rewards", rwJoinOrder: "Join Rewards to earn {n} points on this order",
     rwBadPin: "The PIN is 4 digits.", rwJoinedVoice: "You're in! Signed in to VoiceBite Rewards.", rwRefFruit: "Bring a friend: you both get a fruit when they order with your code.",
     fbTitle: "Fruit basket", fbNeed: "{n} more fruits for a {reward}", fbFull: "Basket full!", fbVoucher: "Show at the window", fbHow: "Every order adds a fruit, orders of {n}+ items add two. Win more in Meteor Slice.",
     frPlay: "Play Meteor Slice, win coins", frPlaySub: "Every meteor is a coin for your wallet. Slice {n} for a bonus fruit", frKick: "VoiceBite Rewards", frTitle: "Meteor Slice", frSwipe: "swipe the meteor to begin", frRules2: "Slice {n} meteors in 30 seconds. Miss 3 or touch a mine and it's over.", frReady: "Meteors incoming…", frSending: "Counting your meteors…", frWon: "You won a {f}!", frWonSub: "A new fruit landed in your basket: {n} of 6.", frBasket: "Basket complete: {reward} is yours!", frScore: "{n} meteors sliced", frCollect: "Add to my basket", frLostT: "You lost", frMissed: "You missed too many meteors.", frTime: "{s} of {n} before the timer ran out.", frBomb: "Boom!", frBombSub: "You sliced a space mine.", frNext: "Play again on your next order", frDone: "Done", rwRefLine: "Friends get {a} points when they join with your code, you get {b} after their first order." },
-  ar: { typeNum: "أو اكتب رقم جوالك", typePlate: "أو اكتب رقم اللوحة، مثل D 12345", typeSend: "إرسال", obTitle: "قبل أن تطلب", obSub: "نستخدم رقم جوالك للتواصل معك عند وصولك ولإرسال تحديثات طلبك.", obFirst: "أول طلب", obMember: "أنا عضو", obName: "اسمك", obPhone: "رقم الجوال", obOffers: "أرسلوا لي العروض والمكافآت", obGo: "متابعة", obSignIn: "سجّل الدخول وتابع", obNeedName: "يرجى إدخال اسمك.", obPrivacy: "لا نشارك رقمك أبداً.", rwUnlock: "افتح محفظتك", rwUnlockLead: "مرحباً {name}! نقاطك محفوظة على {phone}. اختر رمزاً من 4 أرقام لترى محفظتك وتستخدم نقاطك وتلعب قطّع النيازك.", rwUnlockGo: "تعيين الرمز", pickupFor: "الاستلام باسم", pickupCall: "سنتصل بـ {phone} عند وصولك.", rwChange: "لست أنت؟", frCoins: "+{n} عملة · {v} أضيفت إلى محفظتك", rwTitle: "مكافآت VoiceBite", rwLead: "اكسب نقاطاً مع كل طلب. فقط رقم جوالك ورمز من 4 أرقام.", rwPhone: "رقم الجوال", rwPin: "رمز من 4 أرقام", rwName: "اسمك (اختياري)",
+  ar: { outSpeaker: "مكبّر", outPhone: "الهاتف", outPhoneTip: "ضع الهاتف على أذنك", outPhoneLow: "صوت أخفض لوضع الهاتف على الأذن", mute: "كتم", muted: "مكتوم", typeBtn: "اكتب", typeHint: "اكتب رسالة للموظف", typeNum: "أو اكتب رقم جوالك", typePlate: "أو اكتب رقم اللوحة، مثل D 12345", typeSend: "إرسال", obTitle: "قبل أن تطلب", obSub: "نستخدم رقم جوالك للتواصل معك عند وصولك ولإرسال تحديثات طلبك.", obFirst: "أول طلب", obMember: "أنا عضو", obName: "اسمك", obPhone: "رقم الجوال", obOffers: "أرسلوا لي العروض والمكافآت", obGo: "متابعة", obSignIn: "سجّل الدخول وتابع", obNeedName: "يرجى إدخال اسمك.", obPrivacy: "لا نشارك رقمك أبداً.", rwUnlock: "افتح محفظتك", rwUnlockLead: "مرحباً {name}! نقاطك محفوظة على {phone}. اختر رمزاً من 4 أرقام لترى محفظتك وتستخدم نقاطك وتلعب قطّع النيازك.", rwUnlockGo: "تعيين الرمز", pickupFor: "الاستلام باسم", pickupCall: "سنتصل بـ {phone} عند وصولك.", rwChange: "لست أنت؟", frCoins: "+{n} عملة · {v} أضيفت إلى محفظتك", rwTitle: "مكافآت VoiceBite", rwLead: "اكسب نقاطاً مع كل طلب. فقط رقم جوالك ورمز من 4 أرقام.", rwPhone: "رقم الجوال", rwPin: "رمز من 4 أرقام", rwName: "اسمك (اختياري)",
     rwRef: "رمز صديق (اختياري)", rwJoin: "انضم وابدأ بجمع النقاط", rwSignIn: "تسجيل الدخول", rwHaveAcc: "عضو بالفعل؟ سجّل الدخول", rwNew: "جديد هنا؟ انضم", rwPoints: "نقطة", rwWorth: "قيمتها",
     rwCode: "رمزك", rwShare: "شارك مع صديق", rwShareText: "اطلب بصوتك من VoiceBite واحصل على {n} نقطة إضافية برمزي {code}:", rwCopied: "تم نسخ الرابط", rwFriends: "أصدقاء انضموا",
     rwRecent: "آخر الطلبات", rwOut: "تسجيل الخروج", rwEarn: "ستكسب حوالي {n} نقطة عند استلام هذا الطلب.", rwLinked: "مرتبط بحساب المكافآت", rwJoinOrder: "انضم إلى المكافآت لتكسب {n} نقطة على هذا الطلب",
@@ -1428,7 +1444,8 @@ function addLine(role, text) {
   while ($("caps").children.length > 6) $("caps").firstChild.remove();
   pinCaps(); return li;
 }
-function pinCaps() { const c = $("caps"); if (c.scrollHeight - c.scrollTop - c.clientHeight < 80 || c.dataset.pin !== "off") c.scrollTop = c.scrollHeight; }
+function pinCaps() { const c = $("caps"); if (c.scrollHeight - c.scrollTop - c.clientHeight < 80 || c.dataset.pin !== "off") c.scrollTop = c.scrollHeight;
+  const m = document.querySelector(".vmid"); if (m && m.scrollHeight > m.clientHeight) c.getBoundingClientRect().bottom > m.getBoundingClientRect().bottom && (m.scrollTop = m.scrollHeight); }
 const sameWords = t => String(t || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 function overlap(a, b) { const A = new Set(a.split(" ")), B = new Set(b.split(" ")); if (!A.size || !B.size) return 0; let n = 0; B.forEach(w => A.has(w) && n++); return n / Math.min(A.size, B.size); }
 const heardAt = () => ctx ? ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0) : 0;   // what has reached the speaker
@@ -1608,14 +1625,14 @@ async function startCall() {
   catch (e) { return setState("micBlocked", true); }
   try { ctx = new AudioContext({ sampleRate: RATE }); } catch (e) { ctx = new AudioContext(); }
   await ctx.resume();
-  outGain = ctx.createGain(); outAn = ctx.createAnalyser(); outAn.fftSize = 512; outGain.connect(outAn); outAn.connect(ctx.destination);
+  outGain = ctx.createGain(); setTimeout(applyOut, 0); outAn = ctx.createAnalyser(); outAn.fftSize = 512; outGain.connect(outAn); outAn.connect(ctx.destination);
   const mic = ctx.createMediaStreamSource(micStream); micAn = ctx.createAnalyser(); micAn.fftSize = 512; mic.connect(micAn);
   proc = ctx.createScriptProcessor(4096, 1, 1); const silent = ctx.createGain(); silent.gain.value = 0; mic.connect(proc); proc.connect(silent); silent.connect(ctx.destination);
   const acc = new Int16Array(CHUNK); let fill = 0, loud = 0;
   proc.onaudioprocess = ev => {
     if (!ws || ws.readyState !== 1) return;
     const f = to16k(ev.inputBuffer.getChannelData(0), ctx.sampleRate);
-    const gain = echoGate(f) ? 0 : 1;
+    const gain = micMuted || echoGate(f) ? 0 : 1;   // muted: silence goes to the attendant, the line stays open
     for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i] * gain)); acc[fill++] = v < 0 ? v * 32768 : v * 32767;
       if (fill === CHUNK) { ws.send(JSON.stringify({ type: "bidi_audio_input", audio: b64FromI16(acc), format: "pcm", sample_rate: RATE, channels: 1 })); fill = 0; } }
   };
@@ -1674,6 +1691,42 @@ function applyVoice(s) {   // what the kitchen says about this call's language; 
   if (s.switchLanguage && s.switchLanguage !== voiceLang) { moveCall(s.switchLanguage, s.resumeToken || ""); return true; }
   return false;
 }
+/* In-call controls: Speaker / Phone, Mute, and Type (text the attendant during the call, e.g. somewhere noisy or quiet). */
+let outMode = (() => { try { return localStorage.getItem("voiceOut") || "speaker"; } catch (e) { return "speaker"; } })(), micMuted = false, outNote = "";
+async function applyOut() {
+  outNote = "";
+  if (ctx && outGain) {
+    let routed = false;
+    if (outMode === "phone" && typeof ctx.setSinkId === "function" && navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+      try {   // a phone's earpiece, where the browser lists it as an audio output
+        const ear = (await navigator.mediaDevices.enumerateDevices()).find(d => d.kind === "audiooutput" && /earpiece|receiver|handset/i.test(d.label));
+        if (ear) { await ctx.setSinkId(ear.deviceId); routed = true; }
+      } catch (e) {}
+    }
+    if (outMode === "speaker" && typeof ctx.setSinkId === "function") { try { await ctx.setSinkId(""); } catch (e) {} }
+    outGain.gain.value = outMode === "phone" && !routed ? 0.3 : 1;   // no earpiece available: play quietly for holding to the ear
+    if (outMode === "phone") outNote = routed ? rt("outPhoneTip") : rt("outPhoneLow");
+  }
+  renderTools();
+}
+function renderTools() {
+  const o = $("vOut"); if (!o) return;
+  o.setAttribute("aria-pressed", outMode === "phone"); o.classList.toggle("phone", outMode === "phone");
+  o.querySelector("b").textContent = outMode === "phone" ? rt("outPhone") : rt("outSpeaker"); o.title = outNote || "";
+  $("vMute").setAttribute("aria-pressed", micMuted); $("vMute").querySelector("b").textContent = micMuted ? rt("muted") : rt("mute");
+  $("vType").setAttribute("aria-pressed", !$("vCompose").hidden); $("vType").querySelector("b").textContent = rt("typeBtn");
+  $("vText").placeholder = rt("typeHint"); $("vCompose").querySelector("button").textContent = rt("typeSend");
+}
+$("vOut").onclick = () => { outMode = outMode === "phone" ? "speaker" : "phone"; try { localStorage.setItem("voiceOut", outMode); } catch (e) {} applyOut(); if (outNote) toast(outNote); };
+$("vMute").onclick = () => { micMuted = !micMuted; renderTools(); };
+$("vType").onclick = () => { const f = $("vCompose"); f.hidden = !f.hidden; renderTools(); if (!f.hidden) $("vText").focus(); };
+$("vCompose").addEventListener("submit", e => {
+  e.preventDefault(); const v = $("vText").value.trim(); if (!v) return;
+  if (!live || !ws || ws.readyState !== 1) return toast(t("noReach"));
+  sendText(v); finishCaption(); lastLine = { role: "user", el: addLine("user", v), final: true }; pinCaps();
+  $("vText").value = "";
+});
+renderTools();
 function endCall(key, bad) {
   keepCart(); clearTimeout(helloTimer); helloTimer = null;
   finishCaption(); live = false; openedAt = 0; agentCart = null; builder = null; lit = null; shown = [];
@@ -1681,6 +1734,7 @@ function endCall(key, bad) {
   try { proc && proc.disconnect(); } catch (e) {} proc = null;
   micStream && micStream.getTracks().forEach(tr => tr.stop()); micStream = null;
   try { ctx && ctx.close(); } catch (e) {} ctx = null; micAn = outAn = null;
+  micMuted = false; $("vCompose").hidden = true; renderTools();
   $("talk").classList.remove("live"); $("orb").style.setProperty("--lvl", 0); setState(key || "idle", bad); renderCart();
   if (KIOSK) kioskCallEnded();
 }
