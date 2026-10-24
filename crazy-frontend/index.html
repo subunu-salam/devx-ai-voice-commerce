@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#EB1700">
+<meta name="theme-color" content="#0E3B2E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="VoiceBite">
@@ -14,7 +14,7 @@
 <title>VoiceBite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Readex+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --palm:#0E3B2E; --palm-2:#185740; --deep:#071E17; --tomato:#F0462B; --citron:#D7F25A; --bg:#F5F8F1; --sheet:#FFFFFF;
@@ -566,330 +566,6 @@ body.kiosk .tab[data-go="more"], body.kiosk #installCard{display:none !important
 .k-qr{width:96px; height:96px; flex:none; background:#fff; border-radius:10px; overflow:hidden; font-size:.6rem; word-break:break-all} .k-qr svg{width:100%; height:100%; display:block}
 .k-qrbox small{font-size:.84rem; color:var(--text); font-weight:500}
 .k-next{font-size:.85rem}
-/* =====================================================================
-   VoiceBite — "Dash": clean white, bold red, photo-first (DoorDash-style).
-   Pure restyle layer; markup/features above are untouched.
-   ===================================================================== */
-:root{
-  --red:#EB1700; --red-2:#C81400; --tomato:#EB1700; --ink:#191919; --text:#191919; --soft:#6B6B6B; --mute:#9A9A9A;
-  --bg:#FFFFFF; --sheet:#FFFFFF; --canvas:#FFFFFF; --soft-bg:#F6F6F6; --line:#EBEBEB; --palm:#191919; --palm-2:#2B2B2B; --deep:#111;
-  --citron:#FFF1EE; --ok:#00A86B; --logo-v:#191919; --tile:#F6F6F6; --r:18px; --gap:12px;
-  --display:"Plus Jakarta Sans",var(--font); --e-out:cubic-bezier(.16,1,.3,1);
-  --sh:0 1px 2px rgba(0,0,0,.06), 0 6px 18px rgba(0,0,0,.06);
-}
-body,.app{font-family:"Plus Jakarta Sans",var(--font)}
-[dir="rtl"] body,[dir="rtl"] .app{font-family:var(--font)}
-.stage{background:radial-gradient(900px 600px at 20% 10%, #3a0a04 0%, transparent 60%), #120605}
-.app{background:#fff; color:var(--text)}
-.title,.hero h1,.h2 h2,.bigno,.totalblock .sum,.rtot b,.stamp b,.onbcard h2,.k-mid h1,.k-card h2,.rwpts b,.k-order b,.b-menu,.b-store b,.name{font-family:var(--display)}
-.title{font-weight:800; font-size:1.9rem; letter-spacing:-.035em}
-.h2 h2{font-weight:800; font-size:1.2rem; letter-spacing:-.025em}
-.name{font-weight:800} .name .wv{color:var(--ink)} .name .wb{color:var(--red)}
-.link{color:var(--red); text-decoration:none; font-weight:700}
-
-/* neutral cards */
-.b,.sheet,.group,.emptybox,.basket,.outline,.install,.rwline,.abtn{background:#fff; color:var(--text); border:1px solid var(--line); box-shadow:none}
-.pillbtn{background:var(--soft-bg); border:0; font-weight:700; font-size:.85rem}
-
-/* home header + hero banner (dark promo like DoorDash) */
-.b-brand{padding:4px 4px 2px}
-.hero{position:relative; overflow:hidden; border:0; color:#fff; min-height:200px; padding:22px 20px 20px; border-radius:22px;
-  background:radial-gradient(120% 120% at 100% 50%, rgba(235,23,0,.55), transparent 55%), linear-gradient(135deg,#1d1d1d,#0d0d0d)}
-.hero::before{display:none}
-.hero::after{display:block; content:""; position:absolute; width:190px; height:190px; inset:auto -36px -46px auto; border-radius:50%; -webkit-mask:none; mask:none;
-  background:url("images/double-burger.jpg") center/118% no-repeat #fff; box-shadow:0 0 0 10px rgba(255,255,255,.08), 0 20px 50px rgba(0,0,0,.5); animation:herospin 30s linear infinite}
-[dir="rtl"] .hero::after{inset:auto auto -46px -36px}
-@keyframes herospin{to{transform:rotate(360deg)}}
-.hero h1{position:relative; z-index:1; font-weight:800; font-size:clamp(1.9rem,8.5vw,2.4rem); letter-spacing:-.04em; line-height:1; max-width:7ch}
-.hero p{position:relative; z-index:1; color:rgba(255,255,255,.78); font-size:.9rem; max-width:20ch; margin:10px 0 16px}
-.startbtn{background:var(--red); color:#fff; font-weight:700; padding:12px 18px 12px 12px; border-radius:999px; box-shadow:0 10px 24px rgba(235,23,0,.45)}
-[dir="rtl"] .startbtn{padding:12px 12px 12px 18px}
-.startbtn svg{width:22px; height:22px; padding:0; background:none; stroke:#fff}
-.ticker{transform:none; border:0; border-radius:14px; background:var(--soft-bg); color:var(--soft); box-shadow:none; margin:0}
-.track{font-size:.78rem; font-weight:700; letter-spacing:.1em; padding:10px 0; animation-duration:36s}
-.track i{color:var(--red)} .track span:nth-of-type(5n+1),.track span:nth-of-type(5n+5){color:var(--ink)}
-.b-store{background:var(--soft-bg); border:0}
-.b-store b{font-weight:800}
-.opennow{color:var(--ok); font-weight:700} .opennow::before{background:var(--ok)}
-.b-menu{background:var(--red); color:#fff; border:0; font-weight:800; font-size:1.1rem}
-.b-menu svg{width:36px; height:36px; padding:8px; border-radius:50%; background:#fff; color:var(--red)}
-
-/* category row: round photo-style chips like DoorDash */
-.b-label{margin:10px 2px -4px !important}
-.cats{display:flex !important; gap:6px !important; overflow-x:auto; margin:0 -12px; padding:4px 12px 6px; scrollbar-width:none}
-.cats::-webkit-scrollbar{display:none}
-.cats .cat,.cats .cat:first-child,.cats .cat:last-child:nth-child(even),.cats .cat:nth-child(n){flex:none; width:78px; height:auto !important; min-height:0; padding:0; background:none !important; color:var(--text) !important; border:0; box-shadow:none;
-  display:flex; flex-direction:column !important; align-items:center !important; justify-content:flex-start; gap:8px !important; overflow:visible; text-align:center; grid-column:auto}
-.cats .cat i,.cats .cat:nth-child(n) i{order:0; width:64px !important; height:64px !important; border-radius:20px; background:var(--soft-bg) !important; color:var(--red) !important; align-self:center !important; transition:transform .35s var(--spring), background .25s}
-.cats .cat i svg{width:30px; height:30px}
-.cats .cat:hover i{transform:translateY(-3px) rotate(-4deg); background:#FFE9E5 !important}
-.cats .cat b{font-size:.78rem !important; font-weight:700}
-.cats .cat > span > span{display:none}
-.cats .cat .go{display:none}
-
-/* popular rail: big photo cards */
-.b-pop{background:transparent; border:0; padding:4px 0 0}
-.b-pop .h2{margin:0 2px 10px} .rail{padding:0 2px 6px; margin:0; gap:12px}
-.card{width:168px; background:#fff; border:0; padding:0}
-.card .pic,.rowitem .pic,.pic,.rowitem.lit .pic{background:var(--tile)}
-.card .pic{height:128px; border-radius:16px; position:relative}
-.pic{position:relative; isolation:isolate}
-.pic img{padding:4px; mix-blend-mode:multiply; transition:transform .7s var(--e-out)}
-.card:hover .pic img,.rowitem:hover .pic img{transform:scale(1.07)}
-.card h3{font-weight:700; font-size:.92rem; margin-top:8px}
-.card .cardrow .price{color:var(--soft); font-weight:600}
-.price{font-weight:700; color:var(--text); white-space:nowrap}
-.plus{background:#fff; color:var(--ink); box-shadow:0 2px 10px rgba(0,0,0,.15); font-weight:500; width:34px; height:34px}
-.plus:hover{background:var(--red); color:#fff}
-.stepper{background:var(--red); color:#fff} .stepper button,.stepper span{color:#fff}
-
-/* menu list: DoorDash item rows (text left, photo right with + on the photo) */
-.stick{background:#fff; box-shadow:0 1px 0 var(--line); transition:padding .35s var(--e-out)}
-.stick .title{transition:font-size .35s var(--e-out)}
-.stick.shrunk .title{font-size:1.3rem}
-.search input{background:var(--soft-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23191919' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") no-repeat 16px 50%/18px;
-  border:0; color:var(--text); padding:13px 18px 13px 44px; border-radius:999px; font-weight:500; transition:box-shadow .25s}
-.search input::placeholder{color:var(--soft)}
-.search input:focus{outline:none; box-shadow:0 0 0 2px var(--ink)}
-[dir="rtl"] .search input{background-position:calc(100% - 16px) 50%; padding:13px 44px 13px 18px}
-.chip{background:var(--soft-bg); border:0; font-weight:700; font-size:.88rem; transition:background .25s, color .25s}
-.chip[aria-pressed="true"]{background:var(--ink); color:#fff}
-.rows{display:block !important; background:#fff; padding:0}
-.rows .rowitem,.rows .rowitem:first-child{display:grid !important; grid-template-columns:1fr 112px; gap:14px; align-items:center; flex-direction:row; background:#fff; border:0; border-bottom:1px solid var(--line); border-radius:0; padding:16px 2px; margin:0; box-shadow:none}
-.rows .rowitem:last-child{border-bottom:0}
-.rows .rowitem .pic,.rows .rowitem:first-child .pic{order:2; width:112px; height:112px; border-radius:16px}
-.rows .rowitem > div:last-child{order:1; padding:0}
-.rows .rowitem h3,.rows .rowitem:first-child h3{font-size:1rem; font-weight:800; letter-spacing:-.01em}
-.rows .rowitem p{color:var(--soft); font-size:.84rem; margin-top:4px}
-.rows .rowitem .buy{margin-top:10px; padding-top:0}
-.rows .rowitem.lit{background:#FFF4F2; border-radius:16px; padding:16px 10px; border-color:transparent}
-.pop{background:#FFE9E5; color:var(--red); border-radius:6px; font-weight:800; font-size:.68rem; padding:2px 7px}
-
-/* order */
-.lines li{border-color:var(--line)}
-.lines .stepper{background:var(--soft-bg)} .lines .stepper button,.lines .stepper span{color:var(--ink)}
-.lines small{color:var(--soft)}
-.totalblock{position:relative; overflow:hidden; background:var(--soft-bg); color:var(--ink); border:0}
-.totalblock::after{display:none}
-.totalblock .sum{font-weight:800; font-size:1.6rem}
-.totalblock .vat,.totalblock > span:first-child{color:var(--soft)}
-.totalblock .tag{background:#fff; color:var(--ink)}
-.plate{background:var(--ink); color:#fff}
-.bigno{font-weight:800; color:var(--red)}
-.cta{position:relative; overflow:hidden; background:var(--red); color:#fff; font-weight:800; min-height:58px; padding:10px 10px 10px 22px; border-radius:999px;
-  display:flex; align-items:center; justify-content:space-between; gap:12px; text-align:start; box-shadow:0 12px 28px rgba(235,23,0,.3)}
-[dir="rtl"] .cta{padding:10px 22px 10px 10px}
-.cta::after{content:""; flex:none; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") no-repeat center/18px;
-  transition:transform .5s var(--e-out), opacity .3s}
-[dir="rtl"] .cta::after{transform:scaleX(-1)}
-.cta:hover::after{transform:translateX(4px)}
-.rwcard .cta,.onbcard .cta{justify-content:center; padding:14px; min-height:0} .rwcard .cta::after,.onbcard .cta::after{display:none}
-.outline{font-weight:700; border-radius:999px}
-.emptybox{color:var(--soft); border:0; background:var(--soft-bg)} .emptybox b{color:var(--ink) !important; font-weight:800 !important}
-.steps li{color:var(--mute)}
-.steps li::before{background:#fff; border-color:var(--line)}
-.steps li::after{background:var(--line)}
-.steps li.done,.steps li.now{color:var(--ink)}
-.steps li.done::before{background:var(--ok); border-color:var(--ok); color:#fff} .steps li.done::after{background:var(--ok)}
-.steps li.now::before{background:var(--red); border-color:var(--red); color:#fff; animation:ddpulse 1.8s infinite}
-@keyframes ddpulse{0%,100%{box-shadow:0 0 0 0 rgba(235,23,0,.45)} 50%{box-shadow:0 0 0 8px rgba(235,23,0,0)}}
-.abtn{font-weight:700; background:var(--soft-bg); border:0}
-.abtn.go{background:var(--red); color:#fff}
-.abtn:disabled{background:var(--soft-bg); color:var(--mute)}
-.abtn.done:disabled{background:var(--ok); color:#fff}
-.vat{color:var(--soft)}
-
-/* build-your-own: stacked burger (inspired by "Monte seu lanche") */
-.builder{background:linear-gradient(180deg,#FFF6F3,#fff); color:var(--ink); border:1px solid #FFE1DA; display:grid; grid-template-columns:110px 1fr; gap:6px 14px; align-items:center}
-.builder > *:not(.stack){grid-column:2}
-.builder b{color:var(--red)}
-.stack{grid-row:1 / span 4; width:110px; display:flex; flex-direction:column; align-items:center; filter:drop-shadow(0 8px 10px rgba(0,0,0,.18))}
-.stack i{display:block; width:100%; margin-top:-3px; border-radius:6px; animation:layerdrop .55s var(--spring) both; animation-delay:calc(var(--n) * 90ms)}
-@keyframes layerdrop{from{opacity:0; transform:translateY(-34px) scale(.9)}}
-.stack .bun-t{height:34px; border-radius:60px 60px 10px 10px; background:radial-gradient(circle at 30% 30%,#F3B76A,#C9792E 70%); position:relative}
-.stack .bun-t::after{content:""; position:absolute; inset:8px 18px auto; height:10px; background:radial-gradient(circle,#FFF3D6 1.5px,transparent 2px) 0 0/12px 8px}
-.stack .bun-b{height:16px; border-radius:6px 6px 16px 16px; background:linear-gradient(#E3A055,#C27530)}
-.stack .patty{height:16px; width:104%; border-radius:12px; background:linear-gradient(#5C3420,#3A1F12)}
-.stack .chicken{height:16px; width:104%; border-radius:12px; background:linear-gradient(#E9A84B,#B86B22)}
-.stack .veg{height:16px; width:102%; border-radius:12px; background:linear-gradient(#7FA453,#4E7230)}
-.stack .cheese{height:7px; width:106%; background:#FFC629; clip-path:polygon(0 0,100% 0,96% 100%,72% 40%,50% 100%,28% 40%,4% 100%)}
-.stack .bacon{height:7px; width:100%; background:repeating-linear-gradient(90deg,#B83A2B 0 8px,#E7816C 8px 11px); border-radius:4px}
-.stack .lettuce{height:8px; width:110%; background:#5DBB46; clip-path:polygon(0 30%,8% 0,16% 40%,25% 0,33% 40%,42% 0,50% 40%,58% 0,67% 40%,75% 0,83% 40%,92% 0,100% 30%,100% 100%,0 100%)}
-.stack .tomato{height:7px; width:96%; background:#E2412E; border-radius:6px}
-.stack .onion{height:6px; width:92%; background:repeating-linear-gradient(90deg,#C9A0D6 0 10px,transparent 10px 13px); border-radius:6px}
-.stack .pickle{height:6px; width:88%; background:repeating-linear-gradient(90deg,#7BA23F 0 12px,transparent 12px 16px); border-radius:6px}
-.stack .egg{height:9px; width:100%; background:radial-gradient(circle at 50% 50%,#FFB627 22%,#fff 24%); border-radius:12px}
-.stack .sauce{height:5px; width:98%; background:#D84B16; border-radius:6px}
-.stack .mayo{height:5px; width:98%; background:#FFF0C8; border-radius:6px}
-.stack .other{height:7px; width:96%; background:#C9B79C; border-radius:6px}
-.spot .pic .stack{width:52px} .spot .pic .stack .bun-t{height:16px} .spot .pic .stack .bun-t::after{display:none} .spot .pic .stack i{margin-top:-1px}
-.spot .pic .stack .patty,.spot .pic .stack .chicken,.spot .pic .stack .veg{height:8px} .spot .pic .stack .bun-b{height:8px}
-.spot .pic .stack .cheese,.spot .pic .stack .bacon,.spot .pic .stack .lettuce,.spot .pic .stack .tomato,.spot .pic .stack .onion,.spot .pic .stack .pickle,.spot .pic .stack .egg,.spot .pic .stack .sauce,.spot .pic .stack .mayo,.spot .pic .stack .other{height:4px}
-
-/* buy button drives away */
-.ctal{position:relative; z-index:1; transition:opacity .25s, transform .3s var(--ease)}
-.cta.driving{pointer-events:none}
-.cta.driving .ctal{opacity:0; transform:translateY(-8px)}
-.cta.driving::after{transform:translateX(140%); opacity:0}
-.truck{position:absolute; top:50%; left:-80px; width:64px; height:42px; margin-top:-23px; z-index:2; animation:drive 1.7s .2s cubic-bezier(.6,0,.3,1) forwards}
-.truck svg{width:100%; height:100%; display:block; overflow:visible}
-.truck rect,.truck path{fill:#fff} .truck .win{fill:var(--red)}
-.truck .wh circle:first-child{fill:#191919} .truck .wh circle:nth-child(2),.truck .wh rect{fill:#fff}
-.truck .wh{transform-box:fill-box; transform-origin:center; animation:spin .32s linear infinite}
-.truck .bodyb{animation:jig .18s ease-in-out infinite alternate}
-.truck .puff circle{fill:#fff} .truck .puff{opacity:0; animation:puff .5s .2s ease-out 3}
-@keyframes drive{0%{left:-80px} 38%{left:calc(50% - 32px)} 56%{left:calc(50% - 32px)} 100%{left:calc(100% + 20px)}}
-@keyframes jig{to{transform:translateY(-1.2px)}}
-@keyframes puff{0%{opacity:.8; transform:translate(0,0) scale(.6)} 100%{opacity:0; transform:translate(-12px,-4px) scale(1.4)}}
-.ordered{position:absolute; inset:0; margin:auto; width:max-content; height:40px; display:flex; align-items:center; gap:8px; padding:0 18px; border-radius:999px;
-  background:#fff; color:var(--ok); font-weight:800; opacity:0; transform:scale(.6); animation:okin .5s 1.55s var(--spring) forwards}
-.ordered svg{width:18px; height:18px}
-@keyframes okin{to{opacity:1; transform:none}}
-
-/* more */
-.seg{background:var(--soft-bg)}
-.seg button{color:var(--soft); font-weight:700}
-.seg button[aria-pressed="true"]{background:var(--ink); color:#fff}
-.solid{background:var(--red); color:#fff; font-weight:700}
-.setting{border-color:var(--line)} .setting b{font-weight:700} .setting span{color:var(--soft)}
-.x{color:var(--soft)}
-
-/* bottom tab bar: white, flat, raised red voice button (DoorDash cart-style) */
-.nav{inset-inline:0; bottom:0; height:calc(72px + var(--bottom)); padding-bottom:var(--bottom); border-radius:0; background:rgba(255,255,255,.96); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border:0; border-top:1px solid var(--line); box-shadow:none}
-.view{padding-bottom:calc(108px + var(--bottom))}
-.livepill{bottom:calc(86px + var(--bottom))}
-.blob{display:none}
-.tab{color:var(--mute); font-weight:600}
-.tab[aria-current="page"]{color:var(--red); font-weight:800}
-.tab[aria-current="page"] .ico{transform:translateY(-2px); color:var(--red)}
-.tab[aria-current="page"] .lbl{transform:none}
-.badge{background:var(--red); box-shadow:0 0 0 2px #fff}
-.talk{top:-22px}
-.talk::before{background:#fff; box-shadow:0 -1px 0 var(--line)}
-.bite{background:var(--red); -webkit-mask:none; mask:none; box-shadow:0 10px 24px rgba(235,23,0,.4)}
-.talk:not(.live) .bite{animation:ddpulse 2.6s ease-in-out infinite}
-.livepill{background:var(--ink); border:0}
-.livepill .dot{background:var(--red)}
-.toast{background:var(--ink); color:#fff; animation:toastin .5s var(--spring)}
-@keyframes toastin{from{opacity:0; transform:translateY(-20px) scale(.95)}}
-.fly{background:var(--red)}
-
-/* voice: stays immersive, in DoorDash red */
-.voice{background:radial-gradient(520px 400px at 50% 20%, rgba(255,90,60,.45), transparent 70%), linear-gradient(180deg,#C81400,#7A0C00)}
-.voice .name .wv{color:#fff} .voice .name .wb{color:#FFD7CF}
-.voice .bite{box-shadow:none; background:#fff}
-.voice .orb .bars i{background:var(--red)}
-.orb::before,.orb::after{border-color:rgba(255,255,255,.6)}
-.caps .assistant{background:rgba(0,0,0,.22)}
-.caps .user{background:#fff; color:var(--ink)}
-.vnote,.shelfhead,.rwworth,.rwnote,.rwcode span,.rwcard .x,.choices p{color:rgba(255,255,255,.72)}
-.rwlead,.rwcard label,.rwpts,.srules,.sres p,.k-mid p{color:rgba(255,255,255,.82)}
-.spot{background:#fff; color:var(--ink)}
-.shelf .card{background:#fff; color:var(--ink); padding:8px 8px 10px; border-radius:18px}
-.shelf .card.lit{background:#FFE9E5}
-.vlang{background:rgba(0,0,0,.18); border-color:rgba(255,255,255,.2)}
-.vlang button{color:#FFE3DD}
-.vlang button[aria-pressed="true"]{background:#fff; color:var(--red)}
-.vtools button{background:rgba(0,0,0,.15)}
-.chtype button,.vcompose button{background:#fff; color:var(--red)}
-.flow li.done i{background:#fff; border-color:#fff; color:var(--red)} .flow li.done{color:#fff}
-.flow li.now i{box-shadow:0 0 0 4px rgba(255,255,255,.3)}
-.choices button{background:#fff; color:var(--ink); border:0}
-.choices button.picked{background:var(--ink); color:#fff}
-.endbtn{background:#fff; color:var(--red); font-weight:800; border-radius:999px}
-.glass{border-color:rgba(255,255,255,.3); background:rgba(0,0,0,.12)}
-.voice .vsum{color:var(--ink)}
-.rlines li.new{background:linear-gradient(#FFE1DA,#FFE1DA) 0 60%/100% 60% no-repeat}
-
-/* rewards, game, onboarding, kiosk */
-.rwcard{background:linear-gradient(135deg,#EB1700,#A51000); border:0}
-.rwcard::after{background:rgba(255,255,255,.12)}
-.rwbrand{color:#fff; letter-spacing:.08em; text-transform:uppercase; font-size:.8rem}
-.rwcode{background:rgba(0,0,0,.18)} .rwcode b{color:#fff}
-.rwcode .solid{background:#fff; color:var(--red)}
-.rwcard input{color:var(--ink)}
-.rwcard .cta{background:var(--ink); box-shadow:none}
-.rwswitch{color:#fff}
-.rwline{background:#FFF4F2; border:0}
-.rwearned{color:var(--ok)}
-.rushbtn{background:linear-gradient(120deg,#191919,#3a0d06); border:0; box-shadow:0 12px 28px rgba(0,0,0,.18)}
-.rushbtn small{color:#FFB8A8}
-.bslot{background:var(--soft-bg)} .bslot.got{background:#FFF1EE}
-.bslot i{background:var(--red)}
-.voucher{background:#FFF1EE; border:2px dashed var(--red); color:var(--ink)}
-.onbcard{background:#fff; color:var(--ink)}
-.onbcard h2{font-weight:800}
-.onbcard input:not([type=checkbox]){background:var(--soft-bg); border:2px solid transparent; color:var(--ink); border-radius:12px}
-.onbcard input:focus{outline:none; border-color:var(--ink)}
-.onbtabs{background:var(--soft-bg)} .onbtabs [aria-selected="true"]{background:var(--ink)}
-.k-idle{background:radial-gradient(circle at 50% 46%,rgba(255,120,90,.35),transparent 55%),linear-gradient(170deg,#EB1700,#8E0D00)}
-.k-lane{background:#fff; color:var(--red)}
-.k-mic{background:#fff; color:var(--red); box-shadow:0 18px 60px rgba(0,0,0,.3)}
-.k-ring{border-color:rgba(255,255,255,.5)}
-.k-tap{color:#fff}
-.k-card{background:#fff; color:var(--ink)}
-.k-check{background:var(--ok); color:#fff}
-.k-btn{background:var(--red)} .k-plate{background:var(--ink)}
-.stamp{background:#fff; color:var(--red); border:0; border-radius:20px; box-shadow:0 30px 80px rgba(0,0,0,.35)}
-.party{background:rgba(0,0,0,.35)}
-
-/* ---------- welcome / opening page ---------- */
-.welcome{position:absolute; inset:0; z-index:150; overflow:hidden; color:#fff; display:grid; grid-template-rows:auto 1fr auto; padding:calc(20px + var(--top)) 22px calc(22px + var(--bottom));
-  background:radial-gradient(70% 50% at 50% 46%, #FF4A2B 0%, transparent 70%), linear-gradient(180deg,#EB1700 0%,#C81400 100%)}
-.welcome::before{content:""; position:absolute; inset:-50%; background:repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.06) 0 6deg, transparent 6deg 18deg); animation:wspin 60s linear infinite; pointer-events:none}
-@keyframes wspin{to{transform:rotate(360deg)}}
-.welcome > *{position:relative}
-.w-top{display:flex; align-items:center; justify-content:space-between}
-.w-top .name{color:#fff; font-size:1.2rem} .w-top .name .wv{color:#fff} .w-top .name .wb{color:#FFD7CF}
-.w-top .logo{--logo-v:#fff}
-.w-lang{border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12); color:#fff; border-radius:999px; padding:7px 14px; font-weight:700; font-size:.85rem}
-.w-mid{display:grid; justify-items:center; align-content:center; gap:14px; text-align:center}
-.w-tag{display:inline-block; background:#fff; color:var(--red); font-weight:800; font-size:.82rem; padding:7px 14px; transform:rotate(-3deg); border-radius:4px;
-  clip-path:polygon(2% 10%,98% 0,100% 85%,0 100%); animation:wtag .7s .35s var(--spring) both}
-@keyframes wtag{from{opacity:0; transform:rotate(-12deg) scale(.6)}}
-.w-mid h1{font-family:var(--display); font-weight:800; font-size:clamp(2.6rem,12vw,3.4rem); line-height:.95; letter-spacing:-.045em; max-width:9ch; text-shadow:0 4px 0 rgba(120,10,0,.35)}
-[dir="rtl"] .w-mid h1{font-family:var(--font)}
-.w-mid h1 span{display:block; animation:wword .8s var(--e-out) both} .w-mid h1 span:nth-child(2){animation-delay:.12s}
-@keyframes wword{from{opacity:0; transform:translateY(40px) rotate(4deg)}}
-.w-plate{position:relative; width:min(64vw,250px); aspect-ratio:1; border-radius:50%; background:#fff; margin-top:6px; box-shadow:0 0 0 14px rgba(255,255,255,.12), 0 0 0 30px rgba(255,255,255,.06), 0 40px 70px rgba(80,0,0,.5);
-  animation:wplate 1s .2s var(--spring) both}
-.w-plate img{width:100%; height:100%; object-fit:contain; border-radius:50%; padding:6%; animation:wfloat 4s 1.2s ease-in-out infinite}
-@keyframes wplate{from{opacity:0; transform:scale(.3) rotate(-90deg)}}
-@keyframes wfloat{50%{transform:translateY(-8px) rotate(3deg)}}
-.w-plate .w-chip{position:absolute; background:#fff; color:var(--ink); font-weight:800; font-size:.78rem; border-radius:999px; padding:7px 12px; box-shadow:0 10px 24px rgba(0,0,0,.25); display:flex; gap:6px; align-items:center; white-space:nowrap; animation:wchip .6s var(--spring) both}
-.w-plate .w-chip.a{top:8%; inset-inline-start:-18%; animation-delay:.8s} .w-plate .w-chip.b{bottom:10%; inset-inline-end:-20%; animation-delay:1s}
-.w-chip i{font-style:normal; width:8px; height:8px; border-radius:50%; background:var(--ok)}
-@keyframes wchip{from{opacity:0; transform:scale(.4)}}
-.w-mid p{color:rgba(255,255,255,.85); max-width:28ch; animation:rv .7s .5s var(--e-out) both}
-.w-bot{display:grid; gap:10px; animation:rv .7s .6s var(--e-out) both}
-.w-btn{display:flex; align-items:center; justify-content:center; gap:10px; border-radius:999px; padding:16px; font-weight:800; font-size:1.02rem; border:0; transition:transform .2s var(--ease)}
-.w-btn:active{transform:scale(.97)}
-.w-btn.p{background:#fff; color:var(--red); box-shadow:0 14px 30px rgba(80,0,0,.3)}
-.w-btn.s{background:transparent; color:#fff; border:2px solid rgba(255,255,255,.7)}
-.w-btn svg{width:20px; height:20px}
-.w-fine{font-size:.74rem; text-align:center; color:rgba(255,255,255,.75)}
-.w-bar{height:3px; border-radius:3px; background:rgba(255,255,255,.25); overflow:hidden} .w-bar i{display:block; height:100%; background:#fff; transform-origin:left; animation:wbar var(--wt,7s) linear forwards}
-[dir="rtl"] .w-bar i{transform-origin:right}
-@keyframes wbar{from{transform:scaleX(0)}}
-.welcome.out{animation:wout .7s var(--e-out) forwards; pointer-events:none}
-@keyframes wout{to{transform:translateY(-100%); border-radius:0 0 50% 50%}}
-
-/* ---------- motion layer ---------- */
-.rv{animation:rv .7s var(--e-out) both; animation-delay:calc(var(--i,0) * 55ms)}
-@keyframes rv{from{opacity:0; transform:translateY(22px) scale(.97); filter:blur(4px)}}
-.rip{position:absolute; border-radius:50%; pointer-events:none; background:currentColor; opacity:.25; transform:scale(0); animation:rip .6s var(--e-out) forwards}
-@keyframes rip{to{transform:scale(1); opacity:0}}
-.flyimg{position:absolute; z-index:65; pointer-events:none; border-radius:16px; object-fit:contain; background:var(--tile); box-shadow:0 20px 40px rgba(0,0,0,.4)}
-.cartpulse{animation:cartpulse .6s var(--spring)}
-@keyframes cartpulse{40%{transform:scale(1.35) rotate(-8deg)}}
-.splash{display:none !important; position:absolute; inset:0; z-index:200; display:grid; place-items:center; background:#0B0B0E; pointer-events:none; animation:splashout .6s 1.1s var(--e-out) forwards}
-.splash svg{width:96px; height:84px; animation:splashlogo 1.2s var(--e-out) both}
-.splash b{position:absolute; bottom:38%; font-family:var(--display); font-weight:700; font-size:1.4rem; letter-spacing:-.03em; animation:rv .8s .35s var(--e-out) both}
-.splash b span{background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent}
-@keyframes splashlogo{0%{transform:scale(.4) rotate(-20deg); opacity:0} 60%{transform:scale(1.08) rotate(3deg); opacity:1} 100%{transform:none}}
-@keyframes splashout{to{opacity:0; transform:scale(1.06); visibility:hidden}}
-.hero h1,.hero p,.hero .startbtn{will-change:transform}
-
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
 </style>
 </head>
@@ -1200,12 +876,12 @@ function renderOrder() {
   } else {
     const ls = lines(), sum = total();
     el.innerHTML = `<h1 class="title">${esc(t("navOrder"))}</h1>` +
-      (builder ? `<div class="builder">${burgerStack(builder)}<b>${esc(t("building"))}</b>${esc([builder.patty, ...(builder.toppings || []), ...(builder.sauces || [])].filter(Boolean).join(", ") || "…")}<br>${money(builder.price)}</div>` : "") +
+      (builder ? `<div class="builder"><b>${esc(t("building"))}</b>${esc([builder.patty, ...(builder.toppings || []), ...(builder.sauces || [])].filter(Boolean).join(", ") || "…")}<br>${money(builder.price)}</div>` : "") +
       (ls.length ? `<div class="sheet"><ul class="lines">${ls.map(l => { const known = findItem(l.itemId); return `<li><span>${esc(known ? itemName(known) : l.name)}</span><span class="price">${money((l.unitPrice ?? l.price ?? 0) * (l.quantity || 1))}</span>
           ${l.specialInstructions ? `<small>${esc(l.specialInstructions)}</small>` : ""}
           <span class="stepper"><button data-qty="-1" data-id="${esc(l.itemId)}" aria-label="${esc(t("less"))}">−</button><span>${esc(l.quantity || 1)}</span><button data-qty="1" data-id="${esc(l.itemId)}" aria-label="${esc(t("more"))}">+</button></span></li>`; }).join("")}</ul></div>
         <div class="totalblock"><div class="sum"><span>${esc(t("total"))}</span><span>${money(sum)}</span></div><p class="vat">${esc(t("vat"))} ${money(Math.round(sum * VAT_RATE / (100 + VAT_RATE)))}</p></div>
-        <button class="cta" data-act="place"><span class="ctal">${esc(t("place"))}</span></button>`
+        <button class="cta" data-act="place">${esc(t("place"))}</button>`
       : `<div class="emptybox"><i aria-hidden="true">🛍️</i><b style="color:var(--text); font-weight:500">${esc(t("empty"))}</b><p>${esc(t("emptyHint"))}</p></div><button class="outline" data-go="menu">${esc(t("browse"))}</button>`);
   }
 }
@@ -1265,7 +941,7 @@ function renderSpot() {
   } else { shelf.innerHTML = ""; shelf.dataset.ids = ""; }
   const i = !ids.length && lit && findItem(lit);
   $("spot").innerHTML = i ? `<div class="spot"><div class="pic">${photo(i)}</div><div><b>${esc(itemName(i))}</b><span class="price">${money(i.price)}</span></div></div>`
-    : builder ? `<div class="spot"><div class="pic">${burgerStack(builder)}</div><div><b>${esc(t("building"))}</b><span>${esc([builder.patty, ...(builder.toppings || []), ...(builder.sauces || [])].filter(Boolean).join(", ") || "…")}</span></div></div>` : "";
+    : builder ? `<div class="spot"><div class="pic">🍔</div><div><b>${esc(t("building"))}</b><span>${esc([builder.patty, ...(builder.toppings || []), ...(builder.sauces || [])].filter(Boolean).join(", ") || "…")}</span></div></div>` : "";
 }
 
 /* ================= on the way: tell the kitchen how close you are ================= */
@@ -1387,28 +1063,6 @@ function placeOrder() {
   cart = []; renderCart(); celebrate(order.number); clearInterval(previewTimer);
   previewTimer = setInterval(() => { if (!order || !order.preview || order.status >= 3) return clearInterval(previewTimer); order.status++; renderOrder(); }, 6000);
 }
-/* "the buy button drives away": the delivery truck carries the order off, then the order is placed */
-const TRUCK_SVG = `<svg viewBox="0 0 70 44" aria-hidden="true"><g class="puff"><circle cx="2" cy="32" r="3" fill="#CDBFB3"/></g><g class="bodyb">
-  <rect x="4" y="6" width="38" height="26" rx="5" fill="#FF4D1C"/>
-  <path d="M42 14h12l9 9v9H42z" fill="#FF4D1C"/><path class="win" d="M45 17h8l6 6h-14z"/><rect class="win" x="10" y="12" width="26" height="3" rx="1.5" opacity=".5"/><rect x="60" y="27" width="5" height="3" rx="1.5" fill="#FFD23F"/></g>
-  <g class="wh"><circle cx="16" cy="35" r="6" fill="#1B1512"/><circle cx="16" cy="35" r="2.2" fill="#fff"/><rect x="15.3" y="29.5" width="1.4" height="3" fill="#fff"/></g>
-  <g class="wh"><circle cx="52" cy="35" r="6" fill="#1B1512"/><circle cx="52" cy="35" r="2.2" fill="#fff"/><rect x="51.3" y="29.5" width="1.4" height="3" fill="#fff"/></g></svg>`;
-function driveAway(btn) {
-  if (live || calm || btn.classList.contains("driving")) return placeOrder();
-  btn.classList.add("driving"); btn.setAttribute("aria-busy", "true");
-  btn.insertAdjacentHTML("beforeend", `<span class="truck">${TRUCK_SVG}</span><span class="ordered"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>${lang === "ar" ? "تم الطلب" : "Ordered"}</span>`);
-  setTimeout(placeOrder, 2300);
-}
-/* visual only: draws the burger being built as stacked layers */
-function burgerStack(b) {
-  const kind = n => { n = String(n || "").toLowerCase();
-    return /chicken|crispy/.test(n) ? "chicken" : /veg|bean|plant/.test(n) ? "veg" : /beef|patty|smash|double/.test(n) ? "patty" : /cheese|cheddar/.test(n) ? "cheese" : /bacon/.test(n) ? "bacon"
-      : /lettuce|salad/.test(n) ? "lettuce" : /tomato/.test(n) ? "tomato" : /onion/.test(n) ? "onion" : /pickle|jalape/.test(n) ? "pickle" : /egg/.test(n) ? "egg"
-      : /mayo|ranch|garlic/.test(n) ? "mayo" : /sauce|ketchup|bbq|mustard|spicy|hot/.test(n) ? "sauce" : "other"; };
-  const mids = [...(b.sauces || []), ...(b.toppings || []).slice().reverse(), b.patty].filter(Boolean).map(kind);
-  const layers = ["bun-t", ...mids, "bun-b"];
-  return `<span class="stack" aria-hidden="true">${layers.map((c, n) => `<i class="${c}" style="--n:${n}"></i>`).join("")}</span>`;
-}
 function newOrder() { clearInterval(previewTimer); stopTracking(); order = null; saveOrder(); agentCart = null; agentTotal = 0; builder = null; renderCart(); go("menu"); }
 function renderVoiceLang() { document.querySelectorAll("[data-vlang]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vlang === voiceLang)); }
 function setLang(l) {
@@ -1424,7 +1078,7 @@ $("app").addEventListener("click", e => {
   const q = e.target.closest("[data-qty]"); if (q) return changeQty(q.dataset.id, Number(q.dataset.qty));
   const cat = e.target.closest("[data-cat]"); if (cat) { activeCat = cat.dataset.cat; query = ""; $("q").value = ""; lit = null; renderMenu(); go("menu"); return centerChip(); }
   const nav = e.target.closest("[data-go]"); if (nav) return go(nav.dataset.go);
-  const act = e.target.closest("[data-act]"); if (act) return act.dataset.act === "place" ? driveAway(act) : newOrder();
+  const act = e.target.closest("[data-act]"); if (act) return act.dataset.act === "place" ? placeOrder() : newOrder();
   const lg = e.target.closest("[data-lang]"); if (lg) return setLang(lg.dataset.lang);
   const vl = e.target.closest("[data-vlang]"); if (vl) return setVoiceLang(vl.dataset.vlang);
   if (e.target.closest("[data-install]")) return install();
@@ -2285,105 +1939,6 @@ if (KIOSK) {
 loadMember();
 requestAnimationFrame(renderNav);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderNav);
-
-/* ===== motion layer: purely visual, observes the app and never changes its state ===== */
-(function motion() {
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, fine = matchMedia("(pointer:fine)").matches, app = document.getElementById("app");
-  if (!app) return;
-  if (!reduce) {   // intro splash
-    const sp = document.createElement("div"); sp.className = "splash"; sp.setAttribute("aria-hidden", "true");
-    sp.innerHTML = '<svg><use href="#vb-logo"/></svg><b>Voice<span>Bite</span></b>'; app.appendChild(sp); setTimeout(() => sp.remove(), 1900);
-  }
-  const SEL = ".hero,.ticker,.b-store,.b-menu,.b-pop .card,.cat,.b-label,#rows .rowitem,#v-order > *,#v-more > *,.group .setting";
-  function reveal(root) {
-    if (reduce) return;
-    const els = [...root.querySelectorAll(SEL)].filter(e => e.offsetParent !== null || e.closest(".view:not([hidden])"));
-    els.forEach((el, i) => { el.classList.remove("rv"); void el.offsetWidth; el.style.setProperty("--i", Math.min(i, 14)); el.classList.add("rv"); });
-  }
-  app.addEventListener("animationend", e => { if (e.animationName === "rv") e.target.classList.remove("rv"); });
-  // replay the entrance whenever a tab opens
-  document.querySelectorAll(".view").forEach(v => new MutationObserver(() => { if (!v.hidden) reveal(v); }).observe(v, { attributes: true, attributeFilter: ["hidden"] }));
-  const vh = document.getElementById("v-home"); vh.addEventListener("vb:reveal", () => reveal(vh)); if (KIOSK || params.get("welcome") === "0") setTimeout(() => reveal(vh), 50);
-  // the menu list animates only when its set of dishes changes (category/search), not on every quantity tap
-  let lastKey = "";
-  const rows = document.getElementById("rows");
-  if (rows) new MutationObserver(() => {
-    const key = [...rows.querySelectorAll("[data-item]")].map(e => e.dataset.item).join(",");
-    if (key !== lastKey) { lastKey = key; if (!reduce) [...rows.querySelectorAll(".rowitem")].forEach((el, i) => { el.style.setProperty("--i", Math.min(i, 10)); el.classList.add("rv"); }); }
-  }).observe(rows, { childList: true });
-  const ord = document.getElementById("v-order"); let ordKey = "";
-  if (ord) new MutationObserver(() => { const k = (ord.querySelector(".bigno") ? "placed" : "cart") + (ord.querySelector(".emptybox") ? "e" : ""); if (k !== ordKey) { ordKey = k; reveal(ord); } }).observe(ord, { childList: true });
-  if (reduce) return;
-  // tap ripple
-  app.addEventListener("pointerdown", e => {
-    const b = e.target.closest("button,.rowitem,.card"); if (!b || b.classList.contains("talk")) return;
-    const r = b.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2, s = document.createElement("span");
-    if (getComputedStyle(b).position === "static") b.style.position = "relative";
-    b.style.overflow = b.style.overflow || "hidden";
-    s.className = "rip"; s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
-    b.appendChild(s); setTimeout(() => s.remove(), 650);
-  }, { passive: true });
-  // dish photo flies into the cart
-  app.addEventListener("click", e => {
-    const add = e.target.closest("[data-add],[data-qty='1']"); if (!add) return;
-    const card = add.closest("[data-item]"), img = card && card.querySelector(".pic img"), tab = document.querySelector('.tab[data-go="order"] .ico');
-    if (!img || !tab) return;
-    const a = app.getBoundingClientRect(), f = img.getBoundingClientRect(), t = tab.getBoundingClientRect(), c = img.cloneNode();
-    c.className = "flyimg"; c.style.cssText = `left:${f.left - a.left}px;top:${f.top - a.top}px;width:${f.width}px;height:${f.height}px`; app.appendChild(c);
-    const dx = t.left + t.width / 2 - (f.left + f.width / 2), dy = t.top + t.height / 2 - (f.top + f.height / 2);
-    c.animate([{ transform: "none", opacity: 1 }, { transform: `translate(${dx * .5}px,${dy * .35 - 80}px) scale(.55) rotate(-10deg)`, opacity: 1, offset: .45 },
-      { transform: `translate(${dx}px,${dy}px) scale(.12) rotate(-25deg)`, opacity: .2 }], { duration: 750, easing: "cubic-bezier(.5,0,.2,1)" })
-      .onfinish = () => { c.remove(); tab.classList.remove("cartpulse"); void tab.offsetWidth; tab.classList.add("cartpulse"); };
-  }, true);
-  // 3D tilt on hover (mouse / trackpad)
-  if (fine) {
-    app.addEventListener("pointermove", e => {
-      const el = e.target.closest(".rowitem,.card,.cat,.b-menu"); if (!el) return;
-      const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
-      el.style.transform = `perspective(700px) rotateX(${-y * 7}deg) rotateY(${x * 9}deg) translateY(-3px)`; el.style.transition = "transform .12s";
-    });
-    app.addEventListener("pointerout", e => { const el = e.target.closest(".rowitem,.card,.cat,.b-menu"); if (el && !el.contains(e.relatedTarget)) { el.style.transform = ""; el.style.transition = "transform .6s cubic-bezier(.16,1,.3,1)"; } });
-  }
-  // hero parallax + shrinking menu header
-  const home = document.getElementById("v-home"), hero = home && home.querySelector(".hero");
-  if (home && hero) home.addEventListener("scroll", () => { const y = Math.min(home.scrollTop, 300);
-    hero.style.transform = `translateY(${y * .25}px) scale(${1 - y / 3000})`; hero.style.opacity = 1 - y / 500; }, { passive: true });
-  const menu = document.getElementById("v-menu"), stick = menu && menu.querySelector(".stick");
-  if (menu && stick) menu.addEventListener("scroll", () => stick.classList.toggle("shrunk", menu.scrollTop > 40), { passive: true });
-})();
-
-/* ===== opening page: shown on launch, then hands over to the home screen ===== */
-(function welcome() {
-  const app = document.getElementById("app");
-  if (!app || KIOSK || params.get("welcome") === "0") return;
-  const ar = lang === "ar", reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, WAIT = 7000;
-  const w = document.createElement("section"); w.className = "welcome"; w.setAttribute("role", "dialog"); w.setAttribute("aria-label", "Welcome");
-  w.style.setProperty("--wt", WAIT + "ms");
-  w.innerHTML = `<div class="w-top"><span class="name"><svg class="logo" aria-hidden="true"><use href="#vb-logo"/></svg><span class="word"><span class="wv">Voice</span><span class="wb">Bite</span></span></span>
-      <button class="w-lang" data-w="lang">${ar ? "English" : "العربية"}</button></div>
-    <div class="w-mid"><span class="w-tag">${ar ? "اطلب مسبقاً · استلم ساخناً" : "Order ahead · Pick up hot"}</span>
-      <h1>${ar ? "<span>أهلاً بك في</span><span>فويس بايت</span>" : "<span>Welcome to</span><span>VoiceBite</span>"}</h1>
-      <div class="w-plate"><img src="images/double-burger.jpg" alt=""><span class="w-chip a"><i></i>${ar ? "المطبخ مفتوح" : "Kitchen open"}</span><span class="w-chip b">🎙️ ${ar ? "فقط قلها" : "Just say it"}</span></div>
-      <p>${ar ? "اطلب بصوتك وأنت في الطريق، ونجهّزه لك عند النافذة." : "Order with your voice on the way. We'll have it hot at your window."}</p></div>
-    <div class="w-bot"><button class="w-btn p" data-w="go">${ar ? "ابدأ الطلب" : "Start ordering"}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ar ? "M19 12H5M11 6l-6 6 6 6" : "M5 12h14M13 6l6 6-6 6"}"/></svg></button>
-      <button class="w-btn s" data-w="voice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>${ar ? "اطلب بالصوت" : "Order by voice"}</button>
-      <div class="w-bar" aria-hidden="true"><i></i></div><p class="w-fine">${ar ? "بالمتابعة توافق على الشروط وسياسة الخصوصية." : "By continuing you agree to our Terms and Privacy Policy."}</p></div>`;
-  app.appendChild(w);
-  let done = false; const auto = setTimeout(() => leave(), WAIT);
-  function leave(then) {
-    if (done) return; done = true; clearTimeout(auto);
-    const finish = () => { w.remove(); if (then) then(); };
-    if (reduce) return finish();
-    w.classList.add("out"); setTimeout(finish, 650);
-    const home = document.getElementById("v-home"); if (home && !home.hidden) setTimeout(() => home.dispatchEvent(new CustomEvent("vb:reveal")), 250);
-  }
-  w.addEventListener("click", e => {
-    const b = e.target.closest("[data-w]"); if (!b) return;
-    if (b.dataset.w === "lang") { clearTimeout(auto); done = true; w.remove(); setLang(ar ? "en" : "ar"); return welcome(); }
-    if (b.dataset.w === "go") leave();
-    if (b.dataset.w === "voice") leave(() => { const t = document.getElementById("heroTalk"); if (t) t.click(); });
-  });
-})();
 </script>
 </body>
 </html>
