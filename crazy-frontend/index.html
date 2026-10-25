@@ -800,6 +800,11 @@ body{background:var(--deep)}
 .rowitem .pic{height:120px}
 .rowitem:first-child .pic{height:124px}
 
+/* ---------- keep content clear of the bottom bar ---------- */
+.view{padding-bottom:calc(150px + var(--bottom)) !important; scroll-padding-bottom:150px}
+.app::after{content:""; position:absolute; inset-inline:0; bottom:0; height:calc(120px + var(--bottom)); z-index:19; pointer-events:none;
+  background:linear-gradient(rgba(243,237,227,0), var(--canvas) 62%)}
+
 /* ---------- Build Your Own Burger ---------- */
 .bb{position:absolute; inset:0; z-index:88; display:grid; align-items:end; background:rgba(14,10,8,.55); backdrop-filter:blur(4px); animation:bbfade .25s ease both}
 .bb.out{animation:bbfade .3s ease reverse forwards} .bb.out .bbcard{animation:bbup .3s var(--ease) reverse forwards}
@@ -815,7 +820,7 @@ body{background:var(--deep)}
 .bbplate{position:absolute; left:50%; bottom:14px; width:250px; height:26px; margin-left:-125px; border-radius:50%; background:radial-gradient(ellipse, rgba(23,18,14,.22), transparent 70%)}
 .bbstack{position:absolute; left:50%; bottom:24px; width:200px; height:230px; margin-left:-100px; transform-origin:50% 100%; transition:transform .45s var(--spring)}
 .bbly{position:absolute; left:0; width:200px; line-height:0; transition:bottom .45s var(--spring)}
-.bbly svg{display:block; overflow:visible; filter:drop-shadow(0 2px 1px rgba(0,0,0,.12))}
+.bbly svg{display:block; overflow:visible; filter:drop-shadow(0 3px 2px rgba(60,30,10,.28))}
 .bbly.drop{animation:bbdrop .62s cubic-bezier(.3,.9,.4,1.25) var(--d,0ms) both}
 @keyframes bbdrop{0%{transform:translateY(-300px) rotate(var(--tilt,0deg)); opacity:0} 15%{opacity:1} 72%{transform:translateY(5px) rotate(0)} 86%{transform:translateY(-3px)} 100%{transform:none}}
 .bbtop{transition:bottom .5s cubic-bezier(.3,1.5,.5,1)}
@@ -967,7 +972,7 @@ body{background:var(--deep)}
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>
         <span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></button></div>
       <button class="tab" data-go="order"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8zM9 8V6a3 3 0 0 1 6 0v2"/></svg><i class="badge" id="badge" hidden></i></span><span class="lbl" data-t="navOrder"></span></button>
-      <button class="tab" data-go="more"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.4"/><circle cx="8" cy="17" r="2.4"/></svg></span><span class="lbl" data-t="navMore"></span></button>
+      <button class="tab" data-go="more"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></span><span class="lbl" data-t="navMore"></span></button>
     </nav>
 
     <section class="voice" id="voice" role="dialog" aria-modal="true" aria-labelledby="vstate">
@@ -1055,7 +1060,7 @@ const T = {
     unreachable: "The attendant can't be reached right now. Order from the menu, or try again in a minute.", hungUp: "The attendant couldn't take the call. Order from the menu, or try again in a minute.",
     needCode: "This ordering page needs an access code. Start again to enter it.", codeSaved: "Code saved. Start again to talk.", codePrompt: "Enter the access code for this ordering page",
     voiceNote: "", search: "Search the menu", popular: "Popular", popularNow: "Popular right now", seeAll: "See the full menu", browse: "Browse the menu", add: "Add", nothing: "Nothing on the menu matches that. Try another word.",
-    navHome: "Home", navMenu: "Menu", navOrder: "Order", navMore: "More", backToMenu: "Menu", close: "Close", livePill: "Call in progress. Tap to return.",
+    navHome: "Home", navMenu: "Menu", navOrder: "Order", navMore: "Account", backToMenu: "Menu", close: "Close", livePill: "Call in progress. Tap to return.",
     empty: "Your order is empty", emptyHint: "Say what you'd like, or add something from the menu.", total: "Total", vat: "Includes 5% VAT of", place: "Place order, pay at window",
     item1: "item", itemN: "items", asked: "Asked the attendant to add", askedPlace: "Asked the attendant to place your order.", building: "Building your burger", onOrder: "On your order",
     orderNo: "Order", vehicle: "Vehicle", received: "Received", preparing: "Preparing", ready: "Ready for pickup", completed: "Completed", payAt: "Pay at the window when you collect.",
@@ -1076,7 +1081,7 @@ const T = {
     unreachable: "تعذر الوصول إلى الموظف الآن. اطلب من القائمة أو حاول بعد دقيقة.", hungUp: "تعذر على الموظف استقبال المحادثة. اطلب من القائمة أو حاول بعد دقيقة.",
     needCode: "هذه الصفحة تحتاج إلى رمز دخول. ابدأ من جديد لإدخاله.", codeSaved: "تم حفظ الرمز. ابدأ من جديد للتحدث.", codePrompt: "أدخل رمز الدخول لصفحة الطلب",
     voiceNote: "", search: "ابحث في القائمة", popular: "الأكثر طلباً", popularNow: "الأكثر طلباً الآن", seeAll: "عرض القائمة كاملة", browse: "تصفح القائمة", add: "أضف", nothing: "لا يوجد صنف مطابق. جرّب كلمة أخرى.",
-    navHome: "الرئيسية", navMenu: "القائمة", navOrder: "الطلب", navMore: "المزيد", backToMenu: "القائمة", close: "إغلاق", livePill: "المحادثة جارية. اضغط للعودة.",
+    navHome: "الرئيسية", navMenu: "القائمة", navOrder: "الطلب", navMore: "الحساب", backToMenu: "القائمة", close: "إغلاق", livePill: "المحادثة جارية. اضغط للعودة.",
     empty: "طلبك فارغ", emptyHint: "قل ما تريد أو أضف صنفاً من القائمة.", total: "الإجمالي", vat: "يشمل ضريبة القيمة المضافة 5% بقيمة", place: "أرسل الطلب وادفع عند النافذة",
     item1: "صنف", itemN: "أصناف", asked: "طلبنا من الموظف إضافة", askedPlace: "طلبنا من الموظف إرسال طلبك.", building: "جارٍ تحضير برجرك", onOrder: "في طلبك",
     orderNo: "طلب", vehicle: "المركبة", received: "تم الاستلام", preparing: "قيد التحضير", ready: "جاهز للاستلام", completed: "مكتمل", payAt: "ادفع عند النافذة عند الاستلام.",
@@ -1451,26 +1456,62 @@ const BB_PRICE = Object.fromEntries(BB.groups.flatMap(g => g[2].map(([k, , p]) =
 const BB_LABEL = Object.fromEntries([...BB.patties, ...BB.groups.flatMap(g => g[2])].map(([k, n]) => [k, n]));
 const BB_SAUCE = { ketchup: "#D93025", mustard: "#F2C200", mayo: "#FFF1CC", "bbq sauce": "#6B2E14", "chipotle mayo": "#E07A3F", "special sauce": "#F4A261" };
 const BB_MAX = 3;
-/* each layer: [height in px, svg body drawn in a 200-wide box] */
+/* each layer: [height in px, svg body drawn in a 200-wide box]. Shading, gradients and texture so it reads as food, not clip-art. */
+const BB_DEFS = `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <radialGradient id="bbBunTop" cx="42%" cy="22%" r="85%"><stop offset="0" stop-color="#F8C977"/><stop offset=".45" stop-color="#E08F38"/><stop offset=".85" stop-color="#B8641F"/><stop offset="1" stop-color="#94501A"/></radialGradient>
+  <linearGradient id="bbCrumb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBE7C2"/><stop offset="1" stop-color="#EBCB94"/></linearGradient>
+  <linearGradient id="bbBunBot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E6A24F"/><stop offset=".6" stop-color="#C77A2C"/><stop offset="1" stop-color="#9C561C"/></linearGradient>
+  <linearGradient id="bbBeef" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7B3F1E"/><stop offset=".35" stop-color="#5A2A12"/><stop offset="1" stop-color="#2E1407"/></linearGradient>
+  <linearGradient id="bbChick" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2BB5C"/><stop offset=".5" stop-color="#D48A2C"/><stop offset="1" stop-color="#9E5A17"/></linearGradient>
+  <linearGradient id="bbLeaf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B7E36F"/><stop offset=".5" stop-color="#6CBF3C"/><stop offset="1" stop-color="#2F7A22"/></linearGradient>
+  <radialGradient id="bbTom" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#FF7A5C"/><stop offset=".6" stop-color="#E23A22"/><stop offset="1" stop-color="#A81E12"/></radialGradient>
+  <linearGradient id="bbBacon" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C94A2C"/><stop offset=".5" stop-color="#9C2E18"/><stop offset="1" stop-color="#6A1C0E"/></linearGradient>
+  <radialGradient id="bbYolk" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#FFE07A"/><stop offset=".6" stop-color="#FDB515"/><stop offset="1" stop-color="#E08A00"/></radialGradient>
+  <linearGradient id="bbAvo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E3EC9A"/><stop offset=".55" stop-color="#B5CF5A"/><stop offset="1" stop-color="#6F8F2A"/></linearGradient>
+  <linearGradient id="bbShine" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <filter id="bbRough" x="-5%" y="-30%" width="110%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+  <filter id="bbRuffle" x="-5%" y="-40%" width="110%" height="180%"><feTurbulence type="fractalNoise" baseFrequency=".05 .2" numOctaves="2" seed="9"/><feDisplacementMap in="SourceGraphic" scale="9"/></filter>
+</defs></svg>`;
+const bbRand = (seed => () => (seed = (seed * 9301 + 49297) % 233280) / 233280);
 function bbLayer(k) {
-  const W = 200, wave = (y, a, c, w) => `<path d="M8 ${y} ${Array.from({ length: 12 }, (_, i) => `Q ${12 + i * 16} ${y + (i % 2 ? a : -a)} ${20 + i * 16} ${y}`).join(" ")}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
-  if (k === "bun-bottom") return [28, `<path d="M10 4h180a6 6 0 0 1 6 6v4c0 8-8 14-18 14H22C12 28 4 22 4 14v-4a6 6 0 0 1 6-6z" fill="#E59A45"/><path d="M10 4h180a6 6 0 0 1 6 6v2H4v-2a6 6 0 0 1 6-6z" fill="#F7D9A8"/>`];
-  if (k === "bun-top") return [62, `<path d="M8 60c-6 0-8-4-6-10C14 18 52 2 100 2s86 16 98 48c2 6 0 10-6 10z" fill="#E59A45"/><path d="M30 22C48 10 72 6 100 6" stroke="#F5C27E" stroke-width="7" stroke-linecap="round" fill="none" opacity=".8"/>` +
-    [[52, 24, -20], [80, 14, 10], [112, 12, -8], [140, 20, 20], [70, 34, 30], [100, 28, -30], [128, 36, 12], [158, 34, -15], [42, 40, 25]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="4.5" ry="2.2" fill="#FFF6E2" transform="rotate(${r} ${x} ${y})"/>`).join("")];
-  if (k === "beef patty") return [26, `<rect x="8" y="2" width="184" height="22" rx="11" fill="#5A2E17"/><rect x="8" y="2" width="184" height="8" rx="4" fill="#7A4022"/>` + Array.from({ length: 14 }, (_, i) => `<circle cx="${18 + i * 13}" cy="${14 + (i % 3) * 3}" r="1.6" fill="#3A1C0D"/>`).join("")];
-  if (k === "chicken patty") return [26, `<rect x="8" y="2" width="184" height="22" rx="11" fill="#D98A2B"/><rect x="8" y="2" width="184" height="8" rx="4" fill="#EDB25A"/>` + Array.from({ length: 16 }, (_, i) => `<circle cx="${14 + i * 11.5}" cy="${8 + (i % 4) * 4}" r="2" fill="#F6CC7E"/>`).join("")];
-  if (k.endsWith("cheese")) { const c = { "american cheese": "#FFB627", "cheddar cheese": "#F59E0B", "pepper jack cheese": "#FDE68A", "swiss cheese": "#FFF0B3" }[k];
-    return [10, `<path d="M4 2h192l-6 6-10 10-8-8-26 4-10 12-8-12-40 2-12 10-6-10-36 2-14 6-6-8-10-2z" fill="${c}"/>` + (k === "swiss cheese" ? `<circle cx="60" cy="6" r="2.5" fill="#F2D27A"/><circle cx="130" cy="5" r="2" fill="#F2D27A"/>` : "") + (k === "pepper jack cheese" ? `<circle cx="70" cy="5" r="1.2" fill="#C2410C"/><circle cx="120" cy="6" r="1.2" fill="#15803D"/><circle cx="150" cy="4" r="1.2" fill="#C2410C"/>` : "")]; }
-  if (k === "bacon") return [10, wave(5, 4, "#B4351E", 8) + wave(5, 4, "#F3A08A", 2.5)];
-  if (k === "lettuce") return [12, wave(6, 5, "#4FA83A", 10) + wave(4, 4, "#8BD46A", 3)];
-  if (k === "tomato") return [10, [30, 74, 118, 162].map(x => `<ellipse cx="${x}" cy="5" rx="24" ry="5" fill="#E2412B"/><ellipse cx="${x}" cy="5" rx="14" ry="2.6" fill="#F98B6E"/>`).join("")];
-  if (k === "onion") return [7, [22, 58, 96, 134, 172].map(x => `<ellipse cx="${x}" cy="3.5" rx="18" ry="3" fill="none" stroke="#B48ACB" stroke-width="2.4"/>`).join("")];
-  if (k === "pickles") return [7, [26, 64, 102, 140, 176].map(x => `<ellipse cx="${x}" cy="3.5" rx="15" ry="3.2" fill="#7FA83A"/><ellipse cx="${x}" cy="3.5" rx="9" ry="1.6" fill="#B5D36E"/>`).join("")];
-  if (k === "jalapeños") return [7, [20, 52, 84, 116, 148, 180].map(x => `<ellipse cx="${x}" cy="3.5" rx="11" ry="3" fill="none" stroke="#2F7D32" stroke-width="2.6"/>`).join("")];
-  if (k === "mushrooms") return [9, [28, 70, 112, 154].map(x => `<path d="M${x - 18} 7c0-5 8-7 18-7s18 2 18 7z" fill="#A47551"/><rect x="${x - 3}" y="6" width="6" height="3" fill="#E8D5BF"/>`).join("")];
-  if (k === "avocado") return [9, [32, 78, 124, 168].map(x => `<ellipse cx="${x}" cy="4.5" rx="22" ry="4.5" fill="#5E8C2A"/><ellipse cx="${x}" cy="4.5" rx="18" ry="3" fill="#B7D86A"/>`).join("")];
-  if (k === "fried egg") return [12, `<path d="M18 8c0-6 30-8 50-6 20-4 60-3 70 1 22-2 44 0 46 6 2 4-10 4-30 3-40 2-100 2-130 0-6 0-6-2-6-4z" fill="#FFFDF5"/><ellipse cx="100" cy="5" rx="17" ry="5" fill="#FDB515"/>`];
-  if (BB_SAUCE[k]) return [5, wave(2.5, 2.2, BB_SAUCE[k], 4)];
+  const r = bbRand(k.length * 131 + k.charCodeAt(0));
+  const dots = (n, x0, x1, y0, y1, rad, fill, op = 1) => Array.from({ length: n }, () => `<ellipse cx="${(x0 + r() * (x1 - x0)).toFixed(1)}" cy="${(y0 + r() * (y1 - y0)).toFixed(1)}" rx="${(rad * (.6 + r() * .8)).toFixed(1)}" ry="${(rad * (.4 + r() * .5)).toFixed(1)}" fill="${fill}" opacity="${op}"/>`).join("");
+  if (k === "bun-bottom") return [34, `<path d="M6 8c0-4 3-6 8-6h172c5 0 8 2 8 6v6H6z" fill="url(#bbCrumb)"/>${dots(40, 12, 188, 4, 12, 1.2, "#E2BC82", .7)}
+    <path d="M6 13h188c0 10-6 19-20 20H26C12 32 6 23 6 13z" fill="url(#bbBunBot)"/><path d="M16 26c40 4 128 4 168 0" stroke="#7E4415" stroke-width="2" fill="none" opacity=".35"/>`];
+  if (k === "bun-top") return [70, `<path d="M4 64c-4 0-5-4-3-9C14 22 52 3 100 3s86 19 99 52c2 5 1 9-3 9z" fill="url(#bbBunTop)"/>
+    <path d="M4 64c30 4 162 4 192 0v5c-30 4-162 4-192 0z" fill="url(#bbCrumb)"/>
+    <path d="M34 26C54 12 78 8 104 8" stroke="#FFE2A8" stroke-width="8" stroke-linecap="round" fill="none" opacity=".55"/>` +
+    Array.from({ length: 22 }, () => { const x = 28 + r() * 144, y = 12 + r() * 38, a = (r() * 160 - 80).toFixed(0); return `<g transform="rotate(${a} ${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="${x.toFixed(1)}" cy="${(y + .6).toFixed(1)}" rx="3.6" ry="1.7" fill="#9A5A1F" opacity=".45"/><ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="3.4" ry="1.6" fill="#FFF3D9"/></g>`; }).join("")];
+  if (k === "beef patty") return [30, `<g filter="url(#bbRough)"><rect x="6" y="3" width="188" height="25" rx="12" fill="url(#bbBeef)"/></g>
+    ${dots(55, 14, 186, 6, 26, 1.6, "#2A1105", .8)}${dots(30, 14, 186, 6, 18, 1.2, "#9A5530", .7)}
+    <path d="M18 7c50-3 114-3 164 0" stroke="#A8643A" stroke-width="2.5" stroke-linecap="round" fill="none" opacity=".55"/>
+    ${[40, 70, 100, 130, 160].map(x => `<path d="M${x - 10} 12l20 10" stroke="#1C0A03" stroke-width="2.4" opacity=".55" stroke-linecap="round"/>`).join("")}`];
+  if (k === "chicken patty") return [32, `<g filter="url(#bbRough)"><rect x="6" y="3" width="188" height="27" rx="13" fill="url(#bbChick)"/></g>
+    ${dots(70, 12, 188, 5, 27, 1.8, "#F7CF85", .9)}${dots(40, 12, 188, 10, 28, 1.4, "#9A5413", .55)}`];
+  if (k.endsWith("cheese")) {
+    const [c1, c2] = { "american cheese": ["#FFC94A", "#F19A0B"], "cheddar cheese": ["#FFB238", "#E57C06"], "pepper jack cheese": ["#FFF0B8", "#EBCF72"], "swiss cheese": ["#FFF4C2", "#EED583"] }[k];
+    const extra = k === "swiss cheese" ? `<ellipse cx="62" cy="7" rx="5" ry="2.4" fill="${c2}"/><ellipse cx="128" cy="6" rx="4" ry="2" fill="${c2}"/><ellipse cx="150" cy="10" rx="3" ry="1.6" fill="${c2}"/>`
+      : k === "pepper jack cheese" ? dots(14, 20, 180, 3, 12, 1, "#C2410C") + dots(10, 20, 180, 3, 12, .9, "#15803D") : "";
+    return [12, `<path d="M2 3c40-3 156-3 196 0l-4 7-14 4-6 14c-1 4-6 4-7 0l-3-12-26 1-10 22c-2 4-7 4-8 0l-4-20-30 1-8 10c-2 3-6 3-7-1l-3-9-34 1-12 6c-3 1-5-1-4-4l2-6-16-2z" fill="${c2}"/>
+      <path d="M2 2c40-3 156-3 196 0l-4 7c-60 3-128 3-188 0z" fill="${c1}"/>${extra}<path d="M14 4c50-2 120-2 170 0" stroke="#fff" stroke-width="1.6" opacity=".55" fill="none" stroke-linecap="round"/>`];
+  }
+  if (k === "bacon") return [11, [0, 1].map(j => { const y = 4 + j * 3, x0 = j ? 14 : 4, x1 = j ? 194 : 182;
+      const d = `M${x0} ${y} ` + Array.from({ length: 10 }, (_, i) => `Q ${x0 + (i + .5) * (x1 - x0) / 10} ${y + (i % 2 ? 5 : -5)} ${x0 + (i + 1) * (x1 - x0) / 10} ${y}`).join(" ");
+      return `<path d="${d}" fill="none" stroke="url(#bbBacon)" stroke-width="7" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#F6C2A6" stroke-width="1.6" stroke-dasharray="14 9" opacity=".9"/>`; }).join("")];
+  if (k === "lettuce") return [14, `<g filter="url(#bbRuffle)"><path d="M0 7c10-8 22 6 34-1s24 8 38 0 26 7 40-1 26 8 40 0 28 7 48 1v6c-20 6-36-2-48 3s-28-4-40 2-26-5-40 1-24-5-38 0S10 13 0 14z" fill="url(#bbLeaf)"/></g>
+    <path d="M10 8c30-3 60 4 90 0s60 3 90-1" stroke="#D9F5A8" stroke-width="1.4" fill="none" opacity=".8"/>`];
+  if (k === "tomato") return [12, [26, 70, 114, 158, 186].slice(0, 4).map((x, i) => `<g transform="translate(${x + (i % 2 ? 4 : 0)} 6)"><ellipse rx="27" ry="6" fill="#A81E12"/><ellipse rx="25.5" ry="5" fill="url(#bbTom)"/>
+      <ellipse rx="17" ry="3" fill="#F7826A" opacity=".75"/>${[-9, -3, 3, 9].map(dx => `<ellipse cx="${dx}" cy="${dx % 2 ? .6 : -.6}" rx="1.6" ry=".9" fill="#FFE9A8"/>`).join("")}<ellipse cx="-8" cy="-2.4" rx="8" ry="1.2" fill="#fff" opacity=".35"/></g>`).join("")];
+  if (k === "onion") return [8, [22, 56, 92, 128, 162, 184].map(x => `<ellipse cx="${x}" cy="4" rx="17" ry="3.4" fill="none" stroke="#F3E6F2" stroke-width="3"/><ellipse cx="${x}" cy="4" rx="17" ry="3.4" fill="none" stroke="#B07CC0" stroke-width="1.1"/>`).join("")];
+  if (k === "pickles") return [8, [24, 60, 98, 136, 174].map(x => `<ellipse cx="${x}" cy="4.5" rx="16" ry="4" fill="#5E8A26"/><ellipse cx="${x}" cy="4" rx="13.5" ry="3" fill="#A8C95A"/>${[-7, -2, 3, 8].map(dx => `<circle cx="${x + dx}" cy="4" r=".9" fill="#E9F2C2"/>`).join("")}`).join("")];
+  if (k === "jalapeños") return [8, [18, 46, 74, 102, 130, 158, 184].map(x => `<ellipse cx="${x}" cy="4" rx="11" ry="3.2" fill="#2E6B1E"/><ellipse cx="${x}" cy="4" rx="7" ry="1.8" fill="#D7E7A6"/><circle cx="${x - 2}" cy="4" r=".8" fill="#FFF7D6"/><circle cx="${x + 2}" cy="4" r=".8" fill="#FFF7D6"/>`).join("")];
+  if (k === "mushrooms") return [10, [24, 62, 100, 138, 176].map(x => `<path d="M${x - 18} 8c0-6 8-8 18-8s18 2 18 8z" fill="#7A5232"/><path d="M${x - 14} 7c2-4 8-5 14-5s12 1 14 5" stroke="#B88A62" stroke-width="2" fill="none"/><rect x="${x - 4}" y="7" width="8" height="3" rx="1" fill="#D9BFA0"/>`).join("")];
+  if (k === "avocado") return [10, [30, 76, 122, 168].map(x => `<ellipse cx="${x}" cy="5" rx="23" ry="5" fill="#2F4A14"/><ellipse cx="${x}" cy="4.6" rx="21" ry="4.2" fill="url(#bbAvo)"/><ellipse cx="${x - 6}" cy="3" rx="8" ry="1" fill="#fff" opacity=".35"/>`).join("")];
+  if (k === "fried egg") return [13, `<path d="M10 9c-2-5 14-7 30-6 14-4 34-5 52-2 18-3 40-3 58 0 18-2 40 0 42 5 2 5-8 6-24 6-40 2-110 2-150 0-6 0-8-1-8-3z" fill="#FFFDF7"/>
+    <path d="M12 10c40 3 140 3 176 0" stroke="#E8DCC2" stroke-width="2" fill="none" opacity=".8"/><ellipse cx="96" cy="5.5" rx="18" ry="6" fill="url(#bbYolk)"/><ellipse cx="90" cy="3.5" rx="6" ry="1.6" fill="#fff" opacity=".6"/>`];
+  if (BB_SAUCE[k]) { const c = BB_SAUCE[k];
+    return [5, `<path d="M6 2c40-3 148-3 188 0v3c-6 0-8 2-9 6-1 4-5 4-6 0-1-3-3-5-8-5-40 1-60 1-80 0-5 0-6 2-7 8-1 4-6 4-7 0-1-5-3-8-8-8-20 0-40 0-55-1-4 0-5 2-6 5-1 3-5 3-6 0-1-3-3-4-6-4z" fill="${c}"/>
+      <path d="M14 2c40-2 130-2 170 0" stroke="url(#bbShine)" stroke-width="1.6" fill="none"/>`]; }
   return [8, `<rect x="8" y="1" width="184" height="6" rx="3" fill="#ccc"/>`];
 }
 const bbIcon = k => { const [h, body] = bbLayer(k); return `<svg viewBox="0 0 200 ${h}" preserveAspectRatio="none" width="44" height="${Math.round(Math.min(26, 8 + h * .8))}" aria-hidden="true">${body}</svg>`; };
@@ -1481,7 +1522,7 @@ const bbCount = k => bb.layers.filter(x => x === k).length;
 function openBuilder() {
   bb = { patty: "beef patty", layers: [], fresh: "intro" };
   const el = document.createElement("div"); el.className = "bb"; el.id = "bb";
-  el.innerHTML = `<div class="bbcard" role="dialog" aria-modal="true" aria-labelledby="bbTitle"><button class="x bbx" data-bb="close" aria-label="${esc(t("close"))}">✕</button>
+  el.innerHTML = BB_DEFS + `<div class="bbcard" role="dialog" aria-modal="true" aria-labelledby="bbTitle"><button class="x bbx" data-bb="close" aria-label="${esc(t("close"))}">✕</button>
     <h2 id="bbTitle">${lang === "ar" ? "اصنع برجرك" : "Build your burger"}</h2><p class="bbsub">${lang === "ar" ? "اختر الطبقات وشاهدها تُبنى" : "Tap a layer and watch it land"}</p>
     <div class="bbstage"><div class="bbplate"></div><div class="bbstack" id="bbStack"></div><span class="bbpop" id="bbPop"></span></div>
     <div id="bbOpts"></div>
@@ -1494,7 +1535,7 @@ function bbRender() {
   const keys = ["bun-bottom", ...bb.layers.filter(k => BB_SAUCE[k]), bb.patty, ...bb.layers.filter(k => !BB_SAUCE[k])];
   let y = 0, html = "";
   keys.forEach((k, i) => { const [h] = bbLayer(k), isNew = bb.fresh === "intro" || (bb.fresh === k && i === keys.lastIndexOf(k));
-    html += `<div class="bbly ${isNew ? "drop" : ""}" style="bottom:${y}px; z-index:${i + 1}; --tilt:${((i * 37) % 13) - 6}deg; --d:${bb.fresh === "intro" ? i * 90 : 0}ms">${bbSvg(k)}</div>`; y += h - 3; });
+    html += `<div class="bbly ${isNew ? "drop" : ""}" style="bottom:${y}px; z-index:${i + 1}; --tilt:${((i * 37) % 13) - 6}deg; --d:${bb.fresh === "intro" ? i * 90 : 0}ms">${bbSvg(k)}</div>`; y += h - 4; });
   html += `<div class="bbly bbtop ${bb.fresh === "intro" ? "drop" : ""}" style="bottom:${y + (bb.fresh && bb.fresh !== "intro" ? 0 : 0)}px; z-index:99; --d:${bb.fresh === "intro" ? keys.length * 90 + 80 : 0}ms">${bbSvg("bun-top")}</div>`;
   const stack = $("bbStack"); stack.innerHTML = html;
   const tall = y + 62, room = 230; stack.style.transform = tall > room ? `scale(${(room / tall).toFixed(3)})` : "";
