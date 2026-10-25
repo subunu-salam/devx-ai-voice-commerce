@@ -1864,7 +1864,7 @@ function playChunk(b64, rate) {
    So during playback the microphone sends silence. The guard learns how loudly this device's speaker comes back
    into its microphone, and lets the customer cut in only when they are clearly louder than that echo for about
    half a second. Tapping the orb always cuts in, whatever the device. */
-let gateHot = 0, coupling = 1.2, dropAudio = false, lastDropped = 0;
+let gateHot = 0, coupling = 1.2, dropAudio = false, lastDropped = 0, cutIn = false;
 const outHist = [];   // the speaker's level over the last half second, so gaps between words do not open the gate
 function rms(f) { let s = 0; for (let i = 0; i < f.length; i++) s += f[i] * f[i]; return Math.sqrt(s / Math.max(1, f.length)); }
 function noteOutput(now) { outHist.push([now, level(outAn) / 4]); while (outHist.length && now - outHist[0][0] > 500) outHist.shift(); }
@@ -1875,9 +1875,17 @@ function echoGate(f) {
   if (peak > 0.01) {   // learn this device's echo: follow it down quickly, up slowly (so a customer talking is not learnt as echo)
     const r = Math.min(3, mine / peak); coupling += (r - coupling) * (r < coupling ? 0.3 : 0.04);
   }
-  const bar = Math.max(0.06, coupling * peak * 2.5);
-  if (mine < bar) { gateHot = 0; return true; }
-  return ++gateHot < 3;   // three loud blocks in a row (about half a second) count as the customer cutting in
+  coupling = Math.min(coupling, 1.5);   // never learn the customer's own voice as echo
+  const bar = Math.max(0.025, coupling * peak * 1.6);   // the browser already cancels most echo: a modest margin is enough
+  if (mine < bar) { gateHot = Math.max(0, gateHot - 1); return true; }   // a soft gap between words does not reset the count
+  if (++gateHot < 2) return true;   // two loud blocks in a row (about a quarter second) count as the customer cutting in
+  bargeIn(); return false;
+}
+/* the customer started talking over the attendant: it stops at once, and the rest of that reply is dropped */
+function bargeIn() {
+  if (!live || !ctx) return;
+  stopPlayback(); turn = null; dropAudio = true; lastDropped = performance.now(); gateHot = 0; cutIn = true;
+  if (navigator.vibrate) try { navigator.vibrate(10); } catch (e) {}
 }
 function interruptAttendant() {   // the customer tapped the orb: stop talking now and listen
   if (!live || !ctx || playHead - ctx.currentTime < 0.05) return;
@@ -1896,14 +1904,18 @@ async function startCall() {
   await ctx.resume();
   outGain = ctx.createGain(); setTimeout(applyOut, 0); outAn = ctx.createAnalyser(); outAn.fftSize = 512; outGain.connect(outAn); outAn.connect(ctx.destination);
   const mic = ctx.createMediaStreamSource(micStream); micAn = ctx.createAnalyser(); micAn.fftSize = 512; mic.connect(micAn);
-  proc = ctx.createScriptProcessor(4096, 1, 1); const silent = ctx.createGain(); silent.gain.value = 0; mic.connect(proc); proc.connect(silent); silent.connect(ctx.destination);
-  const acc = new Int16Array(CHUNK); let fill = 0, loud = 0;
+  proc = ctx.createScriptProcessor(2048, 1, 1); const silent = ctx.createGain(); silent.gain.value = 0; mic.connect(proc); proc.connect(silent); silent.connect(ctx.destination);
+  const acc = new Int16Array(CHUNK); let fill = 0, loud = 0; const held = [];   // the last few blocks the echo guard silenced
+  const push = (f, gain) => { for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i] * gain)); acc[fill++] = v < 0 ? v * 32768 : v * 32767;
+      if (fill === CHUNK) { ws.send(JSON.stringify({ type: "bidi_audio_input", audio: b64FromI16(acc), format: "pcm", sample_rate: RATE, channels: 1 })); fill = 0; } } };
   proc.onaudioprocess = ev => {
     if (!ws || ws.readyState !== 1) return;
     const f = to16k(ev.inputBuffer.getChannelData(0), ctx.sampleRate);
-    const gain = micMuted || echoGate(f) ? 0 : 1;   // muted: silence goes to the attendant, the line stays open
-    for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i] * gain)); acc[fill++] = v < 0 ? v * 32768 : v * 32767;
-      if (fill === CHUNK) { ws.send(JSON.stringify({ type: "bidi_audio_input", audio: b64FromI16(acc), format: "pcm", sample_rate: RATE, channels: 1 })); fill = 0; } }
+    if (micMuted) return push(f, 0);   // muted: silence goes to the attendant, the line stays open
+    if (echoGate(f)) { held.push(f); if (held.length > 3) push(held.shift(), 0); return; }   // held back a moment in case it is the customer
+    const cut = cutIn; cutIn = false;
+    while (held.length) push(held.shift(), cut ? 1 : 0);   // the customer cut in: send their opening words too (otherwise it was only echo)
+    push(f, 1);
   };
   live = true; $("talk").classList.add("live"); setState("calling"); renderNav();
   connect("");
