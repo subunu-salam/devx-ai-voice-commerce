@@ -794,6 +794,54 @@ body{background:var(--deep)}
 [dir="rtl"] .shiprow{transform:scaleX(-1)}
 [dir="rtl"] .ship-pill > span{transform:scaleX(-1); display:inline-flex}
 
+/* ---------- menu photos: always fit their box ---------- */
+.pic{position:relative}
+.pic img{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; padding:6px}
+.rowitem .pic{height:120px}
+.rowitem:first-child .pic{height:124px}
+
+/* ---------- Build Your Own Burger ---------- */
+.bb{position:absolute; inset:0; z-index:88; display:grid; align-items:end; background:rgba(14,10,8,.55); backdrop-filter:blur(4px); animation:bbfade .25s ease both}
+.bb.out{animation:bbfade .3s ease reverse forwards} .bb.out .bbcard{animation:bbup .3s var(--ease) reverse forwards}
+@keyframes bbfade{from{opacity:0}}
+.bbcard{position:relative; max-height:94%; overflow-y:auto; scrollbar-width:none; background:var(--canvas); border-radius:30px 30px 0 0; padding:20px 16px calc(18px + var(--bottom)); animation:bbup .45s var(--spring) both}
+.bbcard::-webkit-scrollbar{display:none}
+@keyframes bbup{from{transform:translateY(100%)}}
+.bbx{position:absolute; top:14px; inset-inline-end:14px; width:36px; height:36px; border-radius:50%; background:#fff; box-shadow:var(--shadow)}
+.bbcard h2{font-family:var(--display); font-weight:800; font-size:1.6rem; letter-spacing:-.04em}
+.bbsub{color:var(--soft); font-size:.88rem; margin-top:2px}
+.bbstage{position:sticky; top:-20px; z-index:3; background-color:var(--canvas); border-radius:0 0 26px 26px; box-shadow:0 14px 18px -16px rgba(23,18,14,.35); height:262px; margin:10px -16px 4px; overflow:hidden;
+  background:radial-gradient(260px 140px at 50% 88%, rgba(255,201,60,.35), transparent 70%), radial-gradient(circle at 50% 120%, #fff 0, transparent 60%), var(--canvas)}
+.bbplate{position:absolute; left:50%; bottom:14px; width:250px; height:26px; margin-left:-125px; border-radius:50%; background:radial-gradient(ellipse, rgba(23,18,14,.22), transparent 70%)}
+.bbstack{position:absolute; left:50%; bottom:24px; width:200px; height:230px; margin-left:-100px; transform-origin:50% 100%; transition:transform .45s var(--spring)}
+.bbly{position:absolute; left:0; width:200px; line-height:0; transition:bottom .45s var(--spring)}
+.bbly svg{display:block; overflow:visible; filter:drop-shadow(0 2px 1px rgba(0,0,0,.12))}
+.bbly.drop{animation:bbdrop .62s cubic-bezier(.3,.9,.4,1.25) var(--d,0ms) both}
+@keyframes bbdrop{0%{transform:translateY(-300px) rotate(var(--tilt,0deg)); opacity:0} 15%{opacity:1} 72%{transform:translateY(5px) rotate(0)} 86%{transform:translateY(-3px)} 100%{transform:none}}
+.bbtop{transition:bottom .5s cubic-bezier(.3,1.5,.5,1)}
+.bbstack.squish{animation:bbsquish .5s ease .38s}
+@keyframes bbsquish{30%{scale:1.04 .95} 60%{scale:.98 1.02}}
+.bbpop{position:absolute; left:50%; top:16px; translate:-50% 0; white-space:nowrap; background:var(--palm); color:#fff; font-weight:600; font-size:.85rem; border-radius:999px; padding:5px 12px; opacity:0; pointer-events:none}
+.bbpop.go{animation:bbpop 1.2s var(--ease)}
+@keyframes bbpop{0%{opacity:0; transform:translateY(10px) scale(.8)} 15%{opacity:1; transform:none} 75%{opacity:1} 100%{opacity:0; transform:translateY(-14px)}}
+#bbOpts h3{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--display); font-weight:700; font-size:1rem; letter-spacing:-.02em; margin:16px 2px 8px}
+#bbOpts h3 span{font-family:var(--font); font-weight:500; font-size:.75rem; color:var(--soft)}
+.bbrow{display:flex; gap:8px; overflow-x:auto; margin:0 -16px; padding:6px 16px 4px; scrollbar-width:none}
+.bbrow::-webkit-scrollbar{display:none}
+.bbchip{position:relative; flex:none; width:82px; border:0; background:#fff; border-radius:20px; padding:10px 6px 9px; display:grid; justify-items:center; gap:3px; text-align:center;
+  box-shadow:var(--shadow); transition:transform .25s var(--spring), box-shadow .25s, background .25s}
+.bbchip:active{transform:scale(.92)}
+.bbchip.on{background:#FFF4D6; box-shadow:0 0 0 2px var(--tomato), var(--shadow)}
+.bbico{width:52px; height:52px; border-radius:50%; background:var(--canvas); display:grid; place-items:center; overflow:hidden}
+.bbico svg{display:block; filter:drop-shadow(0 1px 1px rgba(0,0,0,.15))}
+.bbchip b{font-size:.78rem; font-weight:600; line-height:1.15}
+.bbchip small{font-size:.68rem; color:var(--soft); white-space:nowrap}
+.bbchip.on small{color:var(--tomato); font-weight:600}
+.bbn{position:absolute; top:-4px; inset-inline-end:-2px; min-width:22px; height:22px; border-radius:11px; background:var(--tomato); color:#fff; font-style:normal; font-weight:700; font-size:.75rem; display:grid; place-items:center; padding:0 5px; animation:pop .35s var(--spring)}
+.bbminus{position:absolute; top:-4px; inset-inline-start:-2px; width:22px; height:22px; border-radius:50%; background:var(--palm); color:#fff; font-style:normal; font-weight:700; display:grid; place-items:center; line-height:1}
+.bbgo{position:sticky; bottom:0; display:flex; justify-content:space-between; align-items:center; padding:16px 20px; margin-top:16px}
+.bbgo b{font-family:var(--display); font-weight:800; font-size:1.1rem}
+
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} .rv{opacity:1; transform:none} .splash{display:none} }
 </style>
 </head>
@@ -1308,6 +1356,7 @@ function flyToOrder(fromEl) {
 
 /* ================= ordering ================= */
 function addItem(id, fromEl) {
+  if (id === "custom-burger") return openBuilder();   // the custom burger is assembled layer by layer
   const i = findItem(id); if (!i) return;
   if (live) { sendText(`Please add one ${i.name} to my order.`); return toast(t("asked") + " " + itemName(i)); }
   const line = cart.find(l => l.itemId === id);
@@ -1342,6 +1391,7 @@ $("app").addEventListener("click", e => {
   const add = e.target.closest("[data-add]"); if (add) return addItem(add.dataset.add, add);
   const arr = e.target.closest("[data-arr]"); if (arr) return arrivalTap(arr.dataset.arr);
   const q = e.target.closest("[data-qty]"); if (q) return changeQty(q.dataset.id, Number(q.dataset.qty));
+  if (e.target.closest('[data-item="custom-burger"]')) return openBuilder();
   const cat = e.target.closest("[data-cat]"); if (cat) { activeCat = cat.dataset.cat; query = ""; $("q").value = ""; lit = null; renderMenu(); go("menu"); return centerChip(); }
   const nav = e.target.closest("[data-go]"); if (nav) return go(nav.dataset.go);
   const act = e.target.closest("[data-act]"); if (act) return act.dataset.act === "place" ? placeOrder() : newOrder();
@@ -1355,6 +1405,112 @@ addEventListener("resize", renderNav);
 
 
 
+
+
+/* ================= Build Your Own Burger: watch each layer fall onto the bun ================= */
+/* Options and prices mirror the kitchen's burger config (agent/main.py get_burger_config). */
+const BB = {
+  base: 899,
+  patties: [["beef patty", "Beef"], ["chicken patty", "Chicken"]],
+  groups: [
+    ["cheese", { en: "Cheese", ar: "الجبن" }, [["american cheese", "American", 100], ["cheddar cheese", "Cheddar", 100], ["pepper jack cheese", "Pepper Jack", 100], ["swiss cheese", "Swiss", 100]]],
+    ["extra", { en: "Extras", ar: "إضافات" }, [["bacon", "Bacon", 150], ["avocado", "Avocado", 150], ["fried egg", "Fried egg", 150]]],
+    ["veg", { en: "Fresh", ar: "خضار" }, [["lettuce", "Lettuce", 0], ["tomato", "Tomato", 0], ["onion", "Onion", 0], ["pickles", "Pickles", 0], ["jalapeños", "Jalapeños", 0], ["mushrooms", "Mushrooms", 0]]],
+    ["sauce", { en: "Sauces", ar: "صلصات" }, [["ketchup", "Ketchup", 0], ["mustard", "Mustard", 0], ["mayo", "Mayo", 0], ["bbq sauce", "BBQ", 0], ["chipotle mayo", "Chipotle", 0], ["special sauce", "Special", 0]]]
+  ]
+};
+const BB_PRICE = Object.fromEntries(BB.groups.flatMap(g => g[2].map(([k, , p]) => [k, p])));
+const BB_LABEL = Object.fromEntries([...BB.patties, ...BB.groups.flatMap(g => g[2])].map(([k, n]) => [k, n]));
+const BB_SAUCE = { ketchup: "#D93025", mustard: "#F2C200", mayo: "#FFF1CC", "bbq sauce": "#6B2E14", "chipotle mayo": "#E07A3F", "special sauce": "#F4A261" };
+const BB_MAX = 3;
+/* each layer: [height in px, svg body drawn in a 200-wide box] */
+function bbLayer(k) {
+  const W = 200, wave = (y, a, c, w) => `<path d="M8 ${y} ${Array.from({ length: 12 }, (_, i) => `Q ${12 + i * 16} ${y + (i % 2 ? a : -a)} ${20 + i * 16} ${y}`).join(" ")}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+  if (k === "bun-bottom") return [28, `<path d="M10 4h180a6 6 0 0 1 6 6v4c0 8-8 14-18 14H22C12 28 4 22 4 14v-4a6 6 0 0 1 6-6z" fill="#E59A45"/><path d="M10 4h180a6 6 0 0 1 6 6v2H4v-2a6 6 0 0 1 6-6z" fill="#F7D9A8"/>`];
+  if (k === "bun-top") return [62, `<path d="M8 60c-6 0-8-4-6-10C14 18 52 2 100 2s86 16 98 48c2 6 0 10-6 10z" fill="#E59A45"/><path d="M30 22C48 10 72 6 100 6" stroke="#F5C27E" stroke-width="7" stroke-linecap="round" fill="none" opacity=".8"/>` +
+    [[52, 24, -20], [80, 14, 10], [112, 12, -8], [140, 20, 20], [70, 34, 30], [100, 28, -30], [128, 36, 12], [158, 34, -15], [42, 40, 25]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="4.5" ry="2.2" fill="#FFF6E2" transform="rotate(${r} ${x} ${y})"/>`).join("")];
+  if (k === "beef patty") return [26, `<rect x="8" y="2" width="184" height="22" rx="11" fill="#5A2E17"/><rect x="8" y="2" width="184" height="8" rx="4" fill="#7A4022"/>` + Array.from({ length: 14 }, (_, i) => `<circle cx="${18 + i * 13}" cy="${14 + (i % 3) * 3}" r="1.6" fill="#3A1C0D"/>`).join("")];
+  if (k === "chicken patty") return [26, `<rect x="8" y="2" width="184" height="22" rx="11" fill="#D98A2B"/><rect x="8" y="2" width="184" height="8" rx="4" fill="#EDB25A"/>` + Array.from({ length: 16 }, (_, i) => `<circle cx="${14 + i * 11.5}" cy="${8 + (i % 4) * 4}" r="2" fill="#F6CC7E"/>`).join("")];
+  if (k.endsWith("cheese")) { const c = { "american cheese": "#FFB627", "cheddar cheese": "#F59E0B", "pepper jack cheese": "#FDE68A", "swiss cheese": "#FFF0B3" }[k];
+    return [10, `<path d="M4 2h192l-6 6-10 10-8-8-26 4-10 12-8-12-40 2-12 10-6-10-36 2-14 6-6-8-10-2z" fill="${c}"/>` + (k === "swiss cheese" ? `<circle cx="60" cy="6" r="2.5" fill="#F2D27A"/><circle cx="130" cy="5" r="2" fill="#F2D27A"/>` : "") + (k === "pepper jack cheese" ? `<circle cx="70" cy="5" r="1.2" fill="#C2410C"/><circle cx="120" cy="6" r="1.2" fill="#15803D"/><circle cx="150" cy="4" r="1.2" fill="#C2410C"/>` : "")]; }
+  if (k === "bacon") return [10, wave(5, 4, "#B4351E", 8) + wave(5, 4, "#F3A08A", 2.5)];
+  if (k === "lettuce") return [12, wave(6, 5, "#4FA83A", 10) + wave(4, 4, "#8BD46A", 3)];
+  if (k === "tomato") return [10, [30, 74, 118, 162].map(x => `<ellipse cx="${x}" cy="5" rx="24" ry="5" fill="#E2412B"/><ellipse cx="${x}" cy="5" rx="14" ry="2.6" fill="#F98B6E"/>`).join("")];
+  if (k === "onion") return [7, [22, 58, 96, 134, 172].map(x => `<ellipse cx="${x}" cy="3.5" rx="18" ry="3" fill="none" stroke="#B48ACB" stroke-width="2.4"/>`).join("")];
+  if (k === "pickles") return [7, [26, 64, 102, 140, 176].map(x => `<ellipse cx="${x}" cy="3.5" rx="15" ry="3.2" fill="#7FA83A"/><ellipse cx="${x}" cy="3.5" rx="9" ry="1.6" fill="#B5D36E"/>`).join("")];
+  if (k === "jalapeños") return [7, [20, 52, 84, 116, 148, 180].map(x => `<ellipse cx="${x}" cy="3.5" rx="11" ry="3" fill="none" stroke="#2F7D32" stroke-width="2.6"/>`).join("")];
+  if (k === "mushrooms") return [9, [28, 70, 112, 154].map(x => `<path d="M${x - 18} 7c0-5 8-7 18-7s18 2 18 7z" fill="#A47551"/><rect x="${x - 3}" y="6" width="6" height="3" fill="#E8D5BF"/>`).join("")];
+  if (k === "avocado") return [9, [32, 78, 124, 168].map(x => `<ellipse cx="${x}" cy="4.5" rx="22" ry="4.5" fill="#5E8C2A"/><ellipse cx="${x}" cy="4.5" rx="18" ry="3" fill="#B7D86A"/>`).join("")];
+  if (k === "fried egg") return [12, `<path d="M18 8c0-6 30-8 50-6 20-4 60-3 70 1 22-2 44 0 46 6 2 4-10 4-30 3-40 2-100 2-130 0-6 0-6-2-6-4z" fill="#FFFDF5"/><ellipse cx="100" cy="5" rx="17" ry="5" fill="#FDB515"/>`];
+  if (BB_SAUCE[k]) return [5, wave(2.5, 2.2, BB_SAUCE[k], 4)];
+  return [8, `<rect x="8" y="1" width="184" height="6" rx="3" fill="#ccc"/>`];
+}
+const bbIcon = k => { const [h, body] = bbLayer(k); return `<svg viewBox="0 0 200 ${h}" preserveAspectRatio="none" width="44" height="${Math.round(Math.min(26, 8 + h * .8))}" aria-hidden="true">${body}</svg>`; };
+const bbSvg = k => { const [h, body] = bbLayer(k); return `<svg viewBox="0 0 200 ${h}" width="200" height="${h}" aria-hidden="true">${body}</svg>`; };
+let bb = null;   // { patty, layers: [keys in the order they were added], fresh }
+const bbPrice = () => bb ? BB.base + bb.layers.reduce((s, k) => s + (BB_PRICE[k] || 0), 0) : BB.base;
+const bbCount = k => bb.layers.filter(x => x === k).length;
+function openBuilder() {
+  bb = { patty: "beef patty", layers: [], fresh: "intro" };
+  const el = document.createElement("div"); el.className = "bb"; el.id = "bb";
+  el.innerHTML = `<div class="bbcard" role="dialog" aria-modal="true" aria-labelledby="bbTitle"><button class="x bbx" data-bb="close" aria-label="${esc(t("close"))}">✕</button>
+    <h2 id="bbTitle">${lang === "ar" ? "اصنع برجرك" : "Build your burger"}</h2><p class="bbsub">${lang === "ar" ? "اختر الطبقات وشاهدها تُبنى" : "Tap a layer and watch it land"}</p>
+    <div class="bbstage"><div class="bbplate"></div><div class="bbstack" id="bbStack"></div><span class="bbpop" id="bbPop"></span></div>
+    <div id="bbOpts"></div>
+    <button class="cta bbgo" data-bb="add"></button></div>`;
+  $("app").appendChild(el); bbRender();
+}
+function closeBuilder() { const el = $("bb"); if (!el) return; bb = null; if (calm) return el.remove(); el.classList.add("out"); setTimeout(() => el.remove(), 320); }
+function bbRender() {
+  if (!bb) return;
+  const keys = ["bun-bottom", ...bb.layers.filter(k => BB_SAUCE[k]), bb.patty, ...bb.layers.filter(k => !BB_SAUCE[k])];
+  let y = 0, html = "";
+  keys.forEach((k, i) => { const [h] = bbLayer(k), isNew = bb.fresh === "intro" || (bb.fresh === k && i === keys.lastIndexOf(k));
+    html += `<div class="bbly ${isNew ? "drop" : ""}" style="bottom:${y}px; z-index:${i + 1}; --tilt:${((i * 37) % 13) - 6}deg; --d:${bb.fresh === "intro" ? i * 90 : 0}ms">${bbSvg(k)}</div>`; y += h - 3; });
+  html += `<div class="bbly bbtop ${bb.fresh === "intro" ? "drop" : ""}" style="bottom:${y + (bb.fresh && bb.fresh !== "intro" ? 0 : 0)}px; z-index:99; --d:${bb.fresh === "intro" ? keys.length * 90 + 80 : 0}ms">${bbSvg("bun-top")}</div>`;
+  const stack = $("bbStack"); stack.innerHTML = html;
+  const tall = y + 62, room = 230; stack.style.transform = tall > room ? `scale(${(room / tall).toFixed(3)})` : "";
+  if (bb.fresh && bb.fresh !== "intro" && !calm) { stack.classList.remove("squish"); void stack.offsetWidth; stack.classList.add("squish"); }
+  const chip = (k, name, price, on, n) => `<button class="bbchip ${on ? "on" : ""}" data-bb="${esc(k)}" aria-pressed="${!!on}"><span class="bbico">${bbIcon(k)}</span>
+      ${n > 0 && !BB.patties.some(p => p[0] === k) ? `<i class="bbn">${n}</i><i class="bbminus" data-bb-minus="${esc(k)}" role="button" aria-label="${esc(t("less"))} ${esc(name)}">−</i>` : ""}
+      <b>${esc(name)}</b><small>${price ? "+ " + money(price) : lang === "ar" ? "مجاناً" : "Free"}</small></button>`;
+  $("bbOpts").innerHTML = `<h3>${lang === "ar" ? "اللحم" : "Patty"} <span>${lang === "ar" ? "ضمن السعر" : "included"}</span></h3><div class="bbrow">${BB.patties.map(([k, n]) => chip(k, n, 0, bb.patty === k, 0)).join("")}</div>` +
+    BB.groups.map(([, title, opts]) => `<h3>${esc(title[lang] || title.en)}</h3><div class="bbrow">${opts.map(([k, n, p]) => chip(k, n, p, bbCount(k), bbCount(k))).join("")}</div>`).join("");
+  document.querySelector("#bb .bbgo").innerHTML = `<span>${lang === "ar" ? "أضف إلى الطلب" : "Add to order"}</span><b id="bbTotal">${money(bbPrice())}</b>`;
+  bb.fresh = null;
+}
+function bbTap(k, minus) {
+  if (!bb) return;
+  if (BB.patties.some(p => p[0] === k)) { if (bb.patty !== k) { bb.patty = k; bb.fresh = k; } }
+  else if (minus) { const i = bb.layers.lastIndexOf(k); if (i >= 0) bb.layers.splice(i, 1); }
+  else { if (bbCount(k) >= BB_MAX) return toast(lang === "ar" ? "يكفي هذا من هذه الطبقة" : `That's plenty of ${BB_LABEL[k]}!`); bb.layers.push(k); bb.fresh = k; }
+  if (!minus) { const pop = $("bbPop"), n = bb.fresh && !BB.patties.some(p => p[0] === k) ? bbCount(k) : 0;
+    pop.textContent = `+ ${BB_LABEL[k]}${n > 1 ? " ×" + n : ""}`; pop.classList.remove("go"); void pop.offsetWidth; pop.classList.add("go"); }
+  if (navigator.vibrate) try { navigator.vibrate(8); } catch (e) {}
+  bbRender();
+}
+function bbAdd() {
+  if (!bb) return;
+  const tops = bb.layers.filter(k => !BB_SAUCE[k]), sauces = bb.layers.filter(k => BB_SAUCE[k]);
+  const tally = ks => [...new Set(ks)].map(k => BB_LABEL[k] + (bbCount(k) > 1 ? " ×" + bbCount(k) : ""));
+  const summary = [BB_LABEL[bb.patty], ...tally(tops), ...tally(sauces)].join(", ");
+  if (live) {
+    sendText(`Please add a Build Your Own Burger with ${bb.patty}${tops.length ? ", toppings: " + tops.join(", ") : ", no toppings"}${sauces.length ? ", sauces: " + sauces.join(", ") : ""}. I confirm, that's the burger I want.`);
+    toast(t("asked") + " " + (lang === "ar" ? "برجرك" : "your burger"));
+  } else {
+    const taken = cart.some(l => l.itemId === "custom-burger");
+    cart.push({ itemId: taken ? "custom-burger-" + Date.now().toString(36) : "custom-burger", name: "Build Your Own Burger", quantity: 1, unitPrice: bbPrice(), specialInstructions: summary });
+    renderCart();
+  }
+  const btn = document.querySelector("#bb .bbgo"); flyToOrder(btn); closeBuilder();
+}
+$("app").addEventListener("click", e => {
+  if (!bb) return;
+  const m = e.target.closest("[data-bb-minus]"); if (m) { e.stopPropagation(); return bbTap(m.dataset.bbMinus, true); }
+  const b = e.target.closest("[data-bb]"); if (!b) { if (e.target.id === "bb") closeBuilder(); return; }
+  e.stopPropagation(); const k = b.dataset.bb;
+  if (k === "close") return closeBuilder(); if (k === "add") return bbAdd(); bbTap(k);
+}, true);
 
 /* ================= Fruit basket and Meteor Slice ================= */
 const FRUIT_SVG = {
