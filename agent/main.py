@@ -697,7 +697,7 @@ async def voice_chat(websocket: WebSocket) -> None:
             tools = [stop_conversation]
 
         # English stays on Nova Sonic. Arabic and Malayalam, which Nova Sonic cannot speak, use Gemini Live.
-        model = _make_model(settings) if lang == "en" else _langs.make_model(lang)
+        model = _make_model(settings) if lang == "en" and not (_langs and _langs.english_on_gemini()) else _langs.make_model(lang)
         agent = BidiAgent(model=model, tools=tools, system_prompt=system_prompt)
         pieces = bool(_langs and _langs.sends_pieces(lang))
 

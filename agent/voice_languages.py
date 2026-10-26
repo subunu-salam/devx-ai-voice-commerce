@@ -23,6 +23,7 @@ tapping a language in the ordering app. Either way the app reconnects in the new
 order carries over: see issue_resume / take_resume below.
 """
 
+import base64
 import hmac
 import logging
 import os
@@ -79,6 +80,7 @@ def _gemini_model_class():
     if _model_class is None:
         from google.genai import types as genai_types
         from strands.experimental.bidi.models import BidiGeminiLiveModel
+        from strands.experimental.bidi.types.events import BidiAudioStreamEvent
 
         class _GeminiAttendant(BidiGeminiLiveModel):
             """Gemini Live that waits for each tool result before it speaks again.
@@ -86,6 +88,27 @@ def _gemini_model_class():
             The attendant must hear back from add_to_order or place_order before it confirms an item,
             a total or an order number, the same way the English attendant works.
             """
+
+            def _convert_gemini_live_event(self, message):
+                """Keep the speech when Gemini bundles it with a caption.
+
+                With transcription on, one Gemini message often carries both the words and the next slice of
+                audio. The stock converter returns after the words, so that slice of audio was thrown away:
+                clipped, garbled speech, worst in Malayalam. Return the caption and the audio together.
+                """
+                events = super()._convert_gemini_live_event(message)
+                try:
+                    if message.data and not any(type(e).__name__ == "BidiAudioStreamEvent" for e in events):
+                        audio = BidiAudioStreamEvent(
+                            audio=base64.b64encode(message.data).decode("utf-8"),
+                            format="pcm",
+                            sample_rate=self.config["audio"]["output_rate"],
+                            channels=self.config["audio"]["channels"],
+                        )
+                        events = [audio] + list(events)   # audio first, so the voice is never held up by a caption
+                except Exception as err:   # never let a caption problem end a call
+                    logger.warning("Could not keep a slice of speech: %s", err)
+                return events
 
             def _format_tools_for_live_api(self, tool_specs):
                 if not tool_specs:
@@ -183,9 +206,14 @@ def make_model(lang: str):
     )
 
 
+def english_on_gemini() -> bool:
+    """True (the default) when a Gemini key is set and VOICE_ENGLISH_ENGINE is not "nova": English then skips Nova Sonic (and AWS)."""
+    return os.getenv("VOICE_ENGLISH_ENGINE", "gemini").lower() == "gemini" and _gemini_ready()
+
+
 def sends_pieces(lang: str) -> bool:
     """Gemini sends what was said a few words at a time; the app joins the pieces into one line."""
-    return lang != DEFAULT
+    return lang != DEFAULT or english_on_gemini()
 
 
 # ---------- what the attendant is told ----------
