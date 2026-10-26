@@ -569,6 +569,41 @@ body.kiosk .tab[data-go="more"], body.kiosk #installCard{display:none !important
 .bbgo b{font-family:var(--display); font-weight:800; font-size:1.1rem}
 .bbcard{background:#fff} .bbchip.on{background:var(--brand-50); box-shadow:0 0 0 2px var(--brand), var(--shadow)}
 .bbstage{background:radial-gradient(260px 140px at 50% 88%, rgba(255,180,0,.22), transparent 70%), #FAF8F5 !important}
+/* ---------- builder, in the "burger shop" look: chocolate frame, cream card, round ingredient grid ---------- */
+.bb{background:rgba(20,12,8,.55)}
+.bbcard{background:#2B1A13 !important; border-radius:30px 30px 0 0; padding:0 10px calc(10px + var(--bottom)) !important; max-height:96% !important}
+.bbhead{position:relative; display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:20px 50px 14px 12px; color:#fff}
+[dir="rtl"] .bbhead{padding:20px 12px 14px 50px}
+.bbhead h1{font-family:"Bricolage Grotesque",var(--font); font-weight:800; font-size:1.7rem; letter-spacing:-.04em; line-height:1}
+.bbhead span{font-size:.72rem; color:#CBB8A8; text-align:end}
+.bbcard .bbx{top:14px !important; background:rgba(255,255,255,.1) !important; color:#fff !important; box-shadow:none !important}
+.bbin{background:#FFFBF4; border-radius:24px; padding:14px 12px 12px}
+.bbshop{display:grid; line-height:1.2} .bbshop b{font-weight:800; font-size:.85rem} .bbshop span{font-size:.7rem; color:#8A7A6E}
+.bbin h2{font-family:"Bricolage Grotesque",var(--font); font-weight:800; font-size:1.35rem; letter-spacing:-.03em; margin:8px 0 10px; color:#2B1A13}
+.bbbuns{display:grid; grid-template-columns:repeat(4,1fr); gap:6px}
+.bbbun{display:grid; justify-items:center; gap:3px; border:1.5px solid #EADFD2; background:#fff; border-radius:12px; padding:6px 2px 6px; font-size:.68rem; font-weight:700; color:#2B1A13; transition:transform .2s var(--spring), background .2s, border-color .2s}
+.bbbun i{width:30px; height:16px; border-radius:15px 15px 5px 5px; box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+.bbbun.on{background:#FFE9DF; border-color:#E8452C}
+.bbbun:active{transform:scale(.94)}
+.bbstage{position:relative !important; top:auto !important; height:250px !important; margin:6px -12px 2px !important; border-radius:0 !important; box-shadow:none !important;
+  background:radial-gradient(220px 70px at 50% 92%, rgba(43,26,19,.16), transparent 70%), #FFFBF4 !important}
+.bbplate{display:none}
+.bbgrid{display:grid; grid-template-columns:repeat(5,1fr); gap:12px 4px; padding:6px 0 4px}
+.bbgrid .bbchip{width:auto; background:none !important; box-shadow:none !important; padding:0 !important; gap:2px; border-radius:0}
+.bbgrid .bbico{position:relative; width:46px; height:46px; border-radius:50%; background:#F6EDE2; overflow:visible; box-shadow:inset 0 0 0 1.5px #EADFD2; transition:box-shadow .2s, transform .25s var(--spring)}
+.bbgrid .bbico svg{max-width:34px; border-radius:6px}
+.bbgrid .bbchip.on .bbico{box-shadow:inset 0 0 0 2.5px #E8452C; background:#FFE9DF}
+.bbgrid .bbchip:active .bbico{transform:scale(.88)}
+.bbgrid .bbchip b{font-size:.66rem; font-weight:700; color:#2B1A13; margin-top:3px}
+.bbgrid .bbchip small{font-size:.6rem; color:#8A7A6E}
+.bbgrid .bbchip.on small{color:#8A7A6E; font-weight:500}
+.bbgrid .bbn{top:-5px; inset-inline-end:-6px; min-width:19px; height:19px; font-size:.66rem; background:#E8452C; box-shadow:0 0 0 2px #FFFBF4}
+.bbgrid .bbminus{top:-5px; inset-inline-start:-6px; width:19px; height:19px; font-size:.8rem; background:#2B1A13; box-shadow:0 0 0 2px #FFFBF4}
+.bbgo{position:sticky !important; bottom:0; width:100%; display:flex; justify-content:space-between; align-items:center; border:0; border-radius:999px !important; margin-top:14px !important; padding:8px 8px 8px 22px !important;
+  background:#2B1A13 !important; color:#fff; font-weight:800; box-shadow:0 12px 24px -12px rgba(43,26,19,.8) !important}
+[dir="rtl"] .bbgo{padding:8px 22px 8px 8px !important}
+.bbgo b{background:rgba(255,255,255,.14); border-radius:999px; padding:8px 14px; font-size:.9rem !important}
+
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} .rv{opacity:1; transform:none} .splash{display:none} }
 </style>
 </head>
@@ -1151,9 +1186,10 @@ const BB_PRICE = Object.fromEntries(BB.groups.flatMap(g => g[2].map(([k, , p]) =
 const BB_LABEL = Object.fromEntries([...BB.patties, ...BB.groups.flatMap(g => g[2])].map(([k, n]) => [k, n]));
 const BB_SAUCE = { ketchup: "#D93025", mustard: "#F2C200", mayo: "#FFF1CC", "bbq sauce": "#6B2E14", "chipotle mayo": "#E07A3F", "special sauce": "#F4A261" };
 const BB_MAX = 3;
+const BB_BUNS = [["brioche", "Brioche", "#8E4314", "#D9822B", "#F4B860"], ["sesame", "Sesame", "#A5581B", "#E39A45", "#F8CF86"], ["potato", "Potato", "#B98A33", "#EBC86F", "#FBE7A9"], ["parmesan", "Parmesan", "#9C6418", "#E0A63E", "#F7D88A"]];
 /* each layer: [height in px, svg body drawn in a 200-wide box]. Shading, gradients and texture so it reads as food, not clip-art. */
-const BB_DEFS = `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-  <radialGradient id="bbBunTop" cx="42%" cy="22%" r="85%"><stop offset="0" stop-color="#F8C977"/><stop offset=".45" stop-color="#E08F38"/><stop offset=".85" stop-color="#B8641F"/><stop offset="1" stop-color="#94501A"/></radialGradient>
+const BB_DEFS_FN = () => `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  ${BB_BUNS.map(([id, , d, m, l]) => `<radialGradient id="bbBun-${id}" cx="42%" cy="22%" r="85%"><stop offset="0" stop-color="${l}"/><stop offset=".5" stop-color="${m}"/><stop offset="1" stop-color="${d}"/></radialGradient>`).join("")}
   <linearGradient id="bbCrumb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBE7C2"/><stop offset="1" stop-color="#EBCB94"/></linearGradient>
   <linearGradient id="bbBunBot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E6A24F"/><stop offset=".6" stop-color="#C77A2C"/><stop offset="1" stop-color="#9C561C"/></linearGradient>
   <linearGradient id="bbBeef" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7B3F1E"/><stop offset=".35" stop-color="#5A2A12"/><stop offset="1" stop-color="#2E1407"/></linearGradient>
@@ -1173,10 +1209,13 @@ function bbLayer(k) {
   const dots = (n, x0, x1, y0, y1, rad, fill, op = 1) => Array.from({ length: n }, () => `<ellipse cx="${(x0 + r() * (x1 - x0)).toFixed(1)}" cy="${(y0 + r() * (y1 - y0)).toFixed(1)}" rx="${(rad * (.6 + r() * .8)).toFixed(1)}" ry="${(rad * (.4 + r() * .5)).toFixed(1)}" fill="${fill}" opacity="${op}"/>`).join("");
   if (k === "bun-bottom") return [34, `<path d="M6 8c0-4 3-6 8-6h172c5 0 8 2 8 6v6H6z" fill="url(#bbCrumb)"/>${dots(40, 12, 188, 4, 12, 1.2, "#E2BC82", .7)}
     <path d="M6 13h188c0 10-6 19-20 20H26C12 32 6 23 6 13z" fill="url(#bbBunBot)"/><path d="M16 26c40 4 128 4 168 0" stroke="#7E4415" stroke-width="2" fill="none" opacity=".35"/>`];
-  if (k === "bun-top") return [70, `<path d="M4 64c-4 0-5-4-3-9C14 22 52 3 100 3s86 19 99 52c2 5 1 9-3 9z" fill="url(#bbBunTop)"/>
+  if (k === "bun-top") { const bun = (bb && bb.bun) || "sesame";
+    const crust = bun === "sesame" ? Array.from({ length: 22 }, () => { const x = 28 + r() * 144, y = 12 + r() * 38, a = (r() * 160 - 80).toFixed(0); return `<g transform="rotate(${a} ${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="${x.toFixed(1)}" cy="${(y + .6).toFixed(1)}" rx="3.6" ry="1.7" fill="#9A5A1F" opacity=".45"/><ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="3.4" ry="1.6" fill="#FFF3D9"/></g>`; }).join("")
+      : bun === "parmesan" ? Array.from({ length: 70 }, () => { const x = 20 + r() * 160, y = 8 + r() * 48; return `<path d="M${x.toFixed(1)} ${y.toFixed(1)}l${(2 + r() * 4).toFixed(1)} ${(r() * 2 - 1).toFixed(1)}" stroke="${r() > .5 ? "#FFF4C8" : "#F2D27A"}" stroke-width="1.4" stroke-linecap="round"/>`; }).join("")
+      : bun === "potato" ? dots(30, 30, 170, 14, 50, 1.4, "#FFF6D6", .6) : "";
+    return [70, `<path d="M4 64c-4 0-5-4-3-9C14 22 52 3 100 3s86 19 99 52c2 5 1 9-3 9z" fill="url(#bbBun-${bun})"/>
     <path d="M4 64c30 4 162 4 192 0v5c-30 4-162 4-192 0z" fill="url(#bbCrumb)"/>
-    <path d="M34 26C54 12 78 8 104 8" stroke="#FFE2A8" stroke-width="8" stroke-linecap="round" fill="none" opacity=".55"/>` +
-    Array.from({ length: 22 }, () => { const x = 28 + r() * 144, y = 12 + r() * 38, a = (r() * 160 - 80).toFixed(0); return `<g transform="rotate(${a} ${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="${x.toFixed(1)}" cy="${(y + .6).toFixed(1)}" rx="3.6" ry="1.7" fill="#9A5A1F" opacity=".45"/><ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="3.4" ry="1.6" fill="#FFF3D9"/></g>`; }).join("")];
+    <path d="M34 26C54 12 78 8 104 8" stroke="#fff" stroke-width="${bun === "brioche" ? 10 : 7}" stroke-linecap="round" fill="none" opacity="${bun === "brioche" ? .45 : .3}"/>${crust}`]; }
   if (k === "beef patty") return [30, `<g filter="url(#bbRough)"><rect x="6" y="3" width="188" height="25" rx="12" fill="url(#bbBeef)"/></g>
     ${dots(55, 14, 186, 6, 26, 1.6, "#2A1105", .8)}${dots(30, 14, 186, 6, 18, 1.2, "#9A5530", .7)}
     <path d="M18 7c50-3 114-3 164 0" stroke="#A8643A" stroke-width="2.5" stroke-linecap="round" fill="none" opacity=".55"/>
@@ -1215,13 +1254,16 @@ let bb = null;   // { patty, layers: [keys in the order they were added], fresh 
 const bbPrice = () => bb ? BB.base + bb.layers.reduce((s, k) => s + (BB_PRICE[k] || 0), 0) : BB.base;
 const bbCount = k => bb.layers.filter(x => x === k).length;
 function openBuilder() {
-  bb = { patty: "beef patty", layers: [], fresh: "intro" };
-  const el = document.createElement("div"); el.className = "bb"; el.id = "bb";
-  el.innerHTML = BB_DEFS + `<div class="bbcard" role="dialog" aria-modal="true" aria-labelledby="bbTitle"><button class="x bbx" data-bb="close" aria-label="${esc(t("close"))}">✕</button>
-    <h2 id="bbTitle">${lang === "ar" ? "اصنع برجرك" : "Build your burger"}</h2><p class="bbsub">${lang === "ar" ? "اختر الطبقات وشاهدها تُبنى" : "Tap a layer and watch it land"}</p>
-    <div class="bbstage"><div class="bbplate"></div><div class="bbstack" id="bbStack"></div><span class="bbpop" id="bbPop"></span></div>
-    <div id="bbOpts"></div>
-    <button class="cta bbgo" data-bb="add"></button></div>`;
+  bb = { bun: "brioche", patty: "beef patty", layers: [], fresh: "intro" };
+  const ar = lang === "ar", el = document.createElement("div"); el.className = "bb"; el.id = "bb";
+  el.innerHTML = BB_DEFS_FN() + `<div class="bbcard" role="dialog" aria-modal="true" aria-labelledby="bbTitle">
+    <div class="bbhead"><h1>${ar ? "متجر البرجر" : "Burger shop"}</h1><span>${ar ? "ركّبه وأرسله إلى المطبخ" : "Stack it and send it to the kitchen"}</span><button class="x bbx" data-bb="close" aria-label="${esc(t("close"))}">✕</button></div>
+    <div class="bbin"><p class="bbshop"><b>VoiceBite</b><span>${esc(MERCHANT.name[lang])} · ${esc(MERCHANT.branch[lang])}</span></p>
+      <h2 id="bbTitle">${ar ? "اصنع برجرك" : "Build your burger"}</h2>
+      <div class="bbbuns" id="bbBuns"></div>
+      <div class="bbstage"><div class="bbplate"></div><div class="bbstack" id="bbStack"></div><span class="bbpop" id="bbPop"></span></div>
+      <div id="bbOpts"></div>
+      <button class="bbgo" data-bb="add"></button></div></div>`;
   $("app").appendChild(el); bbRender();
 }
 function closeBuilder() { const el = $("bb"); if (!el) return; bb = null; if (calm) return el.remove(); el.classList.add("out"); setTimeout(() => el.remove(), 320); }
@@ -1231,15 +1273,15 @@ function bbRender() {
   let y = 0, html = "";
   keys.forEach((k, i) => { const [h] = bbLayer(k), isNew = bb.fresh === "intro" || (bb.fresh === k && i === keys.lastIndexOf(k));
     html += `<div class="bbly ${isNew ? "drop" : ""}" style="bottom:${y}px; z-index:${i + 1}; --tilt:${((i * 37) % 13) - 6}deg; --d:${bb.fresh === "intro" ? i * 90 : 0}ms">${bbSvg(k)}</div>`; y += h - 4; });
-  html += `<div class="bbly bbtop ${bb.fresh === "intro" ? "drop" : ""}" style="bottom:${y + (bb.fresh && bb.fresh !== "intro" ? 0 : 0)}px; z-index:99; --d:${bb.fresh === "intro" ? keys.length * 90 + 80 : 0}ms">${bbSvg("bun-top")}</div>`;
+  html += `<div class="bbly bbtop ${bb.fresh === "intro" || bb.fresh === "bun-top" ? "drop" : ""}" style="bottom:${y + (bb.fresh && bb.fresh !== "intro" ? 0 : 0)}px; z-index:99; --d:${bb.fresh === "intro" ? keys.length * 90 + 80 : 0}ms">${bbSvg("bun-top")}</div>`;
   const stack = $("bbStack"); stack.innerHTML = html;
   const tall = y + 62, room = 230; stack.style.transform = tall > room ? `scale(${(room / tall).toFixed(3)})` : "";
   if (bb.fresh && bb.fresh !== "intro" && !calm) { stack.classList.remove("squish"); void stack.offsetWidth; stack.classList.add("squish"); }
-  const chip = (k, name, price, on, n) => `<button class="bbchip ${on ? "on" : ""}" data-bb="${esc(k)}" aria-pressed="${!!on}"><span class="bbico">${bbIcon(k)}</span>
-      ${n > 0 && !BB.patties.some(p => p[0] === k) ? `<i class="bbn">${n}</i><i class="bbminus" data-bb-minus="${esc(k)}" role="button" aria-label="${esc(t("less"))} ${esc(name)}">−</i>` : ""}
-      <b>${esc(name)}</b><small>${price ? "+ " + money(price) : lang === "ar" ? "مجاناً" : "Free"}</small></button>`;
-  $("bbOpts").innerHTML = `<h3>${lang === "ar" ? "اللحم" : "Patty"} <span>${lang === "ar" ? "ضمن السعر" : "included"}</span></h3><div class="bbrow">${BB.patties.map(([k, n]) => chip(k, n, 0, bb.patty === k, 0)).join("")}</div>` +
-    BB.groups.map(([, title, opts]) => `<h3>${esc(title[lang] || title.en)}</h3><div class="bbrow">${opts.map(([k, n, p]) => chip(k, n, p, bbCount(k), bbCount(k))).join("")}</div>`).join("");
+  const chip = (k, name, price, on, n, radio) => `<button class="bbchip ${on ? "on" : ""}" data-bb="${esc(k)}" aria-pressed="${!!on}"><span class="bbico">${bbIcon(k)}
+      ${on ? `<i class="bbn">${radio ? "✓" : n}</i>` : ""}${n > 0 && !radio ? `<i class="bbminus" data-bb-minus="${esc(k)}" role="button" aria-label="${esc(t("less"))} ${esc(name)}">−</i>` : ""}</span>
+      <b>${esc(name)}</b><small>${price ? "+ " + money(price) : radio ? (lang === "ar" ? "ضمن السعر" : "Included") : (lang === "ar" ? "مجاناً" : "Free")}</small></button>`;
+  $("bbBuns").innerHTML = BB_BUNS.map(([id, name, d, m, l]) => `<button class="bbbun ${bb.bun === id ? "on" : ""}" data-bun="${id}" aria-pressed="${bb.bun === id}"><i style="background:radial-gradient(circle at 40% 30%, ${l}, ${m} 55%, ${d})"></i>${esc(name)}</button>`).join("");
+  $("bbOpts").innerHTML = `<div class="bbgrid">${BB.patties.map(([k, n]) => chip(k, n, 0, bb.patty === k, 0, true)).join("")}${BB.groups.flatMap(g => g[2]).map(([k, n, p]) => chip(k, n, p, bbCount(k), bbCount(k))).join("")}</div>`;
   document.querySelector("#bb .bbgo").innerHTML = `<span>${lang === "ar" ? "أضف إلى الطلب" : "Add to order"}</span><b id="bbTotal">${money(bbPrice())}</b>`;
   bb.fresh = null;
 }
@@ -1257,9 +1299,10 @@ function bbAdd() {
   if (!bb) return;
   const tops = bb.layers.filter(k => !BB_SAUCE[k]), sauces = bb.layers.filter(k => BB_SAUCE[k]);
   const tally = ks => [...new Set(ks)].map(k => BB_LABEL[k] + (bbCount(k) > 1 ? " ×" + bbCount(k) : ""));
-  const summary = [BB_LABEL[bb.patty], ...tally(tops), ...tally(sauces)].join(", ");
+  const bunName = BB_BUNS.find(x => x[0] === bb.bun)[1] + " bun";
+  const summary = [bunName, BB_LABEL[bb.patty], ...tally(tops), ...tally(sauces)].join(", ");
   if (live) {
-    sendText(`Please add a Build Your Own Burger with ${bb.patty}${tops.length ? ", toppings: " + tops.join(", ") : ", no toppings"}${sauces.length ? ", sauces: " + sauces.join(", ") : ""}. I confirm, that's the burger I want.`);
+    sendText(`Please add a Build Your Own Burger with ${bb.patty}${tops.length ? ", toppings: " + tops.join(", ") : ", no toppings"}${sauces.length ? ", sauces: " + sauces.join(", ") : ""}, on a ${bunName.toLowerCase()} (note for the kitchen). I confirm, that's the burger I want.`);
     toast(t("asked") + " " + (lang === "ar" ? "برجرك" : "your burger"));
   } else {
     const taken = cart.some(l => l.itemId === "custom-burger");
@@ -1271,6 +1314,7 @@ function bbAdd() {
 $("app").addEventListener("click", e => {
   if (!bb) return;
   const m = e.target.closest("[data-bb-minus]"); if (m) { e.stopPropagation(); return bbTap(m.dataset.bbMinus, true); }
+  const bun = e.target.closest("[data-bun]"); if (bun) { e.stopPropagation(); if (bb.bun !== bun.dataset.bun) { bb.bun = bun.dataset.bun; bb.fresh = "bun-top"; bbRender(); } return; }
   const b = e.target.closest("[data-bb]"); if (!b) { if (e.target.id === "bb") closeBuilder(); return; }
   e.stopPropagation(); const k = b.dataset.bb;
   if (k === "close") return closeBuilder(); if (k === "add") return bbAdd(); bbTap(k);
