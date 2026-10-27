@@ -1166,6 +1166,45 @@ button{transition:none}
 .cats .cat{animation:catIn .55s var(--spring) both}
 @keyframes catIn{from{opacity:0; transform:translateY(16px) scale(.85)}}
 
+/* ---------- premium icons (replacing emoji) ---------- */
+.ic{width:1em; height:1em; display:inline-block; vertical-align:-.15em; flex:none; --tint:rgba(215,40,47,.16)}
+.mood i{width:30px; height:30px; background:var(--mbg,var(--surface)); color:var(--mfg,var(--brand))}
+.mood i .ic{width:18px; height:18px; --tint:var(--mtint,rgba(215,40,47,.18)); transition:transform .4s var(--spring)}
+.mood-spicy{--mbg:#FFE6E2; --mfg:#D7282F; --mtint:#FFB4A8} .mood-veg{--mbg:#E2F5E8; --mfg:#15935B; --mtint:#A8E0BC}
+.mood-light{--mbg:#E2F3EF; --mfg:#16705F; --mtint:#A9DCCF} .mood-sweet{--mbg:#FFE6F1; --mfg:#D0336F; --mtint:#FFB9D3}
+.mood-deal{--mbg:#FFF1CC; --mfg:#B07800; --mtint:#FFD978} .mood-share{--mbg:#EEE8FF; --mfg:#5B35C9; --mtint:#CDBDFF} .mood-under10{--mbg:#FFF1CC; --mfg:#B07800; --mtint:#FFD978}
+.mood:hover i{background:rgba(255,255,255,.95)} .mood:hover i .ic{transform:rotate(-10deg) scale(1.12)}
+.tg .ic{width:11px; height:11px; --tint:currentColor; opacity:1}
+.tg .ic{--tint:rgba(255,255,255,0)}
+.moodbar span{display:inline-flex; align-items:center; gap:8px} .moodbar .ic{width:18px; height:18px; --tint:rgba(255,255,255,.25)}
+.gico{display:inline-grid; place-items:center; width:30px; height:30px; border-radius:50%; background:#FFF1CC; color:#E08A00; vertical-align:4px; margin-inline-start:4px; animation:gspin 12s linear infinite}
+.gico .ic{width:19px; height:19px; --tint:#FFD978}
+@keyframes gspin{to{transform:rotate(360deg)}}
+.fl svg{width:1em; height:1em; display:block}
+
+/* ---------- voice chat: its own living background (transforms and opacity only) ---------- */
+.vbg{position:absolute; inset:0; z-index:-1; overflow:hidden; pointer-events:none; contain:strict}
+.vbg i{position:absolute; border-radius:50%; will-change:transform}
+.vbg .b1{width:420px; height:420px; left:-160px; top:-120px; background:radial-gradient(circle, rgba(215,40,47,.22), rgba(215,40,47,0) 62%); animation:vb1 14s ease-in-out infinite alternate}
+.vbg .b2{width:380px; height:380px; right:-170px; top:30%; background:radial-gradient(circle, rgba(255,184,28,.26), rgba(255,184,28,0) 62%); animation:vb2 17s ease-in-out infinite alternate}
+.vbg .b3{width:400px; height:400px; left:-80px; bottom:-200px; background:radial-gradient(circle, rgba(255,46,126,.14), rgba(255,46,126,0) 62%); animation:vb3 20s ease-in-out infinite alternate}
+@keyframes vb1{to{transform:translate3d(90px,70px,0) scale(1.15)}}
+@keyframes vb2{to{transform:translate3d(-110px,-60px,0) scale(.9)}}
+@keyframes vb3{to{transform:translate3d(70px,-90px,0) scale(1.1)}}
+.vbg .rip{position:absolute; left:50%; top:calc(118px + var(--top)); width:150px; height:150px; margin:-75px 0 0 -75px; border-radius:50%; border:1.5px solid rgba(215,40,47,.22); opacity:0; animation:vrip 4.5s cubic-bezier(.2,.6,.3,1) infinite}
+.vbg .r2{animation-delay:1.5s} .vbg .r3{animation-delay:3s}
+@keyframes vrip{0%{transform:scale(.9); opacity:.9} 100%{transform:scale(3.4); opacity:0}}
+.voice.shelf-on .vbg .rip,.voice.asking .vbg .rip{top:calc(80px + var(--top)); width:84px; height:84px; margin:-42px 0 0 -42px}
+.vbg .vwave{position:absolute; left:-50%; bottom:150px; width:200%; height:90px; opacity:.5;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='90' viewBox='0 0 400 90'%3E%3Cpath d='M0 45 Q50 10 100 45 T200 45 T300 45 T400 45' fill='none' stroke='%23D7282F' stroke-opacity='.18' stroke-width='2'/%3E%3Cpath d='M0 55 Q50 25 100 55 T200 55 T300 55 T400 55' fill='none' stroke='%23FFB81C' stroke-opacity='.25' stroke-width='2'/%3E%3C/svg%3E") repeat-x 0 0/400px 90px;
+  animation:vwave 9s linear infinite}
+@keyframes vwave{to{transform:translate3d(-400px,0,0)}}
+.voice.open .vbg .rip{animation-play-state:running}
+.voice:not(.open) .vbg *{animation-play-state:paused}
+.voice::before{animation:none}
+.voice .floaters .fl{--o:.22}
+@media (prefers-reduced-motion:reduce){ .vbg *{animation:none !important} }
+
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} .rv{opacity:1; transform:none} .splash{display:none} }
 </style>
 </head>
@@ -1183,6 +1222,28 @@ button{transition:none}
   <g fill="#fff"><rect x="82" y="50" width="5.5" height="16" rx="2.75"/><rect x="91.5" y="42" width="5.5" height="32" rx="2.75"/><rect x="101" y="47" width="5.5" height="22" rx="2.75"/><rect x="110.5" y="53" width="5.5" height="10" rx="2.75"/></g>
   <g clip-path="url(#vb-top)"><path d="M6 -8 L41 90 L76 -8" fill="none" style="stroke:var(--logo-v,#0E3B2E)" stroke-width="23" stroke-linejoin="round"/></g>
 </symbol></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- line icons (stroke = currentColor, soft tint fill = --tint) -->
+  <symbol id="i-spicy" viewBox="0 0 24 24"><path d="M15.5 6.5c1.8.4 3.5 2.2 3.3 5-.4 5-6.6 9.6-13.3 9.8-.9 0-1.1-1.1-.3-1.5 4.2-2 6.8-5 7.6-9.3.4-2.4 1.2-3.6 2.7-4z" fill="var(--tint)"/><path d="M15.5 6.5c1.8.4 3.5 2.2 3.3 5-.4 5-6.6 9.6-13.3 9.8-.9 0-1.1-1.1-.3-1.5 4.2-2 6.8-5 7.6-9.3.4-2.4 1.2-3.6 2.7-4zM15.5 6.5c0-1.8.9-3 2.5-3.5M13.8 7.2c1.3-.9 2.6-.9 3.8.1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-veg" viewBox="0 0 24 24"><path d="M19.5 4.5C10 4.5 4.5 8.8 4.5 15c0 2.5 1.8 4.5 4.5 4.5 6.2 0 10.5-5.5 10.5-15z" fill="var(--tint)"/><path d="M19.5 4.5C10 4.5 4.5 8.8 4.5 15c0 2.5 1.8 4.5 4.5 4.5 6.2 0 10.5-5.5 10.5-15zM4 20l9.5-9.5M9.5 14.5h3.2M12 12V8.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-light" viewBox="0 0 24 24"><path d="M3.5 11.5h17a8.5 8.5 0 0 1-17 0z" fill="var(--tint)"/><path d="M3.5 11.5h17a8.5 8.5 0 0 1-17 0zM9 20h6M8 11.5c0-2.5 1.6-4.3 4-4.3M12.5 11.5c.2-3.2 2.2-5.6 5.2-6M7.5 6.5c.6-1.3 1.8-2 3.2-1.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sweet" viewBox="0 0 24 24"><path d="M7 10.5h10l-5 10.5z" fill="var(--tint)"/><path d="M7 10.5h10l-5 10.5zM6.6 10.5a5.4 5.4 0 1 1 10.8 0M10 13.5l4.2 3.5M14.4 12.8 11 16.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="3.6" r="1.3" fill="currentColor"/></symbol>
+  <symbol id="i-deal" viewBox="0 0 24 24"><path d="M3.5 12.3V4.5a1 1 0 0 1 1-1h7.8l8.2 8.2a1.4 1.4 0 0 1 0 2l-6.8 6.8a1.4 1.4 0 0 1-2 0z" fill="var(--tint)"/><path d="M3.5 12.3V4.5a1 1 0 0 1 1-1h7.8l8.2 8.2a1.4 1.4 0 0 1 0 2l-6.8 6.8a1.4 1.4 0 0 1-2 0zM10 15.5l4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.3" fill="var(--tint)"/><path d="M2.8 19.5c.6-3.4 3-5.5 6.2-5.5s5.6 2.1 6.2 5.5M15.5 4.9a3.3 3.3 0 0 1 0 6.3M17.5 14.3c2 .7 3.3 2.5 3.7 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="9" cy="8" r="3.3" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+  <symbol id="i-coin" viewBox="0 0 24 24"><ellipse cx="12" cy="7" rx="7.5" ry="3" fill="var(--tint)"/><path d="M4.5 7v5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V7M4.5 12v5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-5" fill="none" stroke="currentColor" stroke-width="1.7"/><ellipse cx="12" cy="7" rx="7.5" ry="3" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+  <symbol id="i-new" viewBox="0 0 24 24"><path d="M12 2.8l2.1 6.1 6.1 2.1-6.1 2.1L12 19.2l-2.1-6.1L3.8 11l6.1-2.1z" fill="var(--tint)" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M19 17.5v4M17 19.5h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-local" viewBox="0 0 24 24"><path d="M12 9c-2.3-3-6-3.5-8.5-1.5 3 0 5.6.5 8.5 1.5zM12 9c2.3-3 6-3.5 8.5-1.5-3 0-5.6.5-8.5 1.5zM12 9C9.5 7 9.3 4 11 2.5M12 9c2.5-2 2.7-5 1-6.5" fill="var(--tint)" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><path d="M12 9c-.4 4.5-.2 8.4.8 12.5M7.5 21.5h9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2" fill="var(--tint)" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1z" fill="var(--tint)" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M16 3.5v3M14.5 5h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <!-- filled food shapes for the drifting background -->
+  <symbol id="f-burger" viewBox="0 0 48 48"><path d="M7 21C7 12 15 7 24 7s17 5 17 14z" fill="#F2A541"/><g fill="#FFF3D6"><ellipse cx="17" cy="13" rx="1.4" ry=".8"/><ellipse cx="25" cy="11" rx="1.4" ry=".8"/><ellipse cx="31" cy="15" rx="1.4" ry=".8"/></g><path d="M5 24c3-2 5 1 8-1s5 1 8-1 5 1 8-1 5 1 8-1 4 1 6 0v2H5z" fill="#7CC36E"/><rect x="6" y="26" width="36" height="6" rx="3" fill="#7A3E22"/><path d="M8 33h32l-1 3a5 5 0 0 1-5 4H14a5 5 0 0 1-5-4z" fill="#E9963A"/></symbol>
+  <symbol id="f-fries" viewBox="0 0 48 48"><g fill="#FFC93C"><rect x="13" y="6" width="4" height="20" rx="1.5" transform="rotate(-8 15 16)"/><rect x="19" y="4" width="4" height="22" rx="1.5"/><rect x="25" y="5" width="4" height="21" rx="1.5" transform="rotate(6 27 15)"/><rect x="30" y="8" width="4" height="18" rx="1.5" transform="rotate(12 32 17)"/></g><path d="M11 20h26l-3 22H14z" fill="#E8333A"/><path d="M11 20c4 4 9 5 13 5s9-1 13-5" fill="#C9202A"/></symbol>
+  <symbol id="f-drink" viewBox="0 0 48 48"><path d="M27 4l4 1-3 11" fill="none" stroke="#1E1715" stroke-width="2.4" stroke-linecap="round"/><path d="M12 14h24l-3 30H15z" fill="#E8333A"/><rect x="10" y="12" width="28" height="5" rx="2.5" fill="#FFF3E8"/><path d="M14.5 26h19l-.6 6H15.1z" fill="#FFF3E8"/></symbol>
+  <symbol id="f-icecream" viewBox="0 0 48 48"><path d="M15 22h18l-9 22z" fill="#E9A85C"/><path d="M18 26l10 8M30 26l-10 9" stroke="#C7843D" stroke-width="1.5"/><circle cx="18" cy="18" r="7" fill="#FF9EC0"/><circle cx="30" cy="18" r="7" fill="#FFE3B0"/><circle cx="24" cy="11" r="7" fill="#8B5A3C"/><circle cx="24" cy="4" r="2.2" fill="#E8333A"/></symbol>
+  <symbol id="f-chili" viewBox="0 0 48 48"><path d="M31 12c4 1 7 5 6 10-1 10-13 19-26 19-2 0-2-2-.5-3C19 34 24 27 26 19c1-5 2.5-7 5-7z" fill="#E8333A"/><path d="M31 12c0-4 2-6 5-7" stroke="#3E9B4F" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M27 14c3-2 6-2 8 0" stroke="#3E9B4F" stroke-width="3" fill="none" stroke-linecap="round"/></symbol>
+  <symbol id="f-donut" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" fill="#E9A85C"/><path d="M24 8a16 16 0 0 1 15.5 12c-2 3-4 1-6 4s-4 0-7 3-5-1-8 1-5-1-9-2A16 16 0 0 1 24 8z" fill="#FF8DB5"/><circle cx="24" cy="24" r="5.5" fill="#FBF7F1"/><g stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M16 14l2 1M30 13l1 2M34 19l2-1M13 20l1 2"/></g></symbol>
+  <symbol id="f-drum" viewBox="0 0 48 48"><path d="M30 6c8 0 13 6 11 13-2 6-9 9-15 10l-8 8-3-3 8-8c0-6 0-20 7-20z" fill="#D9822B"/><path d="M14 35a3.5 3.5 0 1 0-4 4 3.5 3.5 0 1 0 4-4l2-2-2-2z" fill="#FFF3E0"/></symbol>
+</svg>
 <div class="stage">
   <div class="atmo" aria-hidden="true"><i></i><i></i><i></i></div>
 
@@ -1270,6 +1331,7 @@ button{transition:none}
     </nav>
 
     <section class="voice" id="voice" role="dialog" aria-modal="true" aria-labelledby="vstate">
+      <div class="vbg" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i><span class="rip"></span><span class="rip r2"></span><span class="rip r3"></span><span class="vwave"></span></div>
       <div class="vtop in">
         <button class="glass" id="vMin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span data-t="backToMenu"></span></button>
         <span class="name" style="font-size:1.05rem"><svg class="logo" aria-hidden="true"><use href="#vb-logo"/></svg><span class="word"><span class="wv">Voice</span><span class="wb">Bite</span></span></span>
@@ -1409,11 +1471,14 @@ const META = {
   "mango-smoothie": { kcal: 260, tags: ["new"] }, "strawberry-shake": { kcal: 490 }, "karak-chai": { kcal: 160, tags: ["local"] }, water: { kcal: 0, tags: ["light"] },
   "apple-pie": { kcal: 240 }, sundae: { kcal: 330 }, cookie: { kcal: 210 }, brownie: { kcal: 380 }, churros: { kcal: 410, tags: ["share"] }, "lotus-sundae": { kcal: 450, tags: ["new"] }
 };
-const TAGS = { spicy: ["🌶", "Spicy", "حار"], veg: ["🌱", "Veggie", "نباتي"], new: ["✨", "New", "جديد"], light: ["🥗", "Light", "خفيف"], deal: ["💰", "Deal", "عرض"], share: ["👨‍👩‍👧", "To share", "للمشاركة"], local: ["🇦🇪", "Local fave", "مفضل محلياً"] };
-const MOODS = [["spicy", "🌶", "Something spicy", "شيء حار"], ["veg", "🌱", "Veggie", "نباتي"], ["light", "🥗", "Keep it light", "خفيف"], ["sweet", "🍦", "Sweet tooth", "حلويات"],
-  ["deal", "💰", "Best value", "أفضل قيمة"], ["share", "👨‍👩‍👧", "Feeding a group", "لمجموعة"], ["under10", "🪙", "Under AED 10", "أقل من 10 درهم"]];
+const TAGS = { spicy: ["", "Spicy", "حار"], veg: ["", "Veggie", "نباتي"], new: ["", "New", "جديد"], light: ["", "Light", "خفيف"], deal: ["", "Deal", "عرض"], share: ["", "To share", "للمشاركة"], local: ["", "Local fave", "مفضل محلياً"] };
+const MOODS = [["spicy", "", "Something spicy", "شيء حار"], ["veg", "", "Veggie", "نباتي"], ["light", "", "Keep it light", "خفيف"], ["sweet", "", "Sweet tooth", "حلويات"],
+  ["deal", "", "Best value", "أفضل قيمة"], ["share", "", "Feeding a group", "لمجموعة"], ["under10", "", "Under AED 10", "أقل من 10 درهم"]];
+const ico = (id, cls) => `<svg class="ic ${cls || ""}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+const MOOD_ICON = { spicy: "spicy", veg: "veg", light: "light", sweet: "sweet", deal: "deal", share: "share", under10: "coin" };
+const TAG_ICON = { spicy: "spicy", veg: "veg", new: "new", light: "light", deal: "deal", share: "share", local: "local" };
 const tagsOf = i => (META[i.itemId] || {}).tags || [];
-const tagHtml = i => tagsOf(i).filter(k => k !== "deal").slice(0, 2).map(k => `<span class="tg tg-${k}">${TAGS[k][0]} ${esc(TAGS[k][lang === "ar" ? 2 : 1])}</span>`).join("");
+const tagHtml = i => tagsOf(i).filter(k => k !== "deal").slice(0, 2).map(k => `<span class="tg tg-${k}">${ico(TAG_ICON[k])}${esc(TAGS[k][lang === "ar" ? 2 : 1])}</span>`).join("");
 const kcalOf = i => (META[i.itemId] || {}).kcal;
 const moodMatch = (m, i) => m === "sweet" ? i.cat === "desserts" || /shake|smoothie/.test(i.itemId) : m === "under10" ? i.price < 1000 && i.itemId !== "water" : tagsOf(i).includes(m);
 const T = {
@@ -1545,8 +1610,8 @@ function renderHome() {
     : h < 22 ? [ar ? "مساء الخير" : "Good evening", ar ? "ماذا تشتهي الليلة؟" : "What are you craving tonight?"]
     : [ar ? "سهرانين؟" : "Late-night bites", ar ? "المطبخ ما زال يطبخ" : "The grill is still hot."];
   const nm = !KIOSK && profile().name ? ", " + profile().name.split(" ")[0] : "";
-  $("greet").innerHTML = `<b>${esc(g + nm)} 👋</b><span>${esc(sub)}</span>`;
-  $("moods").innerHTML = MOODS.map(([k, e, en, a], n) => `<button class="mood" style="--n:${n}" data-cat="mood:${k}"><i>${e}</i>${esc(ar ? a : en)}</button>`).join("");
+  $("greet").innerHTML = `<b>${esc(g + nm)} <span class="gico">${ico(h >= 6 && h < 18 ? "sun" : "moon")}</span></b><span>${esc(sub)}</span>`;
+  $("moods").innerHTML = MOODS.map(([k, e, en, a], n) => `<button class="mood mood-${k}" style="--n:${n}" data-cat="mood:${k}"><i>${ico(MOOD_ICON[k])}</i>${esc(ar ? a : en)}</button>`).join("");
   let past = []; try { past = JSON.parse(store.get("lastCart") || "[]"); } catch (e) {}
   const againItems = past.map(l => findItem(l.itemId)).filter(Boolean);
   $("again").innerHTML = againItems.length ? `<div class="sec"><h2>${esc(ar ? "اطلب مرة أخرى" : "Order again")}</h2><button class="link" data-act="reorder">${esc(ar ? "أضف الكل" : "Add all")}</button></div>
@@ -1569,7 +1634,7 @@ function renderMenu() {
   else if (activeCat.startsWith("mood:")) list = list.filter(i => moodMatch(activeCat.slice(5), i));
   else list = list.filter(i => i.cat === activeCat).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   const mood = !q && activeCat.startsWith("mood:") && MOODS.find(m => m[0] === activeCat.slice(5));
-  $("rows").innerHTML = (mood ? `<div class="moodbar"><span>${mood[1]} ${esc(lang === "ar" ? mood[3] : mood[2])} · ${list.length}</span><button data-cat="popular" aria-label="Clear">✕</button></div>` : "") + (list.length ? `<div class="rows">` + list.map(i => `<article class="rowitem ${i.itemId === lit ? "lit" : ""}" data-item="${esc(i.itemId)}">
+  $("rows").innerHTML = (mood ? `<div class="moodbar"><span>${ico(MOOD_ICON[mood[0]])} ${esc(lang === "ar" ? mood[3] : mood[2])} · ${list.length}</span><button data-cat="popular" aria-label="Clear">✕</button></div>` : "") + (list.length ? `<div class="rows">` + list.map(i => `<article class="rowitem ${i.itemId === lit ? "lit" : ""}" data-item="${esc(i.itemId)}">
       <div class="pic">${photo(i)}</div>
       <div><h3>${esc(itemName(i))}${i.featured && activeCat !== "popular" ? `<span class="pop">${esc(t("popular"))}</span>` : ""}</h3>
         ${tagHtml(i) || kcalOf(i) != null ? `<div class="meta">${tagHtml(i)}${kcalOf(i) != null ? `<small class="kcal">${kcalOf(i)} kcal</small>` : ""}</div>` : ""}
@@ -2886,14 +2951,14 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderNav)
 /* background animation: food icons and sesame seeds drifting up behind the content */
 (() => {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const FOOD = ["🍔", "🍟", "🥤", "🌶️", "🍦", "🥗", "🍗", "🌯", "🧀", "🍅", "🥨", "🍩"];
+  const FOOD = ["burger", "fries", "drink", "chili", "icecream", "donut", "drum"];
   const rnd = (a, b) => a + Math.random() * (b - a);
   function fill(host, n, big) {
     const box = document.createElement("div"); box.className = "floaters"; box.setAttribute("aria-hidden", "true");
     for (let k = 0; k < n; k++) {
       const seed = Math.random() < .45, el = document.createElement("i");
       el.className = "fl" + (seed ? " seed" : "");
-      if (!seed) el.textContent = FOOD[k % FOOD.length];
+      if (!seed) el.innerHTML = `<svg viewBox="0 0 48 48"><use href="#f-${FOOD[k % FOOD.length]}"/></svg>`;
       const size = big ? rnd(26, 46) : rnd(16, 30);
       el.style.cssText = `--x:${rnd(-2, 98)}%; --s:${size}px; --d:${rnd(18, 34)}s; --dl:${-rnd(0, 34)}s;
         --o:${seed ? rnd(.35, .6) : (big ? rnd(.25, .45) : rnd(.1, .18))}; --sway:${rnd(-40, 40)}px; --r:${rnd(-200, 200)}deg`;
@@ -2904,7 +2969,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderNav)
   const stageAtmo = document.querySelector(".stage > .atmo"), appAtmo = document.querySelector(".app > .atmo");
   if (stageAtmo && innerWidth >= 900) fill(stageAtmo, 12, true);
   const inner = appAtmo && fill(appAtmo, 9, false);
-  const voice = document.getElementById("voice"); if (voice) fill(voice, 6, false);
+  const voice = document.getElementById("voice"); if (voice) fill(voice.querySelector(".vbg") || voice, 8, false);
   // gentle parallax: the floaters drift opposite to the scroll of the open view
   let tick = 0;
   document.querySelectorAll(".view").forEach(v => v.addEventListener("scroll", () => {
