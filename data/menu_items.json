@@ -17,10 +17,71 @@
     "sortOrder": 1
   },
   {
+    "PK": "CATEGORY#meals",
+    "SK": "METADATA",
+    "name": "Meals & Combos",
+    "sortOrder": 1
+  },
+  {
+    "PK": "CATEGORY#meals",
+    "SK": "ITEM#classic-meal",
+    "name": "Classic Burger Meal",
+    "description": "Classic Burger with regular fries and a cold drink",
+    "price": 1299,
+    "imageUrl": "images/classic-burger.png",
+    "category": "Meals & Combos",
+    "featured": true,
+    "sortOrder": 1
+  },
+  {
+    "PK": "CATEGORY#meals",
+    "SK": "ITEM#chicken-meal",
+    "name": "Crispy Chicken Meal",
+    "description": "Crispy Chicken Sandwich with fries and a drink of your choice",
+    "price": 1399,
+    "imageUrl": "images/chicken-sandwich.png",
+    "category": "Meals & Combos",
+    "featured": false,
+    "sortOrder": 2
+  },
+  {
+    "PK": "CATEGORY#meals",
+    "SK": "ITEM#double-meal",
+    "name": "Double Burger Meal",
+    "description": "Double Burger, large fries and a large drink for the really hungry",
+    "price": 1699,
+    "imageUrl": "images/double-burger.png",
+    "category": "Meals & Combos",
+    "featured": false,
+    "sortOrder": 3
+  },
+  {
+    "PK": "CATEGORY#meals",
+    "SK": "ITEM#kids-meal",
+    "name": "Kids Meal",
+    "description": "Four nuggets, small fries, apple juice and a little surprise",
+    "price": 799,
+    "imageUrl": "images/chicken-nuggets.png",
+    "category": "Meals & Combos",
+    "featured": false,
+    "sortOrder": 4
+  },
+  {
+    "PK": "CATEGORY#meals",
+    "SK": "ITEM#family-box",
+    "name": "Family Feast Box",
+    "description": "Four burgers, 20 nuggets, two large fries and four drinks to share",
+    "price": 5499,
+    "imageUrl": "images/double-burger.png",
+    "category": "Meals & Combos",
+    "featured": true,
+    "sortOrder": 5
+  },
+  {
     "PK": "CATEGORY#burgers",
     "SK": "METADATA",
     "name": "Burgers",
-    "sortOrder": 1
+    "sortOrder": 2
   },
   {
     "PK": "CATEGORY#burgers",
@@ -67,10 +128,54 @@
     "sortOrder": 5
   },
   {
+    "PK": "CATEGORY#burgers",
+    "SK": "ITEM#smash-burger",
+    "name": "Smash Burger",
+    "description": "Two crispy-edged smashed patties, American cheese, caramelised onions and house sauce",
+    "price": 1099,
+    "imageUrl": "images/double-burger.png",
+    "category": "Burgers",
+    "featured": true,
+    "sortOrder": 6
+  },
+  {
+    "PK": "CATEGORY#burgers",
+    "SK": "ITEM#bbq-bacon-burger",
+    "name": "BBQ Bacon Burger",
+    "description": "Beef patty, smoky BBQ sauce, beef bacon, cheddar and crispy onion rings",
+    "price": 1149,
+    "imageUrl": "images/cheeseburger.png",
+    "category": "Burgers",
+    "featured": false,
+    "sortOrder": 7
+  },
+  {
+    "PK": "CATEGORY#burgers",
+    "SK": "ITEM#mushroom-swiss",
+    "name": "Mushroom Swiss Burger",
+    "description": "Beef patty with sautéed mushrooms, Swiss cheese and garlic aioli",
+    "price": 1049,
+    "imageUrl": "images/cheeseburger.png",
+    "category": "Burgers",
+    "featured": false,
+    "sortOrder": 8
+  },
+  {
+    "PK": "CATEGORY#burgers",
+    "SK": "ITEM#jalapeno-fire",
+    "name": "Jalapeño Fire Burger",
+    "description": "Pepper jack, fresh jalapeños, chipotle mayo and a fiery chilli glaze",
+    "price": 1049,
+    "imageUrl": "images/classic-burger.png",
+    "category": "Burgers",
+    "featured": false,
+    "sortOrder": 9
+  },
+  {
     "PK": "CATEGORY#chicken",
     "SK": "METADATA",
     "name": "Chicken",
-    "sortOrder": 2
+    "sortOrder": 3
   },
   {
     "PK": "CATEGORY#chicken",
@@ -117,10 +222,93 @@
     "sortOrder": 4
   },
   {
+    "PK": "CATEGORY#chicken",
+    "SK": "ITEM#buffalo-wings",
+    "name": "Buffalo Wings (6 pc)",
+    "description": "Crispy wings tossed in tangy buffalo sauce with ranch dip",
+    "price": 1099,
+    "imageUrl": "images/spicy-chicken.png",
+    "category": "Chicken",
+    "featured": false,
+    "sortOrder": 5
+  },
+  {
+    "PK": "CATEGORY#chicken",
+    "SK": "ITEM#chicken-tenders",
+    "name": "Chicken Tenders (4 pc)",
+    "description": "Hand-breaded tenders with honey mustard",
+    "price": 899,
+    "imageUrl": "images/chicken-nuggets-10.png",
+    "category": "Chicken",
+    "featured": false,
+    "sortOrder": 6
+  },
+  {
+    "PK": "CATEGORY#chicken",
+    "SK": "ITEM#grilled-chicken",
+    "name": "Grilled Chicken Burger",
+    "description": "Flame-grilled chicken breast, lettuce, tomato and light mayo on a whole-wheat bun",
+    "price": 949,
+    "imageUrl": "images/chicken-sandwich.png",
+    "category": "Chicken",
+    "featured": false,
+    "sortOrder": 7
+  },
+  {
+    "PK": "CATEGORY#wraps",
+    "SK": "METADATA",
+    "name": "Wraps",
+    "sortOrder": 4
+  },
+  {
+    "PK": "CATEGORY#wraps",
+    "SK": "ITEM#chicken-wrap",
+    "name": "Crispy Chicken Wrap",
+    "description": "Crispy chicken, lettuce, cheese and ranch rolled in a toasted tortilla",
+    "price": 799,
+    "imageUrl": "images/chicken-sandwich.png",
+    "category": "Wraps",
+    "featured": true,
+    "sortOrder": 1
+  },
+  {
+    "PK": "CATEGORY#wraps",
+    "SK": "ITEM#shawarma-wrap",
+    "name": "Chicken Shawarma Wrap",
+    "description": "Garlic toum, pickles and fries tucked into Arabic bread",
+    "price": 699,
+    "imageUrl": "images/chicken-sandwich.png",
+    "category": "Wraps",
+    "featured": false,
+    "sortOrder": 2
+  },
+  {
+    "PK": "CATEGORY#wraps",
+    "SK": "ITEM#falafel-wrap",
+    "name": "Falafel Wrap",
+    "description": "Herb falafel, tahini, tomato and pickled turnip",
+    "price": 599,
+    "imageUrl": "images/side-salad.png",
+    "category": "Wraps",
+    "featured": false,
+    "sortOrder": 3
+  },
+  {
+    "PK": "CATEGORY#wraps",
+    "SK": "ITEM#halloumi-wrap",
+    "name": "Grilled Halloumi Wrap",
+    "description": "Grilled halloumi, rocket, tomato and za'atar mayo",
+    "price": 749,
+    "imageUrl": "images/side-salad.png",
+    "category": "Wraps",
+    "featured": false,
+    "sortOrder": 4
+  },
+  {
     "PK": "CATEGORY#sides",
     "SK": "METADATA",
     "name": "Sides",
-    "sortOrder": 3
+    "sortOrder": 5
   },
   {
     "PK": "CATEGORY#sides",
@@ -167,10 +355,43 @@
     "sortOrder": 4
   },
   {
+    "PK": "CATEGORY#sides",
+    "SK": "ITEM#loaded-fries",
+    "name": "Loaded Cheese Fries",
+    "description": "Fries smothered in cheese sauce, jalapeños and crispy onions",
+    "price": 649,
+    "imageUrl": "images/fries.png",
+    "category": "Sides",
+    "featured": true,
+    "sortOrder": 5
+  },
+  {
+    "PK": "CATEGORY#sides",
+    "SK": "ITEM#sweet-potato-fries",
+    "name": "Sweet Potato Fries",
+    "description": "Crispy sweet potato fries with a smoky dip",
+    "price": 499,
+    "imageUrl": "images/fries.png",
+    "category": "Sides",
+    "featured": false,
+    "sortOrder": 6
+  },
+  {
+    "PK": "CATEGORY#sides",
+    "SK": "ITEM#curly-fries",
+    "name": "Curly Fries",
+    "description": "Seasoned spiral fries",
+    "price": 449,
+    "imageUrl": "images/onion-rings.png",
+    "category": "Sides",
+    "featured": false,
+    "sortOrder": 7
+  },
+  {
     "PK": "CATEGORY#drinks",
     "SK": "METADATA",
     "name": "Drinks",
-    "sortOrder": 4
+    "sortOrder": 6
   },
   {
     "PK": "CATEGORY#drinks",
@@ -228,10 +449,53 @@
     "sortOrder": 5
   },
   {
+    "PK": "CATEGORY#drinks",
+    "SK": "ITEM#mango-smoothie",
+    "name": "Mango Smoothie",
+    "description": "Alphonso mango blended with yoghurt and ice",
+    "price": 599,
+    "imageUrl": "images/lemonade.png",
+    "category": "Drinks",
+    "featured": false,
+    "sortOrder": 6
+  },
+  {
+    "PK": "CATEGORY#drinks",
+    "SK": "ITEM#strawberry-shake",
+    "name": "Strawberry Milkshake",
+    "description": "Real strawberries and vanilla ice cream",
+    "price": 549,
+    "imageUrl": "images/milkshake-vanilla.png",
+    "category": "Drinks",
+    "featured": false,
+    "sortOrder": 7
+  },
+  {
+    "PK": "CATEGORY#drinks",
+    "SK": "ITEM#karak-chai",
+    "name": "Karak Chai",
+    "description": "Strong, sweet, cardamom-spiced tea",
+    "price": 299,
+    "imageUrl": "images/iced-tea.png",
+    "category": "Drinks",
+    "featured": false,
+    "sortOrder": 8
+  },
+  {
+    "PK": "CATEGORY#drinks",
+    "SK": "ITEM#water",
+    "name": "Mineral Water",
+    "description": "500 ml bottle",
+    "price": 149,
+    "category": "Drinks",
+    "featured": false,
+    "sortOrder": 9
+  },
+  {
     "PK": "CATEGORY#desserts",
     "SK": "METADATA",
     "name": "Desserts",
-    "sortOrder": 5
+    "sortOrder": 7
   },
   {
     "PK": "CATEGORY#desserts",
@@ -265,5 +529,49 @@
     "category": "Desserts",
     "featured": false,
     "sortOrder": 3
+  },
+  {
+    "PK": "CATEGORY#desserts",
+    "SK": "ITEM#cookie",
+    "name": "Chocolate Chip Cookie",
+    "description": "Warm freshly baked chocolate chip cookie",
+    "price": 199,
+    "imageUrl": "images/cookie.png",
+    "category": "Desserts",
+    "featured": false,
+    "sortOrder": 3
+  },
+  {
+    "PK": "CATEGORY#desserts",
+    "SK": "ITEM#brownie",
+    "name": "Fudge Brownie",
+    "description": "Dense chocolate brownie with a gooey middle",
+    "price": 399,
+    "imageUrl": "images/cookie.png",
+    "category": "Desserts",
+    "featured": false,
+    "sortOrder": 4
+  },
+  {
+    "PK": "CATEGORY#desserts",
+    "SK": "ITEM#churros",
+    "name": "Churros",
+    "description": "Cinnamon-sugar churros with chocolate dip",
+    "price": 449,
+    "imageUrl": "images/apple-pie.png",
+    "category": "Desserts",
+    "featured": false,
+    "sortOrder": 5
+  },
+  {
+    "PK": "CATEGORY#desserts",
+    "SK": "ITEM#lotus-sundae",
+    "name": "Lotus Biscoff Sundae",
+    "description": "Soft serve with Biscoff crumble and caramel sauce",
+    "price": 549,
+    "imageUrl": "images/sundae.png",
+    "category": "Desserts",
+    "featured": true,
+    "sortOrder": 6
   }
 ]
