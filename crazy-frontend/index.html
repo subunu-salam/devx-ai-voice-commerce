@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2B1A13">
+<meta name="theme-color" content="#FBF7F1">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="VoiceBite">
@@ -14,7 +14,7 @@
 <title>VoiceBite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Readex+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;1,800&family=Poppins:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Readex+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 /* =====================================================================
    VoiceBite — marketplace redesign (2026). Clean white, big food photos,
@@ -824,6 +824,283 @@ body{background:#1E120D}
 .livepill{bottom:calc(112px + var(--bottom)); inset-inline:20px}
 .view{padding-bottom:calc(150px + var(--bottom))}
 
+
+/* =====================================================================
+   VoiceBite 2026 refresh — "quick-service red" look
+   Cream canvas, signature red, white floating cards, condensed display
+   type, a floating pill dock and a living warm-aurora atmosphere.
+   Markup and behaviour are unchanged; this layer only restyles.
+   ===================================================================== */
+:root{
+  --bg:#FBF7F1; --surface:#F4EEE6; --card:#FFFFFF; --ink:#1E1715; --ink2:#4A3F3A; --soft:#857a72; --line:#EDE5DA;
+  --brand:#D7282F; --brand-d:#B51E25; --brand-50:#FDECEC; --ok:#15935B; --ok-50:#E5F6EE; --star:#FFB81C;
+  --ai1:#D7282F; --ai2:#FF6A3D; --ai:linear-gradient(135deg,#E8333A,#D7282F 50%,#FF6A3D);
+  --choc:#1E1715; --choc-2:#2C2320; --cream:#FFFFFF;
+  --pink:#FF2E7E; --pink-50:#FFE3EE;
+  --r:22px; --r-sm:14px;
+  --shadow:0 1px 2px rgba(30,23,21,.04), 0 10px 28px -14px rgba(30,23,21,.22);
+  --shadow-lg:0 24px 60px -22px rgba(30,23,21,.4);
+  --red-glow:0 14px 30px -12px rgba(215,40,47,.65);
+  --font:"Poppins","Readex Pro","Segoe UI",system-ui,sans-serif;
+  --display:"Barlow Condensed","Poppins",sans-serif;
+  --ease:cubic-bezier(.22,.9,.24,1); --spring:cubic-bezier(.34,1.56,.64,1);
+}
+body{background:#F3ECE3; font-family:var(--font)}
+[lang="ar"] body,[dir="rtl"] body{font-family:"Readex Pro",var(--font)}
+.title,.sec h2,.promo h2,.bigno,.shipmsg b,.onbcard h2,.sum,.bbhead h1,.bbin h2,.sp-word{font-family:var(--display); text-transform:uppercase; letter-spacing:-.005em !important; font-weight:800}
+[dir="rtl"] .title,[dir="rtl"] .sec h2,[dir="rtl"] .promo h2{font-family:"Readex Pro",var(--font); text-transform:none}
+.rowitem h3,.card h3,.vstate,.loc b{font-family:var(--font); letter-spacing:-.01em}
+.title{font-size:2.1rem; line-height:1; font-style:italic}
+.sec h2{font-size:1.45rem; font-style:italic}
+.link{color:var(--brand); font-weight:600; display:inline-flex; align-items:center; gap:4px}
+.link::after{content:"→"; transition:transform .3s var(--spring)} .link:hover::after{transform:translateX(3px)}
+[dir="rtl"] .link::after{content:"←"}
+
+/* ---------- atmosphere: drifting warm aurora + grain ---------- */
+.stage{position:relative; overflow:hidden; background:#F3ECE3}
+.atmo{position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden}
+.atmo i{position:absolute; border-radius:50%; filter:blur(60px); opacity:.55; mix-blend-mode:multiply; will-change:transform}
+.atmo i:nth-child(1){width:60vmax; height:60vmax; left:-15vmax; top:-20vmax; background:radial-gradient(circle,#FF8A7A,transparent 65%); animation:drift1 22s ease-in-out infinite alternate}
+.atmo i:nth-child(2){width:55vmax; height:55vmax; right:-18vmax; top:10vmax; background:radial-gradient(circle,#FFC86B,transparent 65%); animation:drift2 26s ease-in-out infinite alternate}
+.atmo i:nth-child(3){width:50vmax; height:50vmax; left:10vmax; bottom:-25vmax; background:radial-gradient(circle,#FF9CC2,transparent 65%); animation:drift3 30s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(12vmax,10vmax) scale(1.15)}}
+@keyframes drift2{to{transform:translate(-14vmax,8vmax) scale(.9)}}
+@keyframes drift3{to{transform:translate(8vmax,-12vmax) scale(1.1)}}
+.atmo::after{content:""; position:absolute; inset:-50%; opacity:.07;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain 1.2s steps(6) infinite}
+@keyframes grain{0%{transform:translate(0,0)} 20%{transform:translate(-3%,2%)} 40%{transform:translate(2%,-3%)} 60%{transform:translate(-2%,3%)} 80%{transform:translate(3%,1%)} 100%{transform:translate(0,0)}}
+.stage > .app{position:relative; z-index:1}
+/* the same aurora, quieter, inside the phone */
+.app{background:var(--bg)}
+.app > .atmo i{opacity:.28; filter:blur(50px)}
+.app > .atmo i:nth-child(1){width:340px; height:340px; left:-140px; top:120px}
+.app > .atmo i:nth-child(2){width:300px; height:300px; right:-140px; top:420px; left:auto}
+.app > .atmo i:nth-child(3){width:320px; height:320px; left:40px; bottom:-120px}
+.app > .atmo::after{opacity:.045}
+@media (min-width:560px){ .app{border-radius:46px; box-shadow:0 50px 110px -30px rgba(70,20,10,.45), 0 0 0 10px #1E1715, 0 0 0 11px #3a2f2b} }
+
+/* ---------- home header ---------- */
+.hd{background:rgba(251,247,241,.82); color:var(--ink); border-radius:0 0 28px 28px; backdrop-filter:blur(18px) saturate(1.4); -webkit-backdrop-filter:blur(18px) saturate(1.4); padding-bottom:14px; box-shadow:0 10px 30px -24px rgba(30,23,21,.5)}
+.loc{background:#fff; border-radius:18px; padding:6px 12px 6px 6px; box-shadow:var(--shadow); flex:1; transition:transform .3s var(--spring)}
+[dir="rtl"] .loc{padding:6px 6px 6px 12px}
+.loc:active{transform:scale(.98)}
+.loc-ico{background:var(--brand-50); color:var(--brand); border-radius:13px}
+.loc small{color:var(--brand); font-weight:600}
+.loc b{color:var(--ink); font-weight:700; font-size:.95rem}
+.opennow{color:var(--ok)} .opennow::before{background:var(--ok)}
+.hd .pillbtn{width:46px; height:46px; padding:0; display:grid; place-items:center; border-radius:50%; background:#fff; border:0; color:var(--ink); box-shadow:var(--shadow); font-size:.78rem; font-weight:700}
+.srch{background:#fff; border-radius:999px; padding:5px 5px 5px 16px; box-shadow:var(--shadow); transition:box-shadow .3s, transform .3s var(--spring)}
+[dir="rtl"] .srch{padding:5px 16px 5px 5px}
+.srch:focus-within,.srch:hover{box-shadow:0 0 0 2px var(--brand-50), var(--shadow)}
+.srch > svg{color:var(--ink2)}
+.srch-txt{color:var(--soft); font-size:.92rem}
+.srch-mic{border-radius:50%; background:var(--brand); box-shadow:var(--red-glow)}
+.srch-mic::after{border-radius:50%; border-color:rgba(215,40,47,.35)}
+
+/* ---------- promo hero cards ---------- */
+.promos{gap:14px; margin-top:16px}
+.promo{border-radius:26px; min-height:186px; padding:20px}
+.promo small{background:rgba(255,255,255,.22); color:#fff; border-radius:999px; padding:4px 10px; font-weight:700; letter-spacing:.1em}
+.promo h2{font-size:2rem; line-height:.95; font-style:italic; max-width:11ch; text-shadow:0 2px 0 rgba(0,0,0,.08)}
+.promo p{font-weight:500}
+.p-voice{background:radial-gradient(240px 200px at 85% 20%, #FF6A3D, transparent 70%), linear-gradient(135deg,#E8333A,#B51E25)}
+.p-voice::before{background:radial-gradient(circle, rgba(255,255,255,.22), transparent 62%)}
+.p-voice .wave i{background:rgba(255,255,255,.85)}
+.p-voice small{background:rgba(255,255,255,.2); color:#fff}
+.p-build{background:radial-gradient(220px 180px at 90% 90%, #FF7BAA, transparent 70%), linear-gradient(135deg,#FF2E7E,#E0156A)}
+.p-build small{background:#6E1BD6; color:#fff}
+.p-pick{background:radial-gradient(240px 200px at 10% 0%, #FFE08A, transparent 70%), linear-gradient(135deg,#FFC93C,#FFAA1C); color:var(--ink)}
+.p-pick small{background:rgba(30,23,21,.1); color:var(--ink)}
+.p-pick .promo-btn{background:var(--ink); color:#fff}
+.promo-btn{background:#fff; color:var(--brand); font-weight:700; padding:9px 15px 9px 13px; font-size:.82rem}
+.p-voice .promo-btn svg{background:var(--brand)}
+.promo.on{box-shadow:0 22px 40px -20px rgba(181,30,37,.55)}
+.p-build.on{box-shadow:0 22px 40px -20px rgba(224,21,106,.55)}
+.p-pick.on{box-shadow:0 22px 40px -20px rgba(255,170,28,.6)}
+.dots i{background:#E3D7C9} .dots i.on{background:var(--brand)}
+
+/* ---------- category tiles (rounded squares) ---------- */
+.cats{gap:10px; padding-bottom:10px}
+.cat{width:74px; gap:6px}
+.cat-pic{width:70px; height:70px; border-radius:20px; background:#fff; box-shadow:var(--shadow) !important; transition:transform .35s var(--spring), box-shadow .3s, background .3s}
+.cat:hover .cat-pic,.cat:focus-visible .cat-pic{transform:translateY(-4px) rotate(-2deg); background:var(--brand-50); box-shadow:0 0 0 2px var(--brand), var(--shadow) !important}
+.cat:first-child .cat-pic{background:var(--brand-50)}
+.cat-pic svg{color:var(--brand)}
+.cat b{font-size:.74rem; font-weight:600; color:var(--ink2)}
+
+/* ---------- food cards ---------- */
+.rail{gap:12px; padding-bottom:16px}
+.card{width:162px; background:#fff; border-radius:22px; padding:8px 8px 12px; box-shadow:var(--shadow); transition:transform .35s var(--spring), box-shadow .35s}
+.card:hover{transform:translateY(-4px); box-shadow:0 22px 34px -20px rgba(30,23,21,.35)}
+.card .pic{height:128px; border-radius:16px; box-shadow:none; background:linear-gradient(160deg,#FFF7EE,#F7EDE1)}
+.card h3{font-size:.86rem; font-weight:600; padding:0 4px; min-height:2.4em}
+.cardrow{padding:0 4px}
+.price{color:var(--ink); font-weight:700}
+.card .cardrow .plus,.card .cardrow .stepper{position:static}
+.plus{background:var(--brand); color:#fff; box-shadow:var(--red-glow); width:34px; height:34px}
+.plus:hover{background:var(--brand-d); color:#fff; transform:rotate(90deg)}
+.plus:active{transform:scale(.8) rotate(90deg)}
+.stepper{background:var(--brand); box-shadow:var(--red-glow)}
+.pop{background:var(--pink-50); color:var(--pink); border-radius:999px}
+.pic img{mix-blend-mode:multiply}
+
+/* ---------- menu ---------- */
+.stick{background:rgba(251,247,241,.88); backdrop-filter:blur(18px) saturate(1.4); -webkit-backdrop-filter:blur(18px) saturate(1.4); border-bottom:0; box-shadow:0 12px 24px -22px rgba(30,23,21,.5); padding-bottom:10px}
+.search input{background-color:#fff; border-radius:999px; box-shadow:var(--shadow); transition:box-shadow .3s}
+.search input:focus{outline:0; box-shadow:0 0 0 2px var(--brand), var(--shadow)}
+.chips{gap:8px; padding-top:6px; padding-bottom:2px}
+.chip{border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:8px 16px; font-weight:600; font-size:.85rem; color:var(--ink2); transition:background .3s, color .3s, border-color .3s, transform .3s var(--spring)}
+.chip::after{display:none}
+.chip:active{transform:scale(.94)}
+.chip[aria-pressed="true"]{background:var(--brand); border-color:var(--brand); color:#fff; box-shadow:var(--red-glow)}
+.rows{margin-top:10px}
+.rowitem{background:#fff; border:0; border-radius:22px; padding:12px; margin-bottom:10px; box-shadow:var(--shadow); grid-template-columns:1fr 104px; transition:transform .3s var(--spring), box-shadow .3s, background .4s}
+.rowitem:hover{transform:translateY(-2px)}
+.rowitem .pic{width:104px; height:104px; background:linear-gradient(160deg,#FFF7EE,#F7EDE1)}
+.rowitem h3{font-weight:700; font-size:.98rem}
+.rowitem .plus{background:var(--brand); box-shadow:var(--red-glow)}
+.rowitem.lit{margin:0 0 10px; padding:12px; background:linear-gradient(90deg,var(--brand-50),#fff); box-shadow:0 0 0 2px var(--brand), var(--shadow)}
+
+/* ---------- order ---------- */
+.sheet,.group,.basket{background:#fff; border:0; box-shadow:var(--shadow); border-radius:var(--r)}
+.totalblock{background:#fff; box-shadow:var(--shadow)}
+.lines .stepper{background:var(--surface); color:var(--ink)}
+.cta{background:var(--brand); border-radius:999px; box-shadow:var(--red-glow); font-weight:700; position:relative; overflow:hidden}
+.cta::after{content:""; position:absolute; inset:0; background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%); transform:translateX(-100%); animation:ctasheen 3.2s var(--ease) 1s infinite}
+@keyframes ctasheen{40%,100%{transform:translateX(100%)}}
+.outline{border-radius:999px; background:#fff}
+#v-order > .totalblock:first-child,.rwcard{background:radial-gradient(260px 200px at 100% 0%, #FF6A3D, transparent 70%), linear-gradient(140deg,#D7282F,#8E1218); box-shadow:0 22px 40px -22px rgba(181,30,37,.7)}
+#v-order > .totalblock:first-child::after,.rwcard::after{background:rgba(255,255,255,.18); opacity:.6}
+#v-order > .totalblock:first-child > span:first-child{color:#FFD9D3}
+.tag{background:var(--star)}
+.steps li.now::before{background:var(--brand); box-shadow:0 0 0 6px var(--brand-50); animation:nowpulse 1.8s ease-in-out infinite}
+@keyframes nowpulse{50%{box-shadow:0 0 0 10px rgba(215,40,47,.08)}}
+.abtn{border-radius:18px; background:#fff; box-shadow:var(--shadow)}
+.abtn.go{background:var(--brand); box-shadow:var(--red-glow)}
+.rushbtn{background:var(--ink)}
+.rwline{background:#fff; box-shadow:0 0 0 1.5px var(--brand-50), var(--shadow)}
+.rwline svg{color:var(--brand)}
+.rwcard .cta{background:#fff; color:var(--brand); box-shadow:none}
+.rwcode .solid{color:var(--brand)}
+.voucher{border-color:var(--brand); background:var(--brand-50)}
+.seg{background:var(--surface)}
+.seg button[aria-pressed="true"]{background:var(--brand); color:#fff; box-shadow:var(--red-glow)}
+.solid{background:var(--brand); box-shadow:var(--red-glow)}
+.install{background:#fff; box-shadow:var(--shadow)}
+.emptybox i{background:var(--brand-50)} .emptybox i svg{color:var(--brand)}
+
+/* ---------- floating pill dock with raised red button ---------- */
+.nav{inset-inline:12px; bottom:calc(10px + var(--bottom)); height:70px; padding-bottom:0; border-radius:28px; background:rgba(255,255,255,.92); backdrop-filter:blur(20px) saturate(1.5); -webkit-backdrop-filter:blur(20px) saturate(1.5);
+  border:1px solid rgba(255,255,255,.8); box-shadow:0 18px 40px -16px rgba(30,23,21,.35), 0 2px 6px rgba(30,23,21,.06)}
+@media (min-width:560px){ .nav{border-radius:28px; bottom:14px} }
+.tab{color:#9C918A; font-weight:600}
+.tab[aria-current="page"]{color:var(--brand)}
+.tab[aria-current="page"] .ico{color:var(--brand)}
+.blob{top:7px; height:56px; border-radius:20px; background:var(--brand-50); box-shadow:none}
+.blob::after{background:var(--brand); box-shadow:0 0 10px rgba(215,40,47,.6)}
+.badge{background:var(--brand); box-shadow:0 0 0 2px #fff}
+.talk{top:-24px}
+.talk::before{background:#fff; box-shadow:0 8px 20px -10px rgba(30,23,21,.35)}
+.talk .bite{background:radial-gradient(circle at 35% 28%, #FF5A5F, #D7282F 55%, #9E151B)}
+.t-ring{background:conic-gradient(from 0deg, #FFB81C, #D7282F 30%, transparent 55%, #FFB81C 85%)}
+.t-glow{background:radial-gradient(circle, rgba(215,40,47,.45), rgba(255,184,28,.15) 45%, transparent 70%)}
+.t-orbit i{background:var(--star)}
+.livepill{background:var(--ink); bottom:calc(96px + var(--bottom)); border-radius:999px; padding:11px 18px}
+.toast{background:var(--ink); border-radius:999px; text-align:center}
+.view{padding-bottom:calc(140px + var(--bottom))}
+
+/* ---------- voice screen ---------- */
+.voice{background:var(--bg)}
+.voice::before{background:radial-gradient(420px 320px at 50% 16%, rgba(215,40,47,.16), transparent 70%), radial-gradient(380px 300px at 85% 62%, rgba(255,184,28,.18), transparent 70%), radial-gradient(360px 300px at 10% 80%, rgba(255,46,126,.10), transparent 70%);
+  animation:vbreathe 9s ease-in-out infinite alternate}
+@keyframes vbreathe{to{transform:scale(1.08) translateY(-10px); filter:hue-rotate(-8deg)}}
+.orb .bite{background:conic-gradient(from 0deg, #D7282F, #FF6A3D, #FFB81C, #D7282F); box-shadow:0 24px 60px -16px rgba(215,40,47,.6)}
+.orb::before,.orb::after{background:radial-gradient(circle, rgba(215,40,47,.2), transparent 70%)}
+.vstate{font-weight:700}
+.caps .assistant{background:#fff; box-shadow:var(--shadow)} .caps .user{background:var(--brand)}
+.glass,.vtools button,.voice .vsum,.shelf .card,.spot{border:0; box-shadow:var(--shadow)}
+.vtools button{border-radius:16px; transition:transform .25s var(--spring), background .25s}
+.vtools button:active{transform:scale(.94)}
+.vtools button[aria-pressed="true"],.choices button.picked{background:var(--brand); color:#fff}
+.vlang{background:#fff; box-shadow:var(--shadow)}
+.vlang button[aria-pressed="true"]{background:var(--brand); color:#fff; box-shadow:var(--red-glow)}
+.choices button{border:0; box-shadow:var(--shadow)}
+.flow li.now i{background:var(--brand)} .flow li.done i{background:var(--ok)}
+.endbtn{background:var(--ink); border-radius:999px}
+.vcompose button,.chtype button{background:var(--brand) !important}
+.shelf .card.lit{box-shadow:0 0 0 2px var(--brand), var(--shadow)}
+.rlines li.new{background:linear-gradient(var(--brand-50),var(--brand-50)) 0 60%/100% 70% no-repeat}
+
+/* ---------- sheets, splash, send-off ---------- */
+.onb{background:rgba(30,23,21,.4); backdrop-filter:blur(6px)}
+.onbcard{background:#fff; border-radius:30px 30px 0 0}
+.onbcard input:focus{border-color:var(--brand)}
+.onbtabs [aria-selected="true"]{background:var(--brand); color:#fff}
+.shipit{background:rgba(251,247,241,.94)}
+.splash{background:radial-gradient(420px 420px at 50% 44%, #E8333A, #9E151B 75%)}
+.splash .sp-word .wb{color:var(--star)}
+.splash .sp-bar i{background:linear-gradient(90deg,#fff,var(--star))}
+.splash{--logo-v:#fff}
+.sp-tag{color:#FFD9D3}
+.bbgo{background:var(--brand) !important; box-shadow:var(--red-glow) !important}
+.bbcard{background:#1E1715 !important}
+
+/* ---------- motion polish ---------- */
+.view:not([hidden]){animation:viewIn .45s var(--ease) both}
+@keyframes viewIn{from{opacity:0; transform:translateY(10px) scale(.995)}}
+button{transition:transform .2s var(--spring)}
+.rowitem:nth-child(n+5){animation-delay:.15s}
+.rv{transform:translateY(22px) scale(.98); transition:opacity .7s var(--ease), transform .7s var(--spring)}
+.badge.bump{animation:bump .6s var(--spring)}
+@media (prefers-reduced-motion:reduce){ .atmo i,.atmo::after,.voice::before,.cta::after{animation:none !important} }
+
+/* ---------- greeting, mood picker, tags, deals, upsell ---------- */
+.greet{display:grid; gap:2px; margin:18px 2px 4px; animation:rise .6s var(--ease) .2s both}
+.greet b{font-family:var(--display); font-style:italic; text-transform:uppercase; font-weight:800; font-size:1.7rem; line-height:1}
+.greet span{color:var(--soft); font-size:.88rem}
+.moods{display:flex; gap:8px; overflow-x:auto; margin:10px -16px 0; padding:4px 16px 8px; scrollbar-width:none}
+.moods::-webkit-scrollbar{display:none}
+.mood{flex:none; display:inline-flex; align-items:center; gap:7px; border:0; background:#fff; border-radius:999px; padding:9px 15px 9px 10px; font-weight:600; font-size:.84rem; box-shadow:var(--shadow);
+  animation:moodIn .5s var(--spring) both; animation-delay:calc(.25s + var(--n) * 50ms); transition:transform .25s var(--spring), background .25s, color .25s}
+[dir="rtl"] .mood{padding:9px 10px 9px 15px}
+.mood i{font-style:normal; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:var(--surface); font-size:.95rem; transition:transform .4s var(--spring)}
+.mood:hover{background:var(--brand); color:#fff} .mood:hover i{transform:rotate(-12deg) scale(1.15); background:rgba(255,255,255,.2)}
+.mood:active{transform:scale(.93)}
+@keyframes moodIn{from{opacity:0; transform:translateY(10px) scale(.9)}}
+.moodbar{display:flex; justify-content:space-between; align-items:center; margin:12px 0 0; padding:10px 10px 10px 16px; border-radius:999px; background:var(--brand); color:#fff; font-weight:600; font-size:.9rem; box-shadow:var(--red-glow); animation:rise .4s var(--ease)}
+.moodbar button{border:0; width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,.2); color:#fff}
+.tgs{position:absolute; top:8px; inset-inline-start:8px; display:flex; flex-wrap:wrap; gap:4px; z-index:1}
+.tg{display:inline-flex; align-items:center; gap:3px; font-size:.64rem; font-weight:700; line-height:1; padding:4px 7px; border-radius:999px; background:rgba(255,255,255,.92); color:var(--ink2); box-shadow:0 2px 6px -2px rgba(0,0,0,.15); white-space:nowrap}
+.tg-spicy{background:#FFE6E2; color:#C2261C} .tg-veg{background:#E4F6EA; color:#147A43} .tg-new{background:#FFF1CF; color:#8A5A00} .tg-light{background:#E6F4F1; color:#16705F} .tg-share{background:#EEE8FF; color:#5B35C9} .tg-local{background:#F1ECE6; color:#5A4234}
+.meta{display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin-top:6px}
+.kcal{font-size:.7rem; color:var(--soft); font-weight:500}
+.card .kcal{display:block; padding:0 4px; margin-top:-2px}
+.card.wide{width:230px}
+.card.wide .pic{height:140px; background:linear-gradient(150deg,#FFF0D6,#FFE0E3)}
+.card.wide::after{content:"COMBO"; position:absolute; top:16px; inset-inline-end:16px; font-family:var(--display); font-style:italic; font-weight:800; font-size:.8rem; color:#fff; background:var(--brand); padding:3px 9px; border-radius:8px; transform:rotate(4deg)}
+.upsell{margin-top:6px}
+.upsell .sec{margin:18px 0 8px}
+.upsell .sec h2{font-size:1.2rem}
+.ups-hint{font-size:.76rem; color:var(--soft)}
+.upsell .card{width:146px} .upsell .card .pic{height:100px}
+
+/* ---------- background animation: drifting food + sesame specks + scroll parallax ---------- */
+.floaters{position:absolute; inset:0; pointer-events:none; overflow:hidden; transform:translateY(var(--par,0px)); transition:transform .25s linear}
+.fl{position:absolute; bottom:-60px; left:var(--x); font-size:var(--s); opacity:0; filter:blur(var(--b)) saturate(.9);
+  animation:flRise var(--d) linear var(--dl) infinite; will-change:transform,opacity}
+.fl.seed{width:7px; height:4px; border-radius:50%; background:#E9C98F; font-size:0; box-shadow:0 0 0 .5px rgba(160,110,40,.25)}
+@keyframes flRise{
+  0%{transform:translate(0,0) rotate(0deg) scale(.85); opacity:0}
+  10%{opacity:var(--o)}
+  50%{transform:translate(var(--sway),-55vh) rotate(calc(var(--r) * .5)) scale(1)}
+  90%{opacity:var(--o)}
+  100%{transform:translate(0,-115vh) rotate(var(--r)) scale(.9); opacity:0}}
+.stage > .atmo .fl{--o:.5}
+.app > .atmo .floaters{z-index:0}
+.voice .floaters{z-index:-1}
+@media (prefers-reduced-motion:reduce){ .floaters{display:none} }
+
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} .rv{opacity:1; transform:none} .splash{display:none} }
 </style>
 </head>
@@ -842,8 +1119,10 @@ body{background:#1E120D}
   <g clip-path="url(#vb-top)"><path d="M6 -8 L41 90 L76 -8" fill="none" style="stroke:var(--logo-v,#0E3B2E)" stroke-width="23" stroke-linejoin="round"/></g>
 </symbol></svg>
 <div class="stage">
+  <div class="atmo" aria-hidden="true"><i></i><i></i><i></i></div>
 
   <div class="app" id="app">
+    <div class="atmo" aria-hidden="true"><i></i><i></i><i></i></div>
     <section class="view" id="v-home">
       <header class="hd">
         <div class="hd-row">
@@ -864,10 +1143,15 @@ body{background:#1E120D}
           <svg class="car" viewBox="0 0 120 70" aria-hidden="true"><path d="M14 46l8-18c2-5 6-8 12-8h40c6 0 10 3 13 8l9 18h8c4 0 6 2 6 6v6H6v-6c0-4 3-6 8-6z" fill="#fff" opacity=".95"/><path d="M30 28l5-8h20v8zM60 28V20h12c3 0 5 2 6 4l3 4z" fill="#067A4C"/><circle cx="32" cy="58" r="9" fill="#0B3B28"/><circle cx="32" cy="58" r="3.5" fill="#fff"/><circle cx="90" cy="58" r="9" fill="#0B3B28"/><circle cx="90" cy="58" r="3.5" fill="#fff"/><rect x="104" y="44" width="8" height="4" rx="2" fill="#FFD23F"/></svg></div>
       </div>
       <div class="dots" id="dots"><i class="on"></i><i></i><i></i></div>
+      <div class="greet" id="greet"></div>
+      <div class="moods" id="moods"></div>
+      <div id="again"></div>
       <div class="sec"><h2 data-t="cats"></h2></div>
       <div class="cats" id="cats"></div>
       <div class="sec"><h2 data-t="popularNow"></h2><button class="link" data-go="menu" data-t="seeAllShort"></button></div>
       <div class="rail" id="rail"></div>
+      <div class="sec"><h2 id="dealsH"></h2><button class="link" data-cat="meals" id="dealsAll"></button></div>
+      <div class="rail" id="deals"></div>
       <div class="install" id="installCard" hidden>
         <img src="icon-192.png" alt=""><div><b data-t="installTitle"></b><span data-t="installText"></span></div>
         <button class="solid" data-install data-t="install"></button><button class="x" id="installNo" aria-label="Dismiss">✕</button>
@@ -1001,6 +1285,71 @@ const AR = {
     fries: "بطاطس مقلية", "onion-rings": "حلقات البصل", "mozzarella-sticks": "أصابع الموزاريلا", "side-salad": "سلطة جانبية", cola: "كولا", lemonade: "ليموناضة طازجة", "iced-tea": "شاي مثلج",
     "milkshake-chocolate": "ميلك شيك شوكولاتة", "milkshake-vanilla": "ميلك شيك فانيلا", "apple-pie": "فطيرة التفاح", sundae: "صنداي بالشوكولاتة الساخنة", cookie: "كوكيز برقائق الشوكولاتة" }
 };
+
+/* ---- extended demo menu: more items, a Meals & Combos and a Wraps section ---- */
+(() => {
+  const X = (id, name, d, price, f, so, img) => ({ ...I(id, name, d, price, f, so), imageUrl: img ? "images/" + img + ".png" : "" });
+  BUILT_IN.categories = [["custom","Build Your Own"],["meals","Meals & Combos"],["burgers","Burgers"],["chicken","Chicken"],["wraps","Wraps"],["sides","Sides"],["drinks","Drinks"],["desserts","Desserts"]]
+    .map(([categoryId, name], sortOrder) => ({ categoryId, name, sortOrder }));
+  const M = BUILT_IN.menuItems;
+  M.meals = [X("classic-meal","Classic Burger Meal","Classic Burger with regular fries and a cold drink",1299,1,1,"classic-burger"),
+    X("chicken-meal","Crispy Chicken Meal","Crispy Chicken Sandwich with fries and a drink of your choice",1399,0,2,"chicken-sandwich"),
+    X("double-meal","Double Burger Meal","Double Burger, large fries and a large drink for the really hungry",1699,0,3,"double-burger"),
+    X("kids-meal","Kids Meal","Four nuggets, small fries, apple juice and a little surprise",799,0,4,"chicken-nuggets"),
+    X("family-box","Family Feast Box","Four burgers, 20 nuggets, two large fries and four drinks to share",5499,1,5,"double-burger")];
+  M.burgers.push(X("smash-burger","Smash Burger","Two crispy-edged smashed patties, American cheese, caramelised onions and house sauce",1099,1,6,"double-burger"),
+    X("bbq-bacon-burger","BBQ Bacon Burger","Beef patty, smoky BBQ sauce, beef bacon, cheddar and crispy onion rings",1149,0,7,"cheeseburger"),
+    X("mushroom-swiss","Mushroom Swiss Burger","Beef patty with sautéed mushrooms, Swiss cheese and garlic aioli",1049,0,8,"cheeseburger"),
+    X("jalapeno-fire","Jalapeño Fire Burger","Pepper jack, fresh jalapeños, chipotle mayo and a fiery chilli glaze",1049,0,9,"classic-burger"));
+  M.chicken.push(X("buffalo-wings","Buffalo Wings (6 pc)","Crispy wings tossed in tangy buffalo sauce with ranch dip",1099,0,5,"spicy-chicken"),
+    X("chicken-tenders","Chicken Tenders (4 pc)","Hand-breaded tenders with honey mustard",899,0,6,"chicken-nuggets-10"),
+    X("grilled-chicken","Grilled Chicken Burger","Flame-grilled chicken breast, lettuce, tomato and light mayo on a whole-wheat bun",949,0,7,"chicken-sandwich"));
+  M.wraps = [X("chicken-wrap","Crispy Chicken Wrap","Crispy chicken, lettuce, cheese and ranch rolled in a toasted tortilla",799,1,1,"chicken-sandwich"),
+    X("shawarma-wrap","Chicken Shawarma Wrap","Garlic toum, pickles and fries tucked into Arabic bread",699,0,2,"chicken-sandwich"),
+    X("falafel-wrap","Falafel Wrap","Herb falafel, tahini, tomato and pickled turnip",599,0,3,"side-salad"),
+    X("halloumi-wrap","Grilled Halloumi Wrap","Grilled halloumi, rocket, tomato and za'atar mayo",749,0,4,"side-salad")];
+  M.sides.push(X("loaded-fries","Loaded Cheese Fries","Fries smothered in cheese sauce, jalapeños and crispy onions",649,1,5,"fries"),
+    X("sweet-potato-fries","Sweet Potato Fries","Crispy sweet potato fries with a smoky dip",499,0,6,"fries"),
+    X("curly-fries","Curly Fries","Seasoned spiral fries",449,0,7,"onion-rings"));
+  M.drinks.push(X("mango-smoothie","Mango Smoothie","Alphonso mango blended with yoghurt and ice",599,0,6,"lemonade"),
+    X("strawberry-shake","Strawberry Milkshake","Real strawberries and vanilla ice cream",549,0,7,"milkshake-vanilla"),
+    X("karak-chai","Karak Chai","Strong, sweet, cardamom-spiced tea",299,0,8,"iced-tea"),
+    X("water","Mineral Water","500 ml bottle",149,0,9,""));
+  M.desserts.push(X("cookie","Chocolate Chip Cookie","Warm, chewy and loaded with chocolate chips",249,0,3,"cookie"),
+    X("brownie","Fudge Brownie","Dense chocolate brownie with a gooey middle",399,0,4,"cookie"),
+    X("churros","Churros","Cinnamon-sugar churros with chocolate dip",449,0,5,"apple-pie"),
+    X("lotus-sundae","Lotus Biscoff Sundae","Soft serve with Biscoff crumble and caramel sauce",549,1,6,"sundae"));
+  Object.assign(AR.cat, { meals: "الوجبات والكومبو", wraps: "راب" });
+  Object.assign(AR.item, { "classic-meal": "وجبة برجر كلاسيك", "chicken-meal": "وجبة دجاج مقرمش", "double-meal": "وجبة دبل برجر", "kids-meal": "وجبة أطفال", "family-box": "صندوق العائلة",
+    "smash-burger": "سماش برجر", "bbq-bacon-burger": "برجر باربكيو بيكون", "mushroom-swiss": "برجر مشروم سويس", "jalapeno-fire": "برجر هالابينو الحار",
+    "buffalo-wings": "أجنحة بافلو (6 قطع)", "chicken-tenders": "تندرز دجاج (4 قطع)", "grilled-chicken": "برجر دجاج مشوي",
+    "chicken-wrap": "راب دجاج مقرمش", "shawarma-wrap": "راب شاورما دجاج", "falafel-wrap": "راب فلافل", "halloumi-wrap": "راب حلوم مشوي",
+    "loaded-fries": "بطاطس بالجبن", "sweet-potato-fries": "بطاطا حلوة مقلية", "curly-fries": "بطاطس كيرلي",
+    "mango-smoothie": "سموذي مانجو", "strawberry-shake": "ميلك شيك فراولة", "karak-chai": "شاي كرك", water: "مياه معدنية",
+    brownie: "براوني", churros: "تشوروز", "lotus-sundae": "صنداي لوتس" });
+  Object.assign(ICON, { "classic-meal": "burgers", "chicken-meal": "chicken", "double-meal": "burgers", "kids-meal": "chicken", "family-box": "burgers", water: "drinks", "karak-chai": "drinks" });
+})();
+/* tags and calories, looked up by item id so they also decorate the live menu during a call */
+const META = {
+  "classic-burger": { kcal: 540 }, cheeseburger: { kcal: 620 }, "double-burger": { kcal: 890 }, "veggie-burger": { kcal: 480, tags: ["veg"] },
+  "smash-burger": { kcal: 760, tags: ["new"] }, "bbq-bacon-burger": { kcal: 820 }, "mushroom-swiss": { kcal: 690 }, "jalapeno-fire": { kcal: 710, tags: ["spicy", "new"] },
+  "chicken-sandwich": { kcal: 580 }, "spicy-chicken": { kcal: 610, tags: ["spicy"] }, "chicken-nuggets-6": { kcal: 280 }, "chicken-nuggets-10": { kcal: 470 },
+  "buffalo-wings": { kcal: 540, tags: ["spicy"] }, "chicken-tenders": { kcal: 430 }, "grilled-chicken": { kcal: 420, tags: ["light"] },
+  "chicken-wrap": { kcal: 560 }, "shawarma-wrap": { kcal: 520, tags: ["local"] }, "falafel-wrap": { kcal: 450, tags: ["veg", "local"] }, "halloumi-wrap": { kcal: 490, tags: ["veg", "new"] },
+  "classic-meal": { kcal: 1010, tags: ["deal"] }, "chicken-meal": { kcal: 1050, tags: ["deal"] }, "double-meal": { kcal: 1480, tags: ["deal"] }, "kids-meal": { kcal: 560, tags: ["deal"] }, "family-box": { kcal: 4200, tags: ["deal", "share"] },
+  fries: { kcal: 320, tags: ["veg"] }, "onion-rings": { kcal: 410, tags: ["veg"] }, "mozzarella-sticks": { kcal: 470, tags: ["veg", "share"] }, "side-salad": { kcal: 90, tags: ["veg", "light"] },
+  "loaded-fries": { kcal: 610, tags: ["spicy", "share"] }, "sweet-potato-fries": { kcal: 340, tags: ["veg", "new"] }, "curly-fries": { kcal: 380, tags: ["veg"] },
+  cola: { kcal: 140 }, lemonade: { kcal: 120, tags: ["light"] }, "iced-tea": { kcal: 90, tags: ["light"] }, "milkshake-chocolate": { kcal: 520 }, "milkshake-vanilla": { kcal: 480 },
+  "mango-smoothie": { kcal: 260, tags: ["new"] }, "strawberry-shake": { kcal: 490 }, "karak-chai": { kcal: 160, tags: ["local"] }, water: { kcal: 0, tags: ["light"] },
+  "apple-pie": { kcal: 240 }, sundae: { kcal: 330 }, cookie: { kcal: 210 }, brownie: { kcal: 380 }, churros: { kcal: 410, tags: ["share"] }, "lotus-sundae": { kcal: 450, tags: ["new"] }
+};
+const TAGS = { spicy: ["🌶", "Spicy", "حار"], veg: ["🌱", "Veggie", "نباتي"], new: ["✨", "New", "جديد"], light: ["🥗", "Light", "خفيف"], deal: ["💰", "Deal", "عرض"], share: ["👨‍👩‍👧", "To share", "للمشاركة"], local: ["🇦🇪", "Local fave", "مفضل محلياً"] };
+const MOODS = [["spicy", "🌶", "Something spicy", "شيء حار"], ["veg", "🌱", "Veggie", "نباتي"], ["light", "🥗", "Keep it light", "خفيف"], ["sweet", "🍦", "Sweet tooth", "حلويات"],
+  ["deal", "💰", "Best value", "أفضل قيمة"], ["share", "👨‍👩‍👧", "Feeding a group", "لمجموعة"], ["under10", "🪙", "Under AED 10", "أقل من 10 درهم"]];
+const tagsOf = i => (META[i.itemId] || {}).tags || [];
+const tagHtml = i => tagsOf(i).filter(k => k !== "deal").slice(0, 2).map(k => `<span class="tg tg-${k}">${TAGS[k][0]} ${esc(TAGS[k][lang === "ar" ? 2 : 1])}</span>`).join("");
+const kcalOf = i => (META[i.itemId] || {}).kcal;
+const moodMatch = (m, i) => m === "sweet" ? i.cat === "desserts" || /shake|smoothie/.test(i.itemId) : m === "under10" ? i.price < 1000 && i.itemId !== "water" : tagsOf(i).includes(m);
 const T = {
   en: { by: "powered by", switchTo: "العربية", open: "Open now", title: "Say your order", lead: "Talk to the attendant, or pick from the menu.", start: "Start talking", end: "End call",
     idle: "Tap End call when you're done.", mic: "Asking for the microphone…", calling: "Calling the attendant. A sleeping kitchen can take a minute to wake.",
@@ -1115,10 +1464,29 @@ function renderChrome() {
   $("vLang").setAttribute("aria-label", t("voiceLang")); renderVoiceLang();
   setState(stateKey, stateBad);
 }
+function card(i, wide) {
+  const k = kcalOf(i);
+  return `<article class="card${wide ? " wide" : ""}" data-item="${esc(i.itemId)}"><div class="pic">${photo(i)}${tagHtml(i) ? `<span class="tgs">${tagHtml(i)}</span>` : ""}</div>
+    <h3>${esc(itemName(i))}</h3>${k != null ? `<small class="kcal">${k} kcal</small>` : ""}<div class="cardrow"><span class="price">${money(i.price)}</span>${buyControl(i)}</div></article>`;
+}
 function renderHome() {
   const cats = [...(menu.categories || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-  $("rail").innerHTML = allItems().filter(i => i.featured).map(i => `<article class="card" data-item="${esc(i.itemId)}"><div class="pic">${photo(i)}</div>
-    <h3>${esc(itemName(i))}</h3><div class="cardrow"><span class="price">${money(i.price)}</span>${buyControl(i)}</div></article>`).join("");
+  $("rail").innerHTML = allItems().filter(i => i.featured).map(i => card(i)).join("");
+  const ar = lang === "ar", h = new Date().getHours();
+  const [g, sub] = h < 11 ? [ar ? "صباح الخير" : "Good morning", ar ? "ابدأ يومك بشيء لذيذ" : "Breakfast cravings? We've got you."]
+    : h < 16 ? [ar ? "وقت الغداء" : "Lunch o'clock", ar ? "اطلب بصوتك في ثوانٍ" : "Say it, skip the queue."]
+    : h < 22 ? [ar ? "مساء الخير" : "Good evening", ar ? "ماذا تشتهي الليلة؟" : "What are you craving tonight?"]
+    : [ar ? "سهرانين؟" : "Late-night bites", ar ? "المطبخ ما زال يطبخ" : "The grill is still hot."];
+  const nm = !KIOSK && profile().name ? ", " + profile().name.split(" ")[0] : "";
+  $("greet").innerHTML = `<b>${esc(g + nm)} 👋</b><span>${esc(sub)}</span>`;
+  $("moods").innerHTML = MOODS.map(([k, e, en, a], n) => `<button class="mood" style="--n:${n}" data-cat="mood:${k}"><i>${e}</i>${esc(ar ? a : en)}</button>`).join("");
+  let past = []; try { past = JSON.parse(store.get("lastCart") || "[]"); } catch (e) {}
+  const againItems = past.map(l => findItem(l.itemId)).filter(Boolean);
+  $("again").innerHTML = againItems.length ? `<div class="sec"><h2>${esc(ar ? "اطلب مرة أخرى" : "Order again")}</h2><button class="link" data-act="reorder">${esc(ar ? "أضف الكل" : "Add all")}</button></div>
+    <div class="rail">${againItems.map(i => card(i)).join("")}</div>` : "";
+  $("dealsH").textContent = ar ? "وجبات وعروض" : "Meal deals"; $("dealsAll").textContent = t("seeAllShort");
+  $("deals").innerHTML = allItems().filter(i => tagsOf(i).includes("deal")).map(i => card(i, true)).join("");
+
   $("cats").innerHTML = cats.map(c => { const first = [...(menu.menuItems[c.categoryId] || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))[0];
     return `<button class="cat" data-cat="${esc(c.categoryId)}"><span class="cat-pic">${first ? photo({ ...first, cat: c.categoryId }) : CAT_SVG[c.categoryId] || ""}</span><b>${esc(catName(c))}</b></button>`; }).join("");
 }
@@ -1130,14 +1498,25 @@ function renderMenu() {
   let list = allItems();
   if (q) list = list.filter(i => (i.name + " " + (i.description || "") + " " + (AR.item[i.itemId] || "")).toLowerCase().includes(q));
   else if (activeCat === "popular") list = list.filter(i => i.featured);
+  else if (activeCat.startsWith("mood:")) list = list.filter(i => moodMatch(activeCat.slice(5), i));
   else list = list.filter(i => i.cat === activeCat).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-  $("rows").innerHTML = list.length ? `<div class="rows">` + list.map(i => `<article class="rowitem ${i.itemId === lit ? "lit" : ""}" data-item="${esc(i.itemId)}">
+  const mood = !q && activeCat.startsWith("mood:") && MOODS.find(m => m[0] === activeCat.slice(5));
+  $("rows").innerHTML = (mood ? `<div class="moodbar"><span>${mood[1]} ${esc(lang === "ar" ? mood[3] : mood[2])} · ${list.length}</span><button data-cat="popular" aria-label="Clear">✕</button></div>` : "") + (list.length ? `<div class="rows">` + list.map(i => `<article class="rowitem ${i.itemId === lit ? "lit" : ""}" data-item="${esc(i.itemId)}">
       <div class="pic">${photo(i)}</div>
       <div><h3>${esc(itemName(i))}${i.featured && activeCat !== "popular" ? `<span class="pop">${esc(t("popular"))}</span>` : ""}</h3>
+        ${tagHtml(i) || kcalOf(i) != null ? `<div class="meta">${tagHtml(i)}${kcalOf(i) != null ? `<small class="kcal">${kcalOf(i)} kcal</small>` : ""}</div>` : ""}
         ${lang === "en" && i.description ? `<p>${esc(i.description)}</p>` : ""}
-        <div class="buy"><span class="price">${money(i.price)}</span>${buyControl(i)}</div></div></article>`).join("") + `</div>` : `<p class="none">${esc(t("nothing"))}</p>`;
+        <div class="buy"><span class="price">${money(i.price)}</span>${buyControl(i)}</div></div></article>`).join("") + `</div>` : `<p class="none">${esc(t("nothing"))}</p>`);
 }
 const STEPS = ["received", "preparing", "ready", "completed"];
+function upsell(ls) {
+  const have = new Set(ls.map(l => (findItem(l.itemId) || {}).cat)), ar = lang === "ar";
+  if (have.has("meals")) return "";
+  const pick = ["sides", "drinks", "desserts"].filter(c => !have.has(c)).map(c => allItems().filter(i => i.cat === c).sort((a, b) => b.featured - a.featured)[0]).filter(Boolean);
+  if (!pick.length) return "";
+  return `<div class="upsell"><div class="sec"><h2>${esc(ar ? "أكمل وجبتك" : "Complete your meal")}</h2><span class="ups-hint">${esc(ar ? "يحبها الآخرون مع طلبك" : "Often added with this")}</span></div>
+    <div class="rail">${pick.map(i => card(i)).join("")}</div></div>`;
+}
 function renderOrder() {
   const el = $("v-order");
   if (order) {
@@ -1153,7 +1532,7 @@ function renderOrder() {
           ${l.specialInstructions ? `<small>${esc(l.specialInstructions)}</small>` : ""}
           <span class="stepper"><button data-qty="-1" data-id="${esc(l.itemId)}" aria-label="${esc(t("less"))}">−</button><span>${esc(l.quantity || 1)}</span><button data-qty="1" data-id="${esc(l.itemId)}" aria-label="${esc(t("more"))}">+</button></span></li>`; }).join("")}</ul></div>
         <div class="totalblock"><div class="sum"><span>${esc(t("total"))}</span><span>${money(sum)}</span></div><p class="vat">${esc(t("vat"))} ${money(Math.round(sum * VAT_RATE / (100 + VAT_RATE)))}</p></div>
-        <button class="cta" data-act="place">${esc(t("place"))}</button>`
+        ${upsell(ls)}<button class="cta" data-act="place">${esc(t("place"))}</button>`
       : `<div class="emptybox"><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8zM9 8V6a3 3 0 0 1 6 0v2"/></svg></i><b style="color:var(--text); font-weight:500">${esc(t("empty"))}</b><p>${esc(t("emptyHint"))}</p></div><button class="outline" data-go="menu">${esc(t("browse"))}</button>`);
   }
 }
@@ -1348,6 +1727,14 @@ function addItem(id, fromEl) {
   if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) {}
   const host = fromEl && document.querySelector(`[data-item="${CSS.escape(id)}"] .pic`); if (host && !calm) { host.classList.remove("boing"); void host.offsetWidth; host.classList.add("boing"); }
 }
+function reorderAll() {
+  let past = []; try { past = JSON.parse(store.get("lastCart") || "[]"); } catch (e) {}
+  past = past.filter(l => findItem(l.itemId)); if (!past.length) return;
+  if (live) { sendText("Please add my usual: " + past.map(l => `${l.quantity} ${findItem(l.itemId).name}`).join(", ") + "."); return toast(t("asked")); }
+  past.forEach(l => { const i = findItem(l.itemId), line = cart.find(x => x.itemId === l.itemId);
+    if (line) line.quantity += l.quantity; else cart.push({ itemId: l.itemId, name: i.name, quantity: l.quantity, unitPrice: i.price }); });
+  renderCart(); toast(lang === "ar" ? "أضفنا طلبك السابق" : "Your last order is in the bag"); go("order");
+}
 function changeQty(id, delta) {
   const line = lines().find(l => l.itemId === id); if (!line) return;
   if (live) return sendText(delta > 0 ? `Please add one more ${line.name} to my order.` : `Please remove one ${line.name} from my order.`);
@@ -1357,6 +1744,7 @@ function changeQty(id, delta) {
 function placeOrder() {
   if (live) { sendText("That's everything. Please place my order."); return toast(t("askedPlace")); }
   // Without the attendant there is no order service to send to yet, so this shows the tracking flow as a preview.
+  try { store.set("lastCart", JSON.stringify(cart.filter(l => l.itemId !== "custom-burger").map(l => ({ itemId: l.itemId, quantity: l.quantity })))); } catch (e) {}
   order = { number: "P-" + Math.floor(1000 + Math.random() * 9000), status: 0, total: total(), preview: true };
   cart = []; renderCart(); celebrate(order.number); clearInterval(previewTimer);
   previewTimer = setInterval(() => { if (!order || !order.preview || order.status >= 3) return clearInterval(previewTimer); order.status++; renderOrder(); }, 6000);
@@ -1379,7 +1767,7 @@ $("app").addEventListener("click", e => {
   if (e.target.closest('[data-item="custom-burger"]')) return openBuilder();
   const cat = e.target.closest("[data-cat]"); if (cat) { activeCat = cat.dataset.cat; query = ""; $("q").value = ""; lit = null; renderMenu(); go("menu"); return centerChip(); }
   const nav = e.target.closest("[data-go]"); if (nav) return go(nav.dataset.go);
-  const act = e.target.closest("[data-act]"); if (act) return act.dataset.act === "place" ? placeOrder() : newOrder();
+  const act = e.target.closest("[data-act]"); if (act) return act.dataset.act === "place" ? placeOrder() : act.dataset.act === "reorder" ? reorderAll() : newOrder();
   const lg = e.target.closest("[data-lang]"); if (lg) return setLang(lg.dataset.lang);
   const vl = e.target.closest("[data-vlang]"); if (vl) return setVoiceLang(vl.dataset.vlang);
   if (e.target.closest("[data-install]")) return install();
@@ -2426,6 +2814,36 @@ if (KIOSK) {
 loadMember();
 requestAnimationFrame(renderNav);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderNav);
+
+/* background animation: food icons and sesame seeds drifting up behind the content */
+(() => {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const FOOD = ["🍔", "🍟", "🥤", "🌶️", "🍦", "🥗", "🍗", "🌯", "🧀", "🍅", "🥨", "🍩"];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  function fill(host, n, big) {
+    const box = document.createElement("div"); box.className = "floaters"; box.setAttribute("aria-hidden", "true");
+    for (let k = 0; k < n; k++) {
+      const seed = Math.random() < .45, el = document.createElement("i");
+      el.className = "fl" + (seed ? " seed" : "");
+      if (!seed) el.textContent = FOOD[k % FOOD.length];
+      const size = big ? rnd(26, 46) : rnd(16, 30);
+      el.style.cssText = `--x:${rnd(-2, 98)}%; --s:${size}px; --b:${seed ? 0 : (size > 36 ? rnd(.5, 2) : 0)}px; --d:${rnd(18, 34)}s; --dl:${-rnd(0, 34)}s;
+        --o:${seed ? rnd(.35, .6) : (big ? rnd(.25, .45) : rnd(.1, .18))}; --sway:${rnd(-40, 40)}px; --r:${rnd(-200, 200)}deg`;
+      box.appendChild(el);
+    }
+    host.appendChild(box); return box;
+  }
+  const stageAtmo = document.querySelector(".stage > .atmo"), appAtmo = document.querySelector(".app > .atmo");
+  if (stageAtmo && innerWidth >= 560) fill(stageAtmo, 26, true);
+  const inner = appAtmo && fill(appAtmo, 16, false);
+  const voice = document.getElementById("voice"); if (voice) fill(voice, 12, false);
+  // gentle parallax: the floaters drift opposite to the scroll of the open view
+  document.querySelectorAll(".view").forEach(v => v.addEventListener("scroll", () => {
+    if (inner) inner.style.setProperty("--par", (-v.scrollTop * .15).toFixed(1) + "px");
+  }, { passive: true }));
+  // pause when the tab is hidden to save battery
+  document.addEventListener("visibilitychange", () => document.querySelectorAll(".fl").forEach(f => f.style.animationPlayState = document.hidden ? "paused" : "running"));
+})();
 </script>
 </body>
 </html>
