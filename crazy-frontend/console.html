@@ -376,7 +376,7 @@ tr.click:hover td{background:#F3F7EE}
 <script>
 /* ================= core ================= */
 const params = new URLSearchParams(location.search);
-const API = (params.get("api") || "https://devx-ai-voice-commerce.onrender.com") + "/admin/api";
+const API = (params.get("api") || "https://voicebite.devxpert.online") + "/admin/api";
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);

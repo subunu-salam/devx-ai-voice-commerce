@@ -207,8 +207,8 @@ def make_model(lang: str):
 
 
 def english_on_gemini() -> bool:
-    """True only when VOICE_ENGLISH_ENGINE is "gemini" and a Gemini key is set. By default English stays on Nova Sonic."""
-    return os.getenv("VOICE_ENGLISH_ENGINE", "nova").lower() == "gemini" and _gemini_ready()
+    """True (the default) when a Gemini key is set and VOICE_ENGLISH_ENGINE is not "nova": English then skips Nova Sonic (and AWS)."""
+    return os.getenv("VOICE_ENGLISH_ENGINE", "gemini").lower() == "gemini" and _gemini_ready()
 
 
 def sends_pieces(lang: str) -> bool:
