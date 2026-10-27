@@ -813,6 +813,17 @@ body{background:#1E120D}
 .pf-dev:hover{transform:translateY(-2px)} .pf-dev:hover img{transform:scale(1.08) rotate(-3deg)}
 .poweredfoot.rv .pf-dev,.poweredfoot .pf-dev{animation:rise .6s var(--ease) both}
 
+/* ---------- dock fit: the highlight wraps the icon and its label, and nothing sits under the voice button ---------- */
+.nav{height:calc(70px + var(--bottom))}
+.tab{height:70px; align-content:center}
+.blob{top:7px; width:min(64px, 18%); height:56px; border-radius:18px}
+.blob::after{bottom:5px; width:14px; margin-left:-7px; height:2.5px}
+.tab .lbl{line-height:1.1}
+.tab[aria-current="page"] .lbl{transform:none}
+.badge{top:-6px; inset-inline-end:-11px}
+.livepill{bottom:calc(112px + var(--bottom)); inset-inline:20px}
+.view{padding-bottom:calc(150px + var(--bottom))}
+
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} .rv{opacity:1; transform:none} .splash{display:none} }
 </style>
 </head>
@@ -1149,7 +1160,7 @@ function renderOrder() {
 function renderNav() {
   document.querySelectorAll(".tab").forEach(b => b.dataset.go === view ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
   const active = document.querySelector('.tab[aria-current="page"]');
-  if (active) $("blob").style.transform = `translateX(${active.offsetLeft + active.offsetWidth / 2 - 27}px)`;
+  if (active) $("blob").style.transform = `translateX(${active.offsetLeft + active.offsetWidth / 2 - $("blob").offsetWidth / 2}px)`;
   const n = order ? 0 : count(), badge = $("badge");
   badge.hidden = !n && !order; badge.textContent = order ? "✓" : n;
   if (n !== lastCount && !badge.hidden) { badge.classList.remove("bump"); void badge.offsetWidth; badge.classList.add("bump"); }
