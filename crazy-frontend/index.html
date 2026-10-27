@@ -1244,6 +1244,51 @@ button{transition:none}
 .srch-mic:hover{transform:scale(1.08) rotate(-6deg)} .srch-mic:active{transform:scale(.9)}
 @media (prefers-reduced-motion:reduce){ .srch::before,.sm-w,.srch-mic svg,.sh-roll{animation:none !important} }
 
+/* ---------- compact, fuller promo carousel ---------- */
+.promos{gap:10px}
+.promo{width:calc(100% - 44px); min-height:0; height:158px; padding:14px 16px; border-radius:22px}
+.promo small{font-size:.6rem; padding:3px 8px}
+.promo h2{font-size:1.38rem; line-height:.95; margin-top:7px; max-width:9.5ch}
+.promo p{font-size:.68rem; margin-top:3px; max-width:20ch; opacity:.85}
+.promo-btn{padding:6px 11px 6px 9px !important; font-size:.72rem !important}
+.pchips{display:flex; gap:5px; margin-top:6px; flex-wrap:nowrap}
+.pchips span{display:inline-flex; align-items:center; gap:4px; font-size:.6rem; font-weight:600; white-space:nowrap; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.25); border-radius:999px; padding:3px 7px 3px 5px}
+.pchips .ic{width:11px; height:11px; --tint:rgba(255,255,255,.3)}
+.p-pick .pchips span{background:rgba(30,23,21,.08); border-color:rgba(30,23,21,.12)} .p-pick .pchips .ic{--tint:rgba(30,23,21,.1)}
+.promo > .promo-btn{margin-top:auto}
+/* hide the old wave/car art, replaced by photo stacks */
+.p-voice .wave{inset-inline-end:10px; bottom:12px; height:26px; gap:3px; opacity:.6} .p-voice .wave i{width:3px}
+.p-pick svg.car{width:70px; height:42px; inset-inline-end:auto; inset-inline-start:150px; bottom:10px; opacity:.9}
+.pdeco{position:absolute; inset-inline-end:10px; top:50%; width:118px; height:128px; translate:0 -50%; z-index:-1; pointer-events:none}
+.pdeco img{position:absolute; border-radius:50%; object-fit:cover; background:#fff; box-shadow:0 10px 22px -10px rgba(0,0,0,.45), 0 0 0 3px rgba(255,255,255,.85); transition:transform .8s var(--spring), opacity .5s}
+.pdeco .d1{width:82px; height:82px; right:6px; top:2px; animation:pdA 6s ease-in-out infinite}
+.pdeco .d2{width:56px; height:56px; left:0; top:44px; animation:pdA 7s ease-in-out -2s infinite}
+.pdeco .d3{width:50px; height:50px; right:14px; bottom:0; animation:pdA 6.5s ease-in-out -4s infinite}
+[dir="rtl"] .pdeco .d1{right:auto; left:6px} [dir="rtl"] .pdeco .d2{left:auto; right:0} [dir="rtl"] .pdeco .d3{right:auto; left:14px}
+@keyframes pdA{50%{transform:translateY(-5px) rotate(4deg)}}
+.promo:not(.on) .pdeco img{transform:scale(.6) rotate(-20deg); opacity:.4}
+.promo.on .pdeco .d2{transition-delay:.08s} .promo.on .pdeco .d3{transition-delay:.16s}
+.p-build img:not(.pdeco img){width:118px !important; height:118px !important; inset-inline-end:2px !important; bottom:14px !important; border-radius:50%; object-fit:cover; background:#fff; box-shadow:0 12px 26px -10px rgba(0,0,0,.5), 0 0 0 3px rgba(255,255,255,.85); filter:none !important}
+.pdeco.pb{inset-inline-end:96px; width:70px; z-index:0}
+.pdeco.pb .d2{width:44px; height:44px; left:auto; right:0; top:6px} .pdeco.pb .d3{width:38px; height:38px; right:18px; bottom:4px}
+.p-voice .pdeco{inset-inline-end:8px}
+
+.promo{height:166px; padding:13px 15px}
+.promo h2{font-size:1.22rem !important; max-width:11.5ch !important; margin-top:6px}
+.promo > p{display:none}
+.p-pick svg.car{display:none}
+.pchips{margin-top:7px}
+.pdeco{width:112px; height:124px}
+.pdeco .d1{width:76px; height:76px}
+
+.pchips{max-width:calc(100% - 118px); flex-wrap:wrap}
+.pdeco.pb{inset-inline-end:2px; top:auto; bottom:14px; translate:none; width:118px; height:118px; z-index:0}
+.pdeco.pb .d2{width:42px; height:42px; left:-12px; right:auto; top:-8px}
+.pdeco.pb .d3{width:38px; height:38px; right:-6px; left:auto; bottom:-6px}
+[dir="rtl"] .pdeco.pb .d2{left:auto; right:-12px} [dir="rtl"] .pdeco.pb .d3{right:auto; left:-6px}
+.p-voice .pchips,.p-build .pchips{flex-wrap:nowrap; max-width:none}
+.p-build .pchips span{position:relative; z-index:1; background:rgba(224,21,106,.55); backdrop-filter:none}
+
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} .rv{opacity:1; transform:none} .splash{display:none} }
 </style>
 </head>
@@ -1272,6 +1317,10 @@ button{transition:none}
   <symbol id="i-coin" viewBox="0 0 24 24"><ellipse cx="12" cy="7" rx="7.5" ry="3" fill="var(--tint)"/><path d="M4.5 7v5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V7M4.5 12v5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-5" fill="none" stroke="currentColor" stroke-width="1.7"/><ellipse cx="12" cy="7" rx="7.5" ry="3" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
   <symbol id="i-new" viewBox="0 0 24 24"><path d="M12 2.8l2.1 6.1 6.1 2.1-6.1 2.1L12 19.2l-2.1-6.1L3.8 11l6.1-2.1z" fill="var(--tint)" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M19 17.5v4M17 19.5h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
   <symbol id="i-local" viewBox="0 0 24 24"><path d="M12 9c-2.3-3-6-3.5-8.5-1.5 3 0 5.6.5 8.5 1.5zM12 9c2.3-3 6-3.5 8.5-1.5-3 0-5.6.5-8.5 1.5zM12 9C9.5 7 9.3 4 11 2.5M12 9c2.5-2 2.7-5 1-6.5" fill="var(--tint)" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><path d="M12 9c-.4 4.5-.2 8.4.8 12.5M7.5 21.5h9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="var(--tint)" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 12h17M12 3.5c2.6 2.6 3.6 5.6 3.6 8.5s-1 5.9-3.6 8.5c-2.6-2.6-3.6-5.6-3.6-8.5s1-5.9 3.6-8.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13.5 2.5 5 13.5h6l-1 8 8.5-11h-6z" fill="var(--tint)" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3.5 21 8l-9 4.5L3 8z" fill="var(--tint)" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m3 12 9 4.5 9-4.5M3 16l9 4.5 9-4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="var(--tint)" stroke="currentColor" stroke-width="1.7"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2" fill="var(--tint)" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1z" fill="var(--tint)" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M16 3.5v3M14.5 5h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
 </svg>
@@ -1292,12 +1341,12 @@ button{transition:none}
           <button class="srch-txt" id="homeSearch"></button><button class="srch-mic" id="heroTalk" aria-label="Talk"><span class="sm-w" aria-hidden="true"></span><span class="sm-w w2" aria-hidden="true"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button></div>
       </header>
       <div class="promos" id="promos">
-        <div class="promo p-voice"><small data-t="pvK"></small><h2 data-t="pvT"></h2><p>English · العربية · മലയാളം</p>
+        <div class="promo p-voice"><span class="pdeco"><img class="d1" src="images/cheeseburger.jpg" alt=""><img class="d2" src="images/fries.jpg" alt=""><img class="d3" src="images/cola.jpg" alt=""></span><small data-t="pvK"></small><h2 data-t="pvT"></h2><p>English · العربية · മലയാളം</p><span class="pchips"><span><svg class="ic" aria-hidden="true"><use href="#i-globe"/></svg><b data-t="pvC1"></b></span><span><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg><b data-t="pvC2"></b></span></span>
           <span class="wave" aria-hidden="true"><i style="--n:0"></i><i style="--n:1"></i><i style="--n:2"></i><i style="--n:3"></i><i style="--n:4"></i><i style="--n:5"></i><i style="--n:6"></i><i style="--n:7"></i><i style="--n:8"></i><i style="--n:9"></i><i style="--n:10"></i><i style="--n:11"></i><i style="--n:12"></i><i style="--n:13"></i></span>
           <button class="promo-btn" data-talk><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span data-t="start"></span></button></div>
-        <div class="promo p-build"><small data-t="pbK"></small><h2 data-t="pbT"></h2><p data-t="pbS"></p><img src="images/double-burger.jpg" alt="">
+        <div class="promo p-build"><small data-t="pbK"></small><h2 data-t="pbT"></h2><p data-t="pbS"></p><span class="pchips"><span><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg><b data-t="pbC1"></b></span><span><svg class="ic" aria-hidden="true"><use href="#i-new"/></svg><b data-t="pbC2"></b></span></span><span class="pdeco pb"><img class="d2" src="images/onion-rings.jpg" alt=""><img class="d3" src="images/milkshake-vanilla.jpg" alt=""></span><img src="images/double-burger.jpg" alt="">
           <button class="promo-btn" data-add="custom-burger"><span data-t="pbB"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
-        <div class="promo p-pick"><small data-t="ppK"></small><h2 data-t="ppT"></h2><p data-t="ppS"></p>
+        <div class="promo p-pick"><span class="pdeco"><img class="d1" src="images/chicken-sandwich.jpg" alt=""><img class="d2" src="images/fries.jpg" alt=""><img class="d3" src="images/lemonade.jpg" alt=""></span><small data-t="ppK"></small><h2 data-t="ppT"></h2><p data-t="ppS"></p><span class="pchips"><span><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg><b data-t="ppC1"></b></span><span><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg><b data-t="ppC2"></b></span></span>
           <svg class="car" viewBox="0 0 120 70" aria-hidden="true"><path d="M14 46l8-18c2-5 6-8 12-8h40c6 0 10 3 13 8l9 18h8c4 0 6 2 6 6v6H6v-6c0-4 3-6 8-6z" fill="#fff" opacity=".95"/><path d="M30 28l5-8h20v8zM60 28V20h12c3 0 5 2 6 4l3 4z" fill="#067A4C"/><circle cx="32" cy="58" r="9" fill="#0B3B28"/><circle cx="32" cy="58" r="3.5" fill="#fff"/><circle cx="90" cy="58" r="9" fill="#0B3B28"/><circle cx="90" cy="58" r="3.5" fill="#fff"/><rect x="104" y="44" width="8" height="4" rx="2" fill="#FFD23F"/></svg></div>
       </div>
       <div class="dots" id="dots"><i class="on"></i><i></i><i></i></div>
@@ -1533,7 +1582,7 @@ const T = {
     voiceLang: "Voice language", voiceLangHint: "Or just ask the attendant, for example “Arabic please”.", switching: "Switching language…",
     voiceOff: "{lang} voice isn't switched on for this kitchen yet. Continuing in English.", voiceFailed: "{lang} voice isn't working right now. Continuing in English.",
     iosHow: "Tap the Share button, then Add to Home Screen.", otherHow: "Open your browser menu and choose Install app or Add to Home screen.", installed: "VoiceBite is installed.", pickupFrom: "Pickup from", searchSay: "Search dishes, or just say it", brandTag: "Say it · We cook it", cats: "Categories", seeAllShort: "See all",
-    pvK: "Voice ordering", pvT: "Just say what you're craving", pbK: "Build your own", pbT: "Stack your perfect burger", pbS: "From AED 8.99", pbB: "Start building", ppK: "Drive-thru pickup", ppT: "Hot and ready when you pull up", ppS: "Tap “I’m 5 min away” after you order", kick: "Drive-thru pre-order · UAE",
+    pvK: "Voice ordering", pvT: "Just say what you're craving", pvC1: "3 languages", pvC2: "Zero typing", pbC1: "20+ toppings", pbC2: "Live preview", ppC1: "Ready in ~8 min", ppC2: "Pay at window", pbK: "Build your own", pbT: "Stack your perfect burger", pbS: "From AED 8.99", pbB: "Start building", ppK: "Drive-thru pickup", ppT: "Hot and ready when you pull up", ppS: "Tap “I’m 5 min away” after you order", kick: "Drive-thru pre-order · UAE",
     how1: "Say it", how1s: "English, Arabic or Malayalam", how2: "We cook it", how2s: "Timed to your arrival", how3: "Pick it up", how3s: "Hot at your window" },
   ar: { by: "مدعوم من", switchTo: "English", open: "مفتوح الآن", title: "اطلب بصوتك", lead: "تحدث مع الموظف أو اختر من القائمة.", start: "ابدأ التحدث", end: "إنهاء المحادثة",
     idle: "اضغط «إنهاء المحادثة» عند الانتهاء.", mic: "جارٍ طلب إذن الميكروفون…", calling: "جارٍ الاتصال بالموظف. قد يستغرق ذلك دقيقة.",
@@ -1555,7 +1604,7 @@ const T = {
     voiceLang: "لغة المحادثة الصوتية", voiceLangHint: "أو اطلب من الموظف تغيير اللغة أثناء المحادثة.", switching: "جارٍ تغيير اللغة…",
     voiceOff: "المحادثة الصوتية باللغة {lang} غير مفعّلة لهذا المطبخ حالياً. سنكمل بالإنجليزية.", voiceFailed: "المحادثة الصوتية باللغة {lang} لا تعمل الآن. سنكمل بالإنجليزية.",
     iosHow: "اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية».", otherHow: "افتح قائمة المتصفح واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».", installed: "تم تثبيت VoiceBite.", pickupFrom: "الاستلام من", searchSay: "ابحث عن طبق أو قلها بصوتك", brandTag: "قلها · نطبخها", cats: "الأقسام", seeAllShort: "عرض الكل",
-    pvK: "الطلب بالصوت", pvT: "قل ما تشتهيه", pbK: "اصنع برجرك", pbT: "ركّب برجرك المثالي", pbS: "ابتداءً من 8.99 د.إ", pbB: "ابدأ الآن", ppK: "استلام من السيارة", ppT: "طلبك جاهز وساخن عند وصولك", ppS: "اضغط «سأصل خلال 5 دقائق» بعد الطلب", kick: "اطلب مسبقاً · الإمارات",
+    pvK: "الطلب بالصوت", pvT: "قل ما تشتهيه", pvC1: "3 لغات", pvC2: "بدون كتابة", pbC1: "+20 إضافة", pbC2: "معاينة مباشرة", ppC1: "جاهز خلال ~8 دقائق", ppC2: "ادفع عند النافذة", pbK: "اصنع برجرك", pbT: "ركّب برجرك المثالي", pbS: "ابتداءً من 8.99 د.إ", pbB: "ابدأ الآن", ppK: "استلام من السيارة", ppT: "طلبك جاهز وساخن عند وصولك", ppS: "اضغط «سأصل خلال 5 دقائق» بعد الطلب", kick: "اطلب مسبقاً · الإمارات",
     how1: "قلها", how1s: "بالعربية أو الإنجليزية أو المالايالامية", how2: "نطبخها", how2s: "في توقيت وصولك", how3: "استلمها", how3s: "ساخنة عند نافذتك" }
 };
 
