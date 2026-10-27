@@ -1180,7 +1180,6 @@ button{transition:none}
 .gico{display:inline-grid; place-items:center; width:30px; height:30px; border-radius:50%; background:#FFF1CC; color:#E08A00; vertical-align:4px; margin-inline-start:4px; animation:gspin 12s linear infinite}
 .gico .ic{width:19px; height:19px; --tint:#FFD978}
 @keyframes gspin{to{transform:rotate(360deg)}}
-.fl svg{width:1em; height:1em; display:block}
 
 /* ---------- voice chat: its own living background (transforms and opacity only) ---------- */
 .vbg{position:absolute; inset:0; z-index:-1; overflow:hidden; pointer-events:none; contain:strict}
@@ -1204,6 +1203,46 @@ button{transition:none}
 .voice::before{animation:none}
 .voice .floaters .fl{--o:.22}
 @media (prefers-reduced-motion:reduce){ .vbg *{animation:none !important} }
+
+/* ---------- background v3: bokeh lights + silk ribbons (replaces floating food) ---------- */
+.bk{position:absolute; left:var(--x); top:var(--y); width:var(--s); height:var(--s); margin:calc(var(--s) / -2) 0 0 calc(var(--s) / -2); border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, rgba(var(--c),.9), rgba(var(--c),.35) 45%, rgba(var(--c),0) 70%);
+  opacity:0; animation:bk var(--d) ease-in-out var(--dl) infinite; will-change:transform,opacity}
+.bk::after{content:""; position:absolute; inset:18%; border-radius:50%; border:1px solid rgba(255,255,255,.55); opacity:.5}
+@keyframes bk{0%,100%{transform:translate3d(0,0,0) scale(.7); opacity:0} 25%{opacity:var(--o)} 50%{transform:translate3d(var(--dx),var(--dy),0) scale(1)} 75%{opacity:var(--o)}}
+.ribbon{position:absolute; left:0; top:38%; width:200%; height:220px; display:flex; opacity:.9; animation:silk 26s linear infinite; will-change:transform}
+.ribbon .silk{width:50%; height:100%; flex:none}
+.ribbon.rb2{top:68%; height:180px; opacity:.6; animation-duration:38s; animation-direction:reverse}
+@keyframes silk{to{transform:translate3d(-50%,0,0)}}
+.voice .ribbon{top:56%}
+.stage > .atmo .ribbon{top:30%; height:340px}
+@media (prefers-reduced-motion:reduce){ .bk,.ribbon{animation:none !important} .bk{opacity:.3} }
+
+/* ---------- search bar v2 ---------- */
+@property --sa{syntax:"<angle>"; inherits:false; initial-value:0deg}
+.srch{position:relative; isolation:isolate; border-radius:999px; padding:5px 5px 5px 16px; background:#fff;
+  animation:srchIn .7s var(--spring) .15s both; transition:transform .35s var(--spring), box-shadow .35s}
+@keyframes srchIn{from{opacity:0; transform:translateY(10px) scale(.96)}}
+.srch::before{content:""; position:absolute; inset:-1.5px; z-index:-1; border-radius:inherit;
+  background:conic-gradient(from var(--sa), rgba(215,40,47,0) 0 55%, #D7282F 70%, #FFB81C 82%, rgba(255,184,28,0) 95%); animation:srchSweep 4s linear infinite}
+.srch::after{content:""; position:absolute; inset:0; z-index:-1; border-radius:inherit; background:#fff}
+@keyframes srchSweep{to{--sa:360deg}}
+.srch:hover{transform:translateY(-2px); box-shadow:0 16px 30px -18px rgba(215,40,47,.55)}
+.srch:active{transform:scale(.985)}
+.srch > svg{transition:transform .5s var(--spring), color .3s}
+.srch:hover > svg{transform:rotate(-15deg) scale(1.15); color:var(--brand)}
+.srch-txt{position:relative; overflow:hidden; height:44px; padding:0 6px !important}
+.sh-roll{position:absolute; inset-inline:6px; top:50%; translate:0 -50%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:start; animation:shRoll .55s var(--spring) both}
+@keyframes shRoll{0%{opacity:0; transform:translateY(70%); filter:blur(3px)} 100%{opacity:1; transform:none; filter:none}}
+.srch-mic{position:relative; overflow:visible; transition:transform .3s var(--spring)}
+.srch-mic::after{display:none}
+.srch-mic svg{position:relative; z-index:1; animation:micBreath 2.4s ease-in-out infinite}
+@keyframes micBreath{50%{transform:scale(1.12)}}
+.sm-w{position:absolute; inset:0; border-radius:50%; border:2px solid rgba(215,40,47,.45); animation:smWave 2.4s cubic-bezier(.2,.6,.3,1) infinite}
+.sm-w.w2{animation-delay:1.2s}
+@keyframes smWave{from{transform:scale(1); opacity:.9} to{transform:scale(1.7); opacity:0}}
+.srch-mic:hover{transform:scale(1.08) rotate(-6deg)} .srch-mic:active{transform:scale(.9)}
+@media (prefers-reduced-motion:reduce){ .srch::before,.sm-w,.srch-mic svg,.sh-roll{animation:none !important} }
 
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} .rv{opacity:1; transform:none} .splash{display:none} }
 </style>
@@ -1235,14 +1274,6 @@ button{transition:none}
   <symbol id="i-local" viewBox="0 0 24 24"><path d="M12 9c-2.3-3-6-3.5-8.5-1.5 3 0 5.6.5 8.5 1.5zM12 9c2.3-3 6-3.5 8.5-1.5-3 0-5.6.5-8.5 1.5zM12 9C9.5 7 9.3 4 11 2.5M12 9c2.5-2 2.7-5 1-6.5" fill="var(--tint)" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><path d="M12 9c-.4 4.5-.2 8.4.8 12.5M7.5 21.5h9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2" fill="var(--tint)" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1z" fill="var(--tint)" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M16 3.5v3M14.5 5h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
-  <!-- filled food shapes for the drifting background -->
-  <symbol id="f-burger" viewBox="0 0 48 48"><path d="M7 21C7 12 15 7 24 7s17 5 17 14z" fill="#F2A541"/><g fill="#FFF3D6"><ellipse cx="17" cy="13" rx="1.4" ry=".8"/><ellipse cx="25" cy="11" rx="1.4" ry=".8"/><ellipse cx="31" cy="15" rx="1.4" ry=".8"/></g><path d="M5 24c3-2 5 1 8-1s5 1 8-1 5 1 8-1 5 1 8-1 4 1 6 0v2H5z" fill="#7CC36E"/><rect x="6" y="26" width="36" height="6" rx="3" fill="#7A3E22"/><path d="M8 33h32l-1 3a5 5 0 0 1-5 4H14a5 5 0 0 1-5-4z" fill="#E9963A"/></symbol>
-  <symbol id="f-fries" viewBox="0 0 48 48"><g fill="#FFC93C"><rect x="13" y="6" width="4" height="20" rx="1.5" transform="rotate(-8 15 16)"/><rect x="19" y="4" width="4" height="22" rx="1.5"/><rect x="25" y="5" width="4" height="21" rx="1.5" transform="rotate(6 27 15)"/><rect x="30" y="8" width="4" height="18" rx="1.5" transform="rotate(12 32 17)"/></g><path d="M11 20h26l-3 22H14z" fill="#E8333A"/><path d="M11 20c4 4 9 5 13 5s9-1 13-5" fill="#C9202A"/></symbol>
-  <symbol id="f-drink" viewBox="0 0 48 48"><path d="M27 4l4 1-3 11" fill="none" stroke="#1E1715" stroke-width="2.4" stroke-linecap="round"/><path d="M12 14h24l-3 30H15z" fill="#E8333A"/><rect x="10" y="12" width="28" height="5" rx="2.5" fill="#FFF3E8"/><path d="M14.5 26h19l-.6 6H15.1z" fill="#FFF3E8"/></symbol>
-  <symbol id="f-icecream" viewBox="0 0 48 48"><path d="M15 22h18l-9 22z" fill="#E9A85C"/><path d="M18 26l10 8M30 26l-10 9" stroke="#C7843D" stroke-width="1.5"/><circle cx="18" cy="18" r="7" fill="#FF9EC0"/><circle cx="30" cy="18" r="7" fill="#FFE3B0"/><circle cx="24" cy="11" r="7" fill="#8B5A3C"/><circle cx="24" cy="4" r="2.2" fill="#E8333A"/></symbol>
-  <symbol id="f-chili" viewBox="0 0 48 48"><path d="M31 12c4 1 7 5 6 10-1 10-13 19-26 19-2 0-2-2-.5-3C19 34 24 27 26 19c1-5 2.5-7 5-7z" fill="#E8333A"/><path d="M31 12c0-4 2-6 5-7" stroke="#3E9B4F" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M27 14c3-2 6-2 8 0" stroke="#3E9B4F" stroke-width="3" fill="none" stroke-linecap="round"/></symbol>
-  <symbol id="f-donut" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" fill="#E9A85C"/><path d="M24 8a16 16 0 0 1 15.5 12c-2 3-4 1-6 4s-4 0-7 3-5-1-8 1-5-1-9-2A16 16 0 0 1 24 8z" fill="#FF8DB5"/><circle cx="24" cy="24" r="5.5" fill="#FBF7F1"/><g stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M16 14l2 1M30 13l1 2M34 19l2-1M13 20l1 2"/></g></symbol>
-  <symbol id="f-drum" viewBox="0 0 48 48"><path d="M30 6c8 0 13 6 11 13-2 6-9 9-15 10l-8 8-3-3 8-8c0-6 0-20 7-20z" fill="#D9822B"/><path d="M14 35a3.5 3.5 0 1 0-4 4 3.5 3.5 0 1 0 4-4l2-2-2-2z" fill="#FFF3E0"/></symbol>
 </svg>
 <div class="stage">
   <div class="atmo" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1258,7 +1289,7 @@ button{transition:none}
           <button class="pillbtn" id="langQuick"></button>
         </div>
         <div class="srch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-          <button class="srch-txt" id="homeSearch" data-t="searchSay"></button><button class="srch-mic" id="heroTalk" aria-label="Talk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button></div>
+          <button class="srch-txt" id="homeSearch"></button><button class="srch-mic" id="heroTalk" aria-label="Talk"><span class="sm-w" aria-hidden="true"></span><span class="sm-w w2" aria-hidden="true"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button></div>
       </header>
       <div class="promos" id="promos">
         <div class="promo p-voice"><small data-t="pvK"></small><h2 data-t="pvT"></h2><p>English · العربية · മലയാളം</p>
@@ -2948,37 +2979,54 @@ loadMember();
 requestAnimationFrame(renderNav);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderNav);
 
-/* background animation: food icons and sesame seeds drifting up behind the content */
+/* background: soft light bokeh + flowing silk ribbons (transform/opacity only) */
 (() => {
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const FOOD = ["burger", "fries", "drink", "chili", "icecream", "donut", "drum"];
   const rnd = (a, b) => a + Math.random() * (b - a);
-  function fill(host, n, big) {
+  const HUES = ["255,120,100", "255,190,90", "255,140,180", "255,255,255"];
+  const RIB = `<svg class="silk" viewBox="0 0 1200 400" preserveAspectRatio="none"><defs>
+    <linearGradient id="sk1" x1="0" x2="1"><stop offset="0" stop-color="#D7282F" stop-opacity="0"/><stop offset=".5" stop-color="#D7282F" stop-opacity=".35"/><stop offset="1" stop-color="#FFB81C" stop-opacity="0"/></linearGradient>
+    <linearGradient id="sk2" x1="0" x2="1"><stop offset="0" stop-color="#FF8DB5" stop-opacity="0"/><stop offset=".5" stop-color="#FF8DB5" stop-opacity=".4"/><stop offset="1" stop-color="#FFB81C" stop-opacity="0"/></linearGradient></defs>
+    <path d="M0 220 C150 120 300 320 450 220 S750 120 900 220 S1150 320 1200 220" stroke="url(#sk1)" stroke-width="2" fill="none"/>
+    <path d="M0 250 C150 160 300 340 450 250 S750 160 900 250 S1150 340 1200 250" stroke="url(#sk2)" stroke-width="1.5" fill="none"/>
+    <path d="M0 280 C150 200 300 360 450 280 S750 200 900 280 S1150 360 1200 280" stroke="url(#sk1)" stroke-width="1" fill="none"/></svg>`;
+  function fill(host, n, wide) {
     const box = document.createElement("div"); box.className = "floaters"; box.setAttribute("aria-hidden", "true");
     for (let k = 0; k < n; k++) {
-      const seed = Math.random() < .45, el = document.createElement("i");
-      el.className = "fl" + (seed ? " seed" : "");
-      if (!seed) el.innerHTML = `<svg viewBox="0 0 48 48"><use href="#f-${FOOD[k % FOOD.length]}"/></svg>`;
-      const size = big ? rnd(26, 46) : rnd(16, 30);
-      el.style.cssText = `--x:${rnd(-2, 98)}%; --s:${size}px; --d:${rnd(18, 34)}s; --dl:${-rnd(0, 34)}s;
-        --o:${seed ? rnd(.35, .6) : (big ? rnd(.25, .45) : rnd(.1, .18))}; --sway:${rnd(-40, 40)}px; --r:${rnd(-200, 200)}deg`;
+      const el = document.createElement("i"), size = rnd(wide ? 40 : 18, wide ? 130 : 70), hue = HUES[k % HUES.length];
+      el.className = "bk";
+      el.style.cssText = `--x:${rnd(0, 100)}%; --y:${rnd(5, 95)}%; --s:${size.toFixed(0)}px; --c:${hue}; --o:${rnd(.25, .6).toFixed(2)};
+        --d:${rnd(14, 26).toFixed(1)}s; --dl:${(-rnd(0, 26)).toFixed(1)}s; --dx:${rnd(-40, 40).toFixed(0)}px; --dy:${rnd(-60, -20).toFixed(0)}px`;
       box.appendChild(el);
     }
+    const r1 = document.createElement("div"); r1.className = "ribbon"; r1.innerHTML = RIB + RIB; box.appendChild(r1);
+    const r2 = document.createElement("div"); r2.className = "ribbon rb2"; r2.innerHTML = RIB + RIB; box.appendChild(r2);
     host.appendChild(box); return box;
   }
   const stageAtmo = document.querySelector(".stage > .atmo"), appAtmo = document.querySelector(".app > .atmo");
-  if (stageAtmo && innerWidth >= 900) fill(stageAtmo, 12, true);
+  if (stageAtmo && innerWidth >= 900) fill(stageAtmo, 10, true);
   const inner = appAtmo && fill(appAtmo, 9, false);
   const voice = document.getElementById("voice"); if (voice) fill(voice.querySelector(".vbg") || voice, 8, false);
-  // gentle parallax: the floaters drift opposite to the scroll of the open view
   let tick = 0;
   document.querySelectorAll(".view").forEach(v => v.addEventListener("scroll", () => {
     if (tick) return; tick = requestAnimationFrame(() => { tick = 0;
       if (inner) inner.style.transform = `translate3d(0,${(-v.scrollTop * .12).toFixed(1)}px,0)`;
       if (v.id === "v-home") document.querySelector(".hd").classList.toggle("tight", v.scrollTop > 40); });
   }, { passive: true }));
-  // pause when the tab is hidden to save battery
-  document.addEventListener("visibilitychange", () => document.querySelectorAll(".fl").forEach(f => f.style.animationPlayState = document.hidden ? "paused" : "running"));
+  document.addEventListener("visibilitychange", () => document.querySelectorAll(".bk,.ribbon").forEach(f => f.style.animationPlayState = document.hidden ? "paused" : "running"));
+})();
+
+/* search bar: rotating "try saying…" hints with a soft roll-in */
+(() => {
+  const btn = document.getElementById("homeSearch"); if (!btn) return;
+  const HINTS = { en: ["Search dishes, or just say it", "Try “two smash burgers”", "Try “something spicy”", "Try “a family box for 4”", "Try “Karak and a brownie”"],
+    ar: ["ابحث عن طبق أو قلها بصوتك", "جرّب «اثنين سماش برجر»", "جرّب «شيء حار»", "جرّب «صندوق العائلة»", "جرّب «كرك وبراوني»"] };
+  let n = 0;
+  const show = () => { const L = HINTS[lang] || HINTS.en; const t = L[n % L.length];
+    btn.setAttribute("aria-label", L[0]);
+    btn.innerHTML = `<span class="sh-roll" aria-hidden="true">${t.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c])}</span>`; };
+  show();
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setInterval(() => { if (document.hidden) return; n++; show(); }, 3200);
+  new MutationObserver(() => { if (!btn.querySelector(".sh-roll")) show(); }).observe(btn, { childList: true });
 })();
 </script>
 </body>
