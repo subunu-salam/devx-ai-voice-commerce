@@ -14,7 +14,7 @@
 <title>VoiceBite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;1,800&family=Poppins:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Readex+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,800&family=Poppins:wght@400;500;600;700&family=Readex+Pro:wght@400;600&display=swap" rel="stylesheet">
 <style>
 /* =====================================================================
    VoiceBite — marketplace redesign (2026). Clean white, big food photos,
@@ -574,12 +574,12 @@ body.kiosk .tab[data-go="more"], body.kiosk #installCard{display:none !important
 .bbcard{background:#2B1A13 !important; border-radius:30px 30px 0 0; padding:0 10px calc(10px + var(--bottom)) !important; max-height:96% !important}
 .bbhead{position:relative; display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:20px 50px 14px 12px; color:#fff}
 [dir="rtl"] .bbhead{padding:20px 12px 14px 50px}
-.bbhead h1{font-family:"Bricolage Grotesque",var(--font); font-weight:800; font-size:1.7rem; letter-spacing:-.04em; line-height:1}
+.bbhead h1{font-family:"Barlow Condensed",var(--font); font-weight:800; font-size:1.7rem; letter-spacing:-.04em; line-height:1}
 .bbhead span{font-size:.72rem; color:#CBB8A8; text-align:end}
 .bbcard .bbx{top:14px !important; background:rgba(255,255,255,.1) !important; color:#fff !important; box-shadow:none !important}
 .bbin{background:#FFFBF4; border-radius:24px; padding:14px 12px 12px}
 .bbshop{display:grid; line-height:1.2} .bbshop b{font-weight:800; font-size:.85rem} .bbshop span{font-size:.7rem; color:#8A7A6E}
-.bbin h2{font-family:"Bricolage Grotesque",var(--font); font-weight:800; font-size:1.35rem; letter-spacing:-.03em; margin:8px 0 10px; color:#2B1A13}
+.bbin h2{font-family:"Barlow Condensed",var(--font); font-weight:800; font-size:1.35rem; letter-spacing:-.03em; margin:8px 0 10px; color:#2B1A13}
 .bbbuns{display:grid; grid-template-columns:repeat(4,1fr); gap:6px}
 .bbbun{display:grid; justify-items:center; gap:3px; border:1.5px solid #EADFD2; background:#fff; border-radius:12px; padding:6px 2px 6px; font-size:.68rem; font-weight:700; color:#2B1A13; transition:transform .2s var(--spring), background .2s, border-color .2s}
 .bbbun i{width:30px; height:16px; border-radius:15px 15px 5px 5px; box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
@@ -619,7 +619,7 @@ body.kiosk .tab[data-go="more"], body.kiosk #installCard{display:none !important
 body{background:#1E120D}
 .stage{background:radial-gradient(700px 500px at 15% 10%, rgba(232,69,44,.25), transparent 60%), radial-gradient(600px 500px at 90% 90%, rgba(245,165,36,.18), transparent 60%), #1E120D}
 @media (min-width:560px){ .app{box-shadow:0 40px 100px -30px rgba(0,0,0,.6), 0 0 0 10px var(--choc)} }
-.title,.sec h2,.promo h2,.rowitem h3,.card h3,.bigno,.shipmsg b,.vstate,.onbcard h2,.loc b,.sum{font-family:"Bricolage Grotesque",var(--font)}
+.title,.sec h2,.promo h2,.rowitem h3,.card h3,.bigno,.shipmsg b,.vstate,.onbcard h2,.loc b,.sum{font-family:"Barlow Condensed",var(--font)}
 .title{font-weight:800; letter-spacing:-.045em}
 .sec h2{font-size:1.25rem; letter-spacing:-.035em}
 
@@ -789,7 +789,7 @@ body{background:#1E120D}
 @keyframes spring{from{transform:scale(.3); opacity:1} to{transform:scale(1.9); opacity:0}}
 .splash .logo{width:84px; height:74px; position:relative; animation:logoDrop .9s cubic-bezier(.3,1.6,.5,1) .1s both; filter:drop-shadow(0 12px 24px rgba(232,69,44,.45))}
 @keyframes logoDrop{from{transform:translateY(-40px) scale(.4) rotate(-20deg); opacity:0}}
-.sp-word{display:flex; font-family:"Bricolage Grotesque",var(--font); font-weight:800; font-size:2.3rem; letter-spacing:-.045em; line-height:1}
+.sp-word{display:flex; font-family:"Barlow Condensed",var(--font); font-weight:800; font-size:2.3rem; letter-spacing:-.045em; line-height:1}
 .sp-word i{font-style:normal; display:inline-block; animation:letterUp .55s cubic-bezier(.3,1.5,.5,1) both; animation-delay:calc(.45s + var(--i) * 55ms)}
 .sp-word .wv{color:#fff} .sp-word .wb{color:var(--brand)}
 @keyframes letterUp{from{transform:translateY(26px) rotate(8deg); opacity:0}}
@@ -1101,6 +1101,71 @@ button{transition:transform .2s var(--spring)}
 .voice .floaters{z-index:-1}
 @media (prefers-reduced-motion:reduce){ .floaters{display:none} }
 
+/* =====================================================================
+   Speed + polish pass: no live blur or blend layers, cheaper glass,
+   cache-friendly, branded dock button, distinct category tiles
+   ===================================================================== */
+/* performance: the glows are plain gradients moved with transforms only */
+.atmo{contain:strict}
+.atmo i,.app > .atmo i{filter:none !important; mix-blend-mode:normal !important; will-change:transform}
+.atmo i:nth-child(1){background:radial-gradient(circle, rgba(255,138,122,.55), rgba(255,138,122,0) 62%)}
+.atmo i:nth-child(2){background:radial-gradient(circle, rgba(255,200,107,.55), rgba(255,200,107,0) 62%)}
+.atmo i:nth-child(3){background:radial-gradient(circle, rgba(255,156,194,.45), rgba(255,156,194,0) 62%)}
+.app > .atmo i{opacity:.55}
+.atmo::after{animation:none !important; opacity:.04 !important}
+.floaters{transition:none; will-change:transform}
+.fl{filter:none !important}
+.view:not([hidden]){animation:none}
+button{transition:none}
+.stick,.hd{backdrop-filter:none !important; -webkit-backdrop-filter:none !important}
+.stick{background:rgba(251,247,241,.97)}
+.hd{background:rgba(251,247,241,.97)}
+.nav{backdrop-filter:blur(10px) !important; -webkit-backdrop-filter:blur(10px) !important}
+.onb,.bb,.k-ask,.k-handoff,.shipit{backdrop-filter:none !important; -webkit-backdrop-filter:none !important}
+.pic img,.cat-pic img{mix-blend-mode:normal !important; opacity:0; transform:scale(.94); transition:opacity .45s var(--ease), transform .6s var(--spring)}
+.pic img.in,.cat-pic img.in{opacity:1; transform:none}
+.card:hover .pic img.in,.rowitem:hover .pic img.in{transform:scale(1.06)}
+.pic,.card .pic,.rowitem .pic{background:#fff !important}
+.rowitem{content-visibility:auto; contain-intrinsic-size:auto 128px}
+.card,.rowitem,.cat-pic{contain:layout paint}
+.cta::after{animation-iteration-count:3}
+@keyframes splashOut{to{opacity:0; visibility:hidden; transform:scale(1.04)}}
+.splash{animation:splashOut .45s var(--ease) 1.05s forwards}
+.sp-word i{animation-delay:calc(.2s + var(--i) * 40ms)} .sp-tag{animation-delay:.5s} .splash .sp-by{animation-delay:.6s !important}
+.splash .sp-bar i{animation-duration:1s}
+
+/* smooth background motion: two slow rotating rings, transform only */
+.app > .atmo::before{content:""; position:absolute; width:520px; height:520px; left:50%; top:30%; margin:-260px 0 0 -260px; border-radius:50%;
+  border:1.5px dashed rgba(215,40,47,.09); box-shadow:0 0 0 70px rgba(255,184,28,.035), 0 0 0 71.5px rgba(215,40,47,.06); animation:ringspin 80s linear infinite}
+@keyframes ringspin{to{transform:rotate(360deg)}}
+
+/* brand bar */
+.brandbar{display:flex; align-items:center; gap:8px; margin:0 2px 12px; max-height:40px; overflow:hidden; transition:max-height .35s var(--ease), opacity .3s, margin .35s var(--ease)}
+.brandbar .logo{width:34px; height:30px; animation:logoBob 4s ease-in-out infinite}
+@keyframes logoBob{0%,100%{transform:none} 50%{transform:translateY(-2px) rotate(-4deg)}}
+.bword{font-family:var(--display); font-style:italic; font-weight:800; font-size:1.55rem; letter-spacing:.005em; text-transform:uppercase; line-height:1}
+.bword .wv{color:var(--ink)} .bword .wb{color:var(--brand)}
+.btag{margin-inline-start:auto; font-size:.7rem; font-weight:600; color:var(--soft); background:#fff; border-radius:999px; padding:5px 10px; box-shadow:var(--shadow)}
+.hd.tight .brandbar{max-height:0; opacity:0; margin-bottom:0}
+
+/* the dock button wears the VoiceBite mark */
+.talk .bite{background:#fff !important; box-shadow:inset 0 0 0 2px rgba(215,40,47,.12), 0 10px 24px -8px rgba(215,40,47,.7) !important}
+.talk::before{background:linear-gradient(135deg,#E8333A,#B51E25) !important}
+.talk svg.tlogo{width:34px; height:30px; margin:auto; z-index:2; --logo-v:#1E1715; filter:none; animation:logoTap 3.2s ease-in-out infinite}
+@keyframes logoTap{0%,72%,100%{transform:none} 80%{transform:scale(1.12) rotate(-6deg)} 88%{transform:scale(.96) rotate(3deg)}}
+.talk.live .bite{background:var(--brand) !important}
+.talk .bars i{background:#fff}
+
+/* distinct, tinted category tiles */
+.cat-pic{background:#fff}
+.cat-custom .cat-pic{background:#FFE9E4 !important} .cat-meals .cat-pic{background:#FFF1CC !important} .cat-burgers .cat-pic{background:#FFE3D2 !important}
+.cat-chicken .cat-pic{background:#FFF4DC !important} .cat-wraps .cat-pic{background:#E6F5E9 !important} .cat-sides .cat-pic{background:#FDEBD7 !important}
+.cat-drinks .cat-pic{background:#E6F0FF !important} .cat-desserts .cat-pic{background:#FFE6F1 !important}
+.cat-pic img{padding:9px !important; mix-blend-mode:multiply !important}
+.cat[aria-pressed],.cat:focus-visible .cat-pic{outline:0}
+.cats .cat{animation:catIn .55s var(--spring) both}
+@keyframes catIn{from{opacity:0; transform:translateY(16px) scale(.85)}}
+
 @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} .rv{opacity:1; transform:none} .splash{display:none} }
 </style>
 </head>
@@ -1125,6 +1190,7 @@ button{transition:transform .2s var(--spring)}
     <div class="atmo" aria-hidden="true"><i></i><i></i><i></i></div>
     <section class="view" id="v-home">
       <header class="hd">
+        <div class="brandbar"><svg class="logo" aria-hidden="true"><use href="#vb-logo"/></svg><span class="bword"><span class="wv">Voice</span><span class="wb">Bite</span></span><span class="btag" data-t="brandTag"></span></div>
         <div class="hd-row">
           <div class="loc"><span class="loc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>
             <div><small><span data-t="pickupFrom"></span><span class="opennow" data-t="open"></span></small><b><span id="storeName"></span> · <span id="storeBranch"></span></b></div></div>
@@ -1197,7 +1263,7 @@ button{transition:transform .2s var(--spring)}
       <button class="tab" data-go="home"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5 12 4l8.5 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-4v-6h-6v6H5A1.5 1.5 0 0 1 3.5 19z"/></svg></span><span class="lbl" data-t="navHome"></span></button>
       <button class="tab" data-go="menu"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/><circle cx="18.5" cy="17" r="1.5"/></svg></span><span class="lbl" data-t="navMenu"></span></button>
       <div class="talkslot"><button class="talk" id="talk"><span class="t-glow" aria-hidden="true"></span><span class="t-ring" aria-hidden="true"></span><span class="bite" aria-hidden="true"></span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>
+        <svg class="tlogo" aria-hidden="true"><use href="#vb-logo"/></svg>
         <span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></button></div>
       <button class="tab" data-go="order"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8zM9 8V6a3 3 0 0 1 6 0v2"/></svg><i class="badge" id="badge" hidden></i></span><span class="lbl" data-t="navOrder"></span></button>
       <button class="tab" data-go="more"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></span><span class="lbl" data-t="navMore"></span></button>
@@ -1370,7 +1436,7 @@ const T = {
     geoBlocked: "Location is blocked. Use the buttons instead.", noReach: "Couldn't reach the kitchen. Please try again.", cancelled: "This order was cancelled. Please speak to the staff.",
     voiceLang: "Voice language", voiceLangHint: "Or just ask the attendant, for example “Arabic please”.", switching: "Switching language…",
     voiceOff: "{lang} voice isn't switched on for this kitchen yet. Continuing in English.", voiceFailed: "{lang} voice isn't working right now. Continuing in English.",
-    iosHow: "Tap the Share button, then Add to Home Screen.", otherHow: "Open your browser menu and choose Install app or Add to Home screen.", installed: "VoiceBite is installed.", pickupFrom: "Pickup from", searchSay: "Search dishes, or just say it", cats: "Categories", seeAllShort: "See all",
+    iosHow: "Tap the Share button, then Add to Home Screen.", otherHow: "Open your browser menu and choose Install app or Add to Home screen.", installed: "VoiceBite is installed.", pickupFrom: "Pickup from", searchSay: "Search dishes, or just say it", brandTag: "Say it · We cook it", cats: "Categories", seeAllShort: "See all",
     pvK: "Voice ordering", pvT: "Just say what you're craving", pbK: "Build your own", pbT: "Stack your perfect burger", pbS: "From AED 8.99", pbB: "Start building", ppK: "Drive-thru pickup", ppT: "Hot and ready when you pull up", ppS: "Tap “I’m 5 min away” after you order", kick: "Drive-thru pre-order · UAE",
     how1: "Say it", how1s: "English, Arabic or Malayalam", how2: "We cook it", how2s: "Timed to your arrival", how3: "Pick it up", how3s: "Hot at your window" },
   ar: { by: "مدعوم من", switchTo: "English", open: "مفتوح الآن", title: "اطلب بصوتك", lead: "تحدث مع الموظف أو اختر من القائمة.", start: "ابدأ التحدث", end: "إنهاء المحادثة",
@@ -1392,7 +1458,7 @@ const T = {
     geoBlocked: "الموقع محظور. استخدم الأزرار بدلاً من ذلك.", noReach: "تعذر الوصول إلى المطبخ. حاول مرة أخرى.", cancelled: "تم إلغاء هذا الطلب. يرجى التحدث مع الموظفين.",
     voiceLang: "لغة المحادثة الصوتية", voiceLangHint: "أو اطلب من الموظف تغيير اللغة أثناء المحادثة.", switching: "جارٍ تغيير اللغة…",
     voiceOff: "المحادثة الصوتية باللغة {lang} غير مفعّلة لهذا المطبخ حالياً. سنكمل بالإنجليزية.", voiceFailed: "المحادثة الصوتية باللغة {lang} لا تعمل الآن. سنكمل بالإنجليزية.",
-    iosHow: "اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية».", otherHow: "افتح قائمة المتصفح واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».", installed: "تم تثبيت VoiceBite.", pickupFrom: "الاستلام من", searchSay: "ابحث عن طبق أو قلها بصوتك", cats: "الأقسام", seeAllShort: "عرض الكل",
+    iosHow: "اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية».", otherHow: "افتح قائمة المتصفح واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».", installed: "تم تثبيت VoiceBite.", pickupFrom: "الاستلام من", searchSay: "ابحث عن طبق أو قلها بصوتك", brandTag: "قلها · نطبخها", cats: "الأقسام", seeAllShort: "عرض الكل",
     pvK: "الطلب بالصوت", pvT: "قل ما تشتهيه", pbK: "اصنع برجرك", pbT: "ركّب برجرك المثالي", pbS: "ابتداءً من 8.99 د.إ", pbB: "ابدأ الآن", ppK: "استلام من السيارة", ppT: "طلبك جاهز وساخن عند وصولك", ppS: "اضغط «سأصل خلال 5 دقائق» بعد الطلب", kick: "اطلب مسبقاً · الإمارات",
     how1: "قلها", how1s: "بالعربية أو الإنجليزية أو المالايالامية", how2: "نطبخها", how2s: "في توقيت وصولك", how3: "استلمها", how3s: "ساخنة عند نافذتك" }
 };
@@ -1443,7 +1509,7 @@ function photo(i) {
   const icon = CAT_ICON[ICON[i.itemId]] || CAT_ICON[i.cat] || CAT_ICON.burgers;
   if (!i.imageUrl) return icon;
   const src = /^https?:/.test(i.imageUrl) ? i.imageUrl : IMAGE_DIR + i.imageUrl.split("/").pop().replace(/\.png$/i, ".jpg");
-  return `<img src="${esc(src)}" alt="" loading="lazy" data-icon="${esc(icon)}" onerror="this.parentNode.innerHTML=this.dataset.icon">`;
+  return `<img src="${esc(src)}" alt="" loading="lazy" decoding="async" data-icon="${esc(icon)}" onload="this.classList.add('in')" onerror="this.parentNode.innerHTML=this.dataset.icon">`;
 }
 
 /* ================= rendering ================= */
@@ -1469,6 +1535,7 @@ function card(i, wide) {
   return `<article class="card${wide ? " wide" : ""}" data-item="${esc(i.itemId)}"><div class="pic">${photo(i)}${tagHtml(i) ? `<span class="tgs">${tagHtml(i)}</span>` : ""}</div>
     <h3>${esc(itemName(i))}</h3>${k != null ? `<small class="kcal">${k} kcal</small>` : ""}<div class="cardrow"><span class="price">${money(i.price)}</span>${buyControl(i)}</div></article>`;
 }
+const CAT_FACE = { custom: "cheeseburger", meals: "fries", burgers: "double-burger", chicken: "chicken-nuggets-10", wraps: "chicken-sandwich", sides: "onion-rings", drinks: "milkshake-chocolate", desserts: "sundae" };
 function renderHome() {
   const cats = [...(menu.categories || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   $("rail").innerHTML = allItems().filter(i => i.featured).map(i => card(i)).join("");
@@ -1488,7 +1555,8 @@ function renderHome() {
   $("deals").innerHTML = allItems().filter(i => tagsOf(i).includes("deal")).map(i => card(i, true)).join("");
 
   $("cats").innerHTML = cats.map(c => { const first = [...(menu.menuItems[c.categoryId] || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))[0];
-    return `<button class="cat" data-cat="${esc(c.categoryId)}"><span class="cat-pic">${first ? photo({ ...first, cat: c.categoryId }) : CAT_SVG[c.categoryId] || ""}</span><b>${esc(catName(c))}</b></button>`; }).join("");
+    const face = CAT_FACE[c.categoryId] ? { itemId: CAT_FACE[c.categoryId], imageUrl: "images/" + CAT_FACE[c.categoryId] + ".png", cat: c.categoryId } : first && { ...first, cat: c.categoryId };
+    return `<button class="cat cat-${esc(c.categoryId)}" data-cat="${esc(c.categoryId)}"><span class="cat-pic">${face ? photo(face) : CAT_SVG[c.categoryId] || ""}</span><b>${esc(catName(c))}</b></button>`; }).join("");
 }
 function renderMenu() {
   const cats = [...(menu.categories || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
@@ -2827,19 +2895,22 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderNav)
       el.className = "fl" + (seed ? " seed" : "");
       if (!seed) el.textContent = FOOD[k % FOOD.length];
       const size = big ? rnd(26, 46) : rnd(16, 30);
-      el.style.cssText = `--x:${rnd(-2, 98)}%; --s:${size}px; --b:${seed ? 0 : (size > 36 ? rnd(.5, 2) : 0)}px; --d:${rnd(18, 34)}s; --dl:${-rnd(0, 34)}s;
+      el.style.cssText = `--x:${rnd(-2, 98)}%; --s:${size}px; --d:${rnd(18, 34)}s; --dl:${-rnd(0, 34)}s;
         --o:${seed ? rnd(.35, .6) : (big ? rnd(.25, .45) : rnd(.1, .18))}; --sway:${rnd(-40, 40)}px; --r:${rnd(-200, 200)}deg`;
       box.appendChild(el);
     }
     host.appendChild(box); return box;
   }
   const stageAtmo = document.querySelector(".stage > .atmo"), appAtmo = document.querySelector(".app > .atmo");
-  if (stageAtmo && innerWidth >= 560) fill(stageAtmo, 26, true);
-  const inner = appAtmo && fill(appAtmo, 16, false);
-  const voice = document.getElementById("voice"); if (voice) fill(voice, 12, false);
+  if (stageAtmo && innerWidth >= 900) fill(stageAtmo, 12, true);
+  const inner = appAtmo && fill(appAtmo, 9, false);
+  const voice = document.getElementById("voice"); if (voice) fill(voice, 6, false);
   // gentle parallax: the floaters drift opposite to the scroll of the open view
+  let tick = 0;
   document.querySelectorAll(".view").forEach(v => v.addEventListener("scroll", () => {
-    if (inner) inner.style.setProperty("--par", (-v.scrollTop * .15).toFixed(1) + "px");
+    if (tick) return; tick = requestAnimationFrame(() => { tick = 0;
+      if (inner) inner.style.transform = `translate3d(0,${(-v.scrollTop * .12).toFixed(1)}px,0)`;
+      if (v.id === "v-home") document.querySelector(".hd").classList.toggle("tight", v.scrollTop > 40); });
   }, { passive: true }));
   // pause when the tab is hidden to save battery
   document.addEventListener("visibilitychange", () => document.querySelectorAll(".fl").forEach(f => f.style.animationPlayState = document.hidden ? "paused" : "running"));
