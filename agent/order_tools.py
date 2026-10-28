@@ -913,10 +913,10 @@ def burger_builder(add: list = None, remove: list = None, patty: str = "", bun: 
         result["not_available"] = unknown
         result["options"] = sorted(tops) + sorted(sauces)
     if opened and not added:
-        result["next"] = ("The builder is open with a beef patty on a brioche bun. In one short sentence, invite them to "
+        result["next"] = ("If you already replied this turn, say nothing more. Otherwise: the builder is open with a beef patty on a brioche bun. In one short sentence, invite them to "
                           "say what goes on it (for example cheese, bacon, a sauce). No prices.")
     else:
-        result["next"] = ("React in a few lively words, e.g. 'Bacon's on! What else?'. No prices. "
+        result["next"] = ("If you already replied this turn, say nothing more. Otherwise react in a few lively words, e.g. 'Bacon's on! What else?'. No prices. "
                           + ("Some of that is not available: say so briefly. " if unknown else "")
                           + "When they say that's it, recap it and ask for a yes before build_custom_burger.")
     return result
