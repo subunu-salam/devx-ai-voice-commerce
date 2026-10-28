@@ -72,7 +72,7 @@ _MID_ORDER_PRICES = ("itemPriceText", "total", "totalText", "price", "priceText"
 def _who_first(result: dict) -> dict:
     """Until we know who is ordering, every tool result reminds the attendant to settle it (the drive-through flow)."""
     call = _call()
-    if _identity_open() and not getattr(call, "who_reminded", False):   # remind once, not on every item
+    if _identity_open() and not getattr(call, "who_reminded", False) and not getattr(call, "who_answer", ""):   # remind once, not on every item
         call.who_reminded = True
         result["first"] = (f'They have not said who is ordering yet. After confirming the item, ask once: "{_WHO_Q}" '
                            "Do not repeat this question again until they answer; carry on with the order meanwhile.")
@@ -199,6 +199,7 @@ def _plate_from_customer(vehicle: str, lines=None) -> bool:
 _WHO_Q = "Are you a VoiceBite Rewards member, or is this your first order with us?"
 _WHO_OPTIONS = ["I'm a member", "First order"]
 _DETAILS_Q = "Welcome! Could I have your name and mobile number? We'll use it to reach you when you arrive."
+_MEMBER_Q = "Great! What's your mobile number and 4-digit PIN? You can type them on your screen."
 _NUMBER_Q = "Could you say your mobile number again, one digit at a time? You can also type it on your screen."
 
 
@@ -251,6 +252,7 @@ def _ask(step: str, step_no: int, question: str, options=None, typing: str = "")
     """Move to `step`, put the question (tap answers, or a box to type into) on screen, and tell the attendant to ask it and wait."""
     call = _call()
     call.step, call.mark = step, len(call.heard)
+    call.who_open = question == _WHO_Q
     box = {"question": question, "options": options or []}
     if typing:
         box["input"] = typing   # "tel" or "text": the customer can type the answer instead of saying it
@@ -277,7 +279,7 @@ def greeting_question() -> str:
 def identity_done(name: str = "") -> dict:
     """Called once the customer has signed in, joined or chosen to continue as a guest."""
     call = _call()
-    call.step = "order"
+    call.step, call.who_open = "order", False
     call.mark = len(call.heard)
     _flow_screen(2)
     hello = f"Thanks, {name}. " if name else "Thanks. "
@@ -368,8 +370,61 @@ def confirm_details(is_correct: bool) -> dict:
 
 @tool
 def skip_rewards() -> dict:
-    """The customer does not want to sign in. Their name and mobile number are still needed to order."""
-    return {"status": "details needed", **_ask("identify", 1, _DETAILS_Q, None, "tel")}
+    """The customer says it is their FIRST ORDER, that they are new, not a member, or do not want to sign in.
+
+    Call it straight away when they answer "member or first order?" with first order, in any language
+    ("first time", "أول مرة", "ആദ്യമായി"...). It asks for their name and mobile number. Never ask "member or first order?" again after this.
+    """
+    _call().who_answer = "first"
+    return {"status": "first order", **_ask("identify", 1, _DETAILS_Q, None, "tel")}
+
+
+@tool
+def i_am_member() -> dict:
+    """The customer says they ARE a VoiceBite Rewards member (in any language). Asks for their mobile number and PIN.
+
+    Then call sign_in_rewards with what they say. Never ask "member or first order?" again after this.
+    """
+    _call().who_answer = "member"
+    return {"status": "member", **_ask("identify", 1, _MEMBER_Q, None, "tel")}
+
+
+# The answer to "member or first order?" in English, Arabic or Malayalam (spoken, typed or tapped).
+_FIRST = re.compile(r"\b(first[\s-]*(time|order|visit)|new (customer|here|user)|not a member|no[t]? member|never ordered|i'?m new|am new)\b"
+                    r"|أول\s*(مرة|طلب)|اول\s*(مرة|مره|طلب)|لست عضو|مش عضو|ما\s*عندي\s*حساب|جديد"
+                    r"|ആദ്യ|പുതിയ|മെമ്പർ അല്ല|അംഗമല്ല|അംഗം അല്ല|മെമ്പറല്ല", re.I)
+_MEMBER = re.compile(r"\b((i'?m|i am|yes,? i'?m) (a |already a )?(rewards )?member|already (a )?member|member already|sign me in|log ?in)\b"
+                     r"|أنا عضو|انا عضو|عضو في|عندي حساب"
+                     r"|മെമ്പർ ആണ്|മെമ്പറാണ്|അംഗമാണ്|ഞാൻ മെമ്പർ", re.I)
+
+
+def who_answer_in(text: str) -> str:
+    """"first" or "member" when `text` answers the open "member or first order?" question; "" otherwise."""
+    call = _call()
+    if not rewards_on or not getattr(call, "who_open", False) or not _identity_open():
+        return ""
+    t = str(text or "")
+    if _FIRST.search(t):
+        return "first"
+    if _MEMBER.search(t):
+        return "member"
+    return ""
+
+
+def settle_who(answer: str) -> str:
+    """The customer answered "member or first order?". Moves the flow on (screen included) without waiting for the
+    voice model, and returns a note for the attendant so it never asks the same question again."""
+    call = _call()
+    call.who_answer = answer
+    if answer == "first":
+        _ask("identify", 1, _DETAILS_Q, None, "tel")
+        call.mark = max(0, call.mark - 1)   # the answer itself may already hold the name and number
+        return ("(The customer has answered: this is their FIRST ORDER. Do NOT ask whether they are a member again. "
+                "Now ask for their first name and mobile number, in the call's language.)")
+    _ask("identify", 1, _MEMBER_Q, None, "tel")
+    call.mark = max(0, call.mark - 1)
+    return ("(The customer has answered: they ARE a VoiceBite Rewards member. Do NOT ask whether they are a member again. "
+            "Now ask for their mobile number and 4-digit PIN, then call sign_in_rewards.)")
 
 
 @tool
@@ -379,6 +434,10 @@ def checkout() -> dict:
     if get_order_state().is_empty():
         return {"error": "The order is empty. Ask what they would like."}
     if _identity_open():
+        if getattr(call, "who_answer", "") == "first":
+            return {"error": "We still need their name and mobile number.", **_ask("identify", 1, _DETAILS_Q, None, "tel")}
+        if getattr(call, "who_answer", "") == "member":
+            return {"error": "We still need their member sign-in.", **_ask("identify", 1, _MEMBER_Q, None, "tel")}
         return {"error": "Who is ordering is not settled yet.", **_ask("identify", 1, _WHO_Q, _WHO_OPTIONS)}
     summary = _show_order_on_screen()
     said = ", ".join(f"{i['quantity']} {i['name']}" for i in summary["items"])
@@ -592,6 +651,7 @@ def place_order(vehicle_number: str = "", payment_method: str = "", user_id: str
         current["shownItems"] = []
         current["burgerBuilder"] = None
         current["highlightedItem"] = None
+        _call().burger = None
         current["highlightedCategory"] = None
         set_ui_state(current)
     except Exception as e:
@@ -651,7 +711,7 @@ _TOPPING_PRICES = {
 
 
 @tool
-def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantity: int = 1) -> dict:
+def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantity: int = 1, bun: str = "") -> dict:
     """Build a custom burger with chosen patty, toppings, and sauces. Adds it to the order.
 
     Args:
@@ -659,6 +719,7 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
         toppings: List of toppings, using the names in the BUILD YOUR OWN BURGER section of your instructions.
         sauces: List of sauces, using the names in your instructions. Defaults to none.
         quantity: Number of custom burgers (default 1).
+        bun: Optional bun: "brioche", "sesame", "potato" or "parmesan".
 
     Returns:
         Summary with the custom burger details, price breakdown, and updated order.
@@ -705,7 +766,8 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
             price_breakdown.append({"item": f"+ {sauce}", "price": price})
 
     # Build description for the order
-    parts = [patty]
+    bun = str(bun or "").strip().lower()
+    parts = ([f"{bun} bun"] if bun in BUNS else []) + [patty]
     if selected_toppings:
         parts.extend(selected_toppings)
     if selected_sauces:
@@ -726,8 +788,9 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
 
     # Auto-update the UI: close burger builder, update order
     try:
+        _call().burger = None
         current = get_ui_state()
-        current["burgerBuilder"] = None
+        current["burgerBuilder"] = {"active": False, "added": True}   # the app flies the burger into the order and closes the builder
         current["highlightedItem"] = None
         current["orderItems"] = summary["items"]
         current["orderTotal"] = summary["total"]
@@ -746,3 +809,114 @@ def build_custom_burger(patty: str, toppings: list, sauces: list = None, quantit
         "total": summary["total"],
         "totalText": _spoken(summary["total"]),
     }))
+
+
+# ---------- building a burger by voice: every ingredient the customer names lands on the burger on their screen ----------
+
+BUNS = ("brioche", "sesame", "potato", "parmesan")
+_MAX_LAYER = 3   # same as the app: at most three of one layer
+_SAYS = {   # what customers say -> the name in the burger config
+    "beef": "beef patty", "chicken": "chicken patty", "american": "american cheese", "cheddar": "cheddar cheese",
+    "pepper jack": "pepper jack cheese", "pepperjack": "pepper jack cheese", "swiss": "swiss cheese", "cheese": "american cheese",
+    "egg": "fried egg", "eggs": "fried egg", "jalapeno": "jalapeños", "jalapenos": "jalapeños", "jalapeño": "jalapeños",
+    "pickle": "pickles", "mushroom": "mushrooms", "onions": "onion", "tomatoes": "tomato", "bbq": "bbq sauce",
+    "barbecue": "bbq sauce", "barbecue sauce": "bbq sauce", "chipotle": "chipotle mayo", "special": "special sauce",
+    "mayonnaise": "mayo", "avocados": "avocado", "lettuces": "lettuce",
+}
+
+
+def _ingredient(name: str, known: dict) -> str:
+    k = re.sub(r"\s+", " ", str(name or "").strip().lower())
+    k = _SAYS.get(k, k)
+    if k in known:
+        return k
+    for opt in known:   # "a slice of cheddar", "extra bacon"
+        if re.search(r"\b" + re.escape(opt) + r"\b", k) or re.search(r"\b" + re.escape(k) + r"\b", opt):
+            return opt
+    return ""
+
+
+def _builder_screen(b: dict, added=(), removed=()) -> None:
+    current = get_ui_state()
+    current["burgerBuilder"] = {"active": True, "voice": True, "bun": b["bun"], "patty": b["patty"],
+                                "toppings": list(b["toppings"]), "sauces": list(b["sauces"]), "price": b["price"],
+                                "just": list(added), "removed": list(removed), "seq": b["seq"]}
+    set_ui_state(current)
+
+
+@tool
+def burger_builder(add: list = None, remove: list = None, patty: str = "", bun: str = "", close: bool = False) -> dict:
+    """The live Build Your Own Burger on the customer's screen. Each ingredient you add drops onto the burger as they watch.
+
+    Call it with no arguments as soon as the customer wants to build their own burger: the builder opens (beef patty on
+    a brioche bun to start). Then call it EVERY time they name ingredients, straight away, before you speak.
+
+    Args:
+        add: Toppings and sauces they just asked for, in English, e.g. ["bacon", "cheddar cheese", "bbq sauce"].
+            Say "two bacon" as ["bacon", "bacon"].
+        remove: Toppings or sauces to take off, e.g. ["onion"].
+        patty: "beef patty" or "chicken patty" if they choose or change it.
+        bun: "brioche", "sesame", "potato" or "parmesan" if they choose it.
+        close: true only if they no longer want a custom burger.
+
+    Returns:
+        What is on the burger now. When they say it is done, recap it in a few words (no prices), ask for a yes, then
+        call build_custom_burger with exactly these patty, toppings, sauces and bun.
+    """
+    call = _call()
+    if close:
+        call.burger = None
+        current = get_ui_state(); current["burgerBuilder"] = None; set_ui_state(current)
+        return {"status": "closed", "next": "Carry on with the order."}
+    config = get_burger_config()
+    base = int(config.get("basePrice", _CUSTOM_BURGER_BASE_PRICE))
+    tops = {str(k).lower(): int(v) for k, v in (config.get("toppings") or {}).items()}
+    sauces = {str(k).lower(): int(v) for k, v in (config.get("sauces") or {}).items()}
+    b = call.burger or {"bun": "brioche", "patty": "beef patty", "toppings": [], "sauces": [], "price": base, "seq": 0}
+    opened = call.burger is None
+    added, removed, unknown = [], [], []
+    p = _ingredient(patty, {"beef patty": 0, "chicken patty": 0}) if patty else ""
+    if p:
+        b["patty"] = p
+        added.append(p)
+    if str(bun or "").strip().lower() in BUNS:
+        b["bun"] = str(bun).strip().lower()
+    for raw in (add or []):
+        k = _ingredient(raw, {**tops, **sauces})
+        if not k:
+            if _ingredient(raw, {"beef patty": 0, "chicken patty": 0}):
+                b["patty"] = _ingredient(raw, {"beef patty": 0, "chicken patty": 0}); added.append(b["patty"])
+            elif str(raw).strip().lower() in BUNS:
+                b["bun"] = str(raw).strip().lower()
+            else:
+                unknown.append(str(raw))
+            continue
+        layer = "sauces" if k in sauces and k not in tops else "toppings"
+        if b[layer].count(k) >= _MAX_LAYER:
+            continue
+        b[layer].append(k)
+        added.append(k)
+    for raw in (remove or []):
+        k = _ingredient(raw, {**tops, **sauces})
+        for layer in ("toppings", "sauces"):
+            if k and k in b[layer]:
+                b[layer].remove(k)
+                removed.append(k)
+                break
+    b["price"] = base + sum(tops.get(k, 0) for k in b["toppings"]) + sum(sauces.get(k, 0) for k in b["sauces"])
+    b["seq"] += 1
+    call.burger = b
+    _builder_screen(b, added, removed)
+    result = {"status": "opened" if opened else "updated", "bun": b["bun"], "patty": b["patty"],
+              "toppings": b["toppings"], "sauces": b["sauces"]}
+    if unknown:
+        result["not_available"] = unknown
+        result["options"] = sorted(tops) + sorted(sauces)
+    if opened and not added:
+        result["next"] = ("The builder is open with a beef patty on a brioche bun. In one short sentence, invite them to "
+                          "say what goes on it (for example cheese, bacon, a sauce). No prices.")
+    else:
+        result["next"] = ("React in a few lively words, e.g. 'Bacon's on! What else?'. No prices. "
+                          + ("Some of that is not available: say so briefly. " if unknown else "")
+                          + "When they say that's it, recap it and ask for a yes before build_custom_burger.")
+    return result
