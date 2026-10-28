@@ -2705,9 +2705,22 @@ function paceCaption() {
   const show = full.slice(0, end);
   if (turn.el.textContent !== show) { turn.el.textContent = show; pinCaps(); }
 }
+/* Speech-to-text sometimes writes an English "yeah" as Hindi "या", or a mumble as Portuguese. Show the customer only
+   words in the call's language (plus English, which every call accepts); anything else shows as "…". */
+const CALL_SCRIPT = { en: /[A-Za-z0-9]/, ar: /[A-Za-z0-9\u0600-\u06FF\u0660-\u0669]/, ml: /[A-Za-z0-9\u0D00-\u0D7F]/ };
+const FOREIGN = { en: /[\u0900-\u097F\u0600-\u06FF\u0D00-\u0D7F\u0B80-\u0BFF\u0C00-\u0C7F\u0980-\u09FF\u0400-\u04FF\u4E00-\u9FFF]/,
+  ar: /[\u0900-\u097F\u0D00-\u0D7F\u0B80-\u0BFF\u0C00-\u0C7F\u0400-\u04FF\u4E00-\u9FFF]/, ml: /[\u0900-\u097F\u0600-\u06FF\u0B80-\u0BFF\u0C00-\u0C7F\u0400-\u04FF\u4E00-\u9FFF]/ };
+const PT_ES = /\b(explicou|pedido|obrigad[oa]|você|voce|está|não|gracias|usted|también|porque)\b/i;
+function heardShown(text) {
+  const l = voiceLang || "en", t = String(text || "").trim(); if (!t) return t;
+  if (FOREIGN[l] && FOREIGN[l].test(t) && !(CALL_SCRIPT[l] || /./).test(t.replace(FOREIGN[l], ""))) return "…";
+  if (l === "en" && PT_ES.test(t)) return "…";
+  return t.replace(FOREIGN[l] || /$^/, "").replace(/\s{2,}/g, " ").trim() || "…";
+}
 function caption(role, text, final) {
   text = String(text || "").trim(); if (!text) return;
   if (role === "user") {
+    text = heardShown(text);
     if (lastLine && lastLine.role === "user" && !lastLine.final) lastLine.el.textContent = text;
     else { if (lastLine && lastLine.role === "user" && lastLine.el.textContent === text) return; finishCaption(); lastLine = { role: "user", el: addLine("user", text) }; }
     lastLine.final = final !== false; return;
@@ -2721,7 +2734,7 @@ function captionPiece(role, raw) {   // Arabic and Malayalam arrive a few words 
   raw = String(raw || ""); if (!raw) return;
   if (role === "user") {
     if (!(lastLine && lastLine.role === "user" && lastLine.raw != null)) { finishCaption(); lastLine = { role: "user", el: addLine("user", ""), raw: "", final: false }; }
-    lastLine.raw += raw; lastLine.el.textContent = lastLine.raw.trim(); pinCaps(); return;
+    lastLine.raw += raw; lastLine.el.textContent = heardShown(lastLine.raw); pinCaps(); return;
   }
   assistantText(raw, true);
 }

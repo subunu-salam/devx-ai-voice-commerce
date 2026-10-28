@@ -374,6 +374,18 @@ def update_ui(
     return {"status": "updated", "next": "If you already replied this turn, say nothing more."}
 
 
+_BUILD_ASK = re.compile(r"\b(build|make|create|customi[sz]e|design)\b.{0,25}\b(own|custom|my)\b.{0,15}\bburger|\bcustom burger|\bbuild[- ]your[- ]own"
+                        r"|اصنع.{0,15}برجر|برجر.{0,10}خاص|سوي.{0,10}برجر|സ്വന്തം.{0,15}ബർഗർ|ബർഗർ.{0,15}ഉണ്ടാക്ക", re.I)
+
+
+def _maybe_open_builder(text: str) -> None:
+    """The customer asked to build their own burger: open the builder on their screen straight away, so they see the
+    burger and every option even if the attendant has not called burger_builder yet."""
+    if _calls.current().burger is None and _BUILD_ASK.search(str(text or "")):
+        _order_tools.burger_builder()
+        logger.info("burger builder opened from the customer's words")
+
+
 _SHOWING = re.compile(r"\bhere(?:'s| is| are| you go)\b|\btake a look\b|\bthese are\b|\bcheck out\b", re.IGNORECASE)
 
 
@@ -440,6 +452,7 @@ RULES:
 - Speak ONCE per turn. When a turn needs a tool, call the tool first and speak after its result. If you already spoke before a tool result came back, say NOTHING after it (never "Perfect, a chicken patty... Got it, a chicken patty..."). Never say a sentence, call a tool, and then say the same thing again in different words
 - Never repeat or rephrase something you have just said
 - Never say the words "screen", "card", "button" or "app". Just say "here are our burgers" or "take a look"
+- ASK EACH CHECKOUT QUESTION ONCE. "Member or first order?" is asked once per call. The plate is read back once; after the customer says yes (or taps it) it is CONFIRMED: never read it back or ask for it again, move on to payment. Always follow the "next" sentence of the latest step tool, never go back to an earlier question
 - Never fabricate items. Only use the menu above
 - If add_to_order says an item is sold out, apologise and suggest something similar
 - When the customer ORDERS an item (e.g. "I'll have the...", "I need that one"): call add_to_order straight away, then confirm in a few words ("Done, one Double Burger. Anything else?")
@@ -754,6 +767,10 @@ async def voice_chat(websocket: WebSocket) -> None:
                 last_line.update(text=line, at=time.monotonic())
             if data.get("type") == "bidi_transcript_stream" and data.get("role") == "user":
                 _order_tools.note_heard(data.get("text") or data.get("delta") or "")   # what the customer said, for the plate check
+                try:
+                    _maybe_open_builder(" ".join(_order_tools._since()[-3:]))
+                except Exception as b_err:
+                    logger.warning("Could not open the burger builder: %s", b_err)
                 try:   # "first order" / "I'm a member" said out loud: move the flow on at once, so the question is never asked twice
                     answer = _order_tools.who_answer_in(" ".join(_order_tools._since()))
                     if answer:
@@ -799,6 +816,10 @@ async def voice_chat(websocket: WebSocket) -> None:
                     except Exception as who_err:
                         logger.warning("Could not read the member / first order answer: %s", who_err)
                     _order_tools.note_heard(text)   # a tapped choice counts as the customer's answer
+                    try:
+                        _maybe_open_builder(text)
+                    except Exception as b_err:
+                        logger.warning("Could not open the burger builder: %s", b_err)
                     if answer:   # typed or tapped "first order": settle it here and tell the attendant plainly
                         data = {**data, "text": f"{text}\n{_order_tools.settle_who(answer)}"}
                         logger.info("who is ordering (typed): %s", answer)
