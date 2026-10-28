@@ -257,10 +257,11 @@ def _customer_section(info: dict) -> str:
                 + (" (a VoiceBite Rewards member)" if info.get("member") else "") + ". Greet them by name once. Skip step 1. The car is still asked on every order.\n")
     return ("CUSTOMER: not identified yet. Step 1 comes first, before taking the order: your opening sentence already asks it. "
             "VoiceBite is ordered on the way to the restaurant: the mobile number is how the restaurant reaches them when they arrive, so it is required.\n"
-            "- \"I'm a member\": ask for their mobile number, then their 4-digit PIN, and call sign_in_rewards\n"
-            "- \"First order\": ask for their first name and mobile number and call quick_details with ALL the digits they said (numbers often come in pieces: put the pieces together). "
+            "- \"I'm a member\" (in any language): call i_am_member straight away, then call sign_in_rewards with the number and PIN they give\n"
+            "- \"First order\" / \"first time\" / \"I'm new\" (in any language): call skip_rewards straight away (it asks for name and number), then call quick_details with ALL the digits they said (numbers often come in pieces: put the pieces together). "
             "It reads the number back; then call confirm_details with their yes or no. No PIN needed. If they type it on screen, use what they typed\n"
             "- If they do not want to give a number, explain kindly that the restaurant needs it to reach them on arrival, and ask again. Never place an order without it\n"
+            "- Ask \"member or first order?\" at most ONCE per call. As soon as they answer it, never ask it again: a repeated question makes customers angry\n"
             "- Never say a PIN back out loud\n")
 
 
@@ -446,10 +447,13 @@ RULES:
 {customer}
 - Special instructions: pass as special_instructions in add_to_order
 
-TOOLS: show_products, show_choices, join_rewards, sign_in_rewards, quick_details, confirm_details, checkout, set_vehicle, confirm_vehicle, set_payment, update_ui, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, get_categories, get_items_by_category, get_recommendations, get_ui_context, load_menu
+TOOLS: show_products, show_choices, burger_builder, skip_rewards, i_am_member, join_rewards, sign_in_rewards, quick_details, confirm_details, checkout, set_vehicle, confirm_vehicle, set_payment, update_ui, add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order, get_categories, get_items_by_category, get_recommendations, get_ui_context, load_menu
 
-BUILD YOUR OWN BURGER (itemId: custom-burger):
-Walk customer through: patty (beef/chicken), toppings, sauces. Use update_ui(burger_builder={"active":true,"patty":null,"toppings":[],"sauces":[],"price":{base_price}}) to open the builder. Update it as they choose, adding each extra's price in cents to "price" (e.g. burger_builder={"active":true,"patty":"beef patty","toppings":["bacon"],"sauces":[],"price":<running total>}). When done, recap the burger (no prices) and ask "Sound good, or want to change anything?" and only call build_custom_burger AFTER they confirm.
+BUILD YOUR OWN BURGER (itemId: custom-burger), the highlight of VoiceBite:
+- As soon as the customer wants to build or customise their own burger, call burger_builder() with no arguments. The builder opens on their screen with a beef patty on a brioche bun, then invite them in one short sentence to say what goes on it
+- EVERY time they name ingredients ("add bacon and cheddar", "no onion", "make it chicken", "sesame bun"), call burger_builder(add=[...], remove=[...], patty=..., bun=...) straight away, BEFORE you speak. Each ingredient drops onto the burger as they watch, so react with energy in a few words ("Bacon's on! What else?"). Pass names in English, exactly as in the list below, whatever language the call is in
+- Do not use update_ui for the burger builder
+- When they say that's it, recap the burger (no prices) and ask "Sound good, or want to change anything?". Only after they confirm, call build_custom_burger with the same patty, toppings, sauces and bun
 {burger_reference}
 """
 
@@ -683,12 +687,12 @@ async def voice_chat(websocket: WebSocket) -> None:
             tools = [
                 show_products, load_menu,
                 get_categories, get_items_by_category, get_recommendations,
-                add_to_order, build_custom_burger, remove_from_order, get_order_summary, place_order, cancel_order,
+                add_to_order, build_custom_burger, _order_tools.burger_builder, remove_from_order, get_order_summary, place_order, cancel_order,
                 update_ui, get_ui_context, stop_conversation, show_choices,
                 _order_tools.checkout, _order_tools.set_vehicle, _order_tools.confirm_vehicle, _order_tools.set_payment,
             ]
             if _rewards:
-                tools += [join_rewards, _order_tools.sign_in_rewards, _order_tools.quick_details, _order_tools.confirm_details, _order_tools.skip_rewards]
+                tools += [join_rewards, _order_tools.sign_in_rewards, _order_tools.quick_details, _order_tools.confirm_details, _order_tools.skip_rewards, _order_tools.i_am_member]
             if _langs and len(_langs.available()) > 1:
                 tools.append(switch_language)
         else:
@@ -742,6 +746,13 @@ async def voice_chat(websocket: WebSocket) -> None:
                 last_line.update(text=line, at=time.monotonic())
             if data.get("type") == "bidi_transcript_stream" and data.get("role") == "user":
                 _order_tools.note_heard(data.get("text") or data.get("delta") or "")   # what the customer said, for the plate check
+                try:   # "first order" / "I'm a member" said out loud: move the flow on at once, so the question is never asked twice
+                    answer = _order_tools.who_answer_in(" ".join(_order_tools._since()))
+                    if answer:
+                        _order_tools.settle_who(answer)
+                        logger.info("who is ordering (spoken): %s", answer)
+                except Exception as who_err:
+                    logger.warning("Could not read the member / first order answer: %s", who_err)
             try:
                 if data.get("type") == "bidi_transcript_stream" and data.get("role") == "assistant":
                     _cards_for_speech(data.get("text") or data.get("current_transcript") or data.get("delta") or "")
@@ -773,7 +784,16 @@ async def voice_chat(websocket: WebSocket) -> None:
                     _request_language(str(data.get("lang", "")))  # the customer tapped a language in the app
                     continue
                 if data.get("type") == "bidi_text_input":
-                    _order_tools.note_heard(str(data.get("text", "")))   # a tapped choice counts as the customer's answer
+                    text = str(data.get("text", ""))
+                    answer = ""
+                    try:
+                        answer = _order_tools.who_answer_in(text)
+                    except Exception as who_err:
+                        logger.warning("Could not read the member / first order answer: %s", who_err)
+                    _order_tools.note_heard(text)   # a tapped choice counts as the customer's answer
+                    if answer:   # typed or tapped "first order": settle it here and tell the attendant plainly
+                        data = {**data, "text": f"{text}\n{_order_tools.settle_who(answer)}"}
+                        logger.info("who is ordering (typed): %s", answer)
                 return data
 
         await agent.run(
