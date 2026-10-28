@@ -56,6 +56,8 @@ class Call:
         self.who_open = False                  # "member or first order?" is waiting for an answer
         self.who_answer = ""                   # "first" or "member" once they have said which
         self.burger = None                     # the burger being built by voice, while the builder is open
+        self.who_asked = False                 # "member or first order?" has been asked once: never again
+        self.question = None                   # the question on screen now (step, number, text, options, typing)
 
     def carry_over_from(self, old: "Call") -> None:
         """A language switch reconnects: the same customer, same order, same identity."""
@@ -63,6 +65,7 @@ class Call:
         self.step, self.mark, self.plate, self.pay, self.join_offered = old.step, old.mark, old.plate, old.pay, old.join_offered
         self.who_open, self.who_answer = getattr(old, "who_open", False), getattr(old, "who_answer", "")
         self.burger = getattr(old, "burger", None)
+        self.who_asked, self.question = getattr(old, "who_asked", False), getattr(old, "question", None)
 
 
 _current: contextvars.ContextVar = contextvars.ContextVar("voicebite_call", default=None)

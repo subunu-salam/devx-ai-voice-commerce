@@ -199,9 +199,14 @@ def _live_tuning() -> dict:
 def make_model(lang: str):
     """The voice model for an Arabic or Malayalam call. English keeps its own model in main.py."""
     voice = os.getenv(f"GEMINI_VOICE_{lang.upper()}", VOICE)   # e.g. GEMINI_VOICE_ML=Aoede, GEMINI_VOICE_AR=Kore
+    inference = _live_tuning()
+    if os.getenv("GEMINI_LANGUAGE_CODES", "").lower() in ("1", "true", "yes"):
+        # Pins the call's language for speech recognition, so English is not written down as Hindi. Some native-audio
+        # models reject it: switch it off again if calls fail to start.
+        inference["speech_config"] = {"language_code": {"en": "en-IN", "ar": "ar-AE", "ml": "ml-IN"}.get(lang, "en-US")}
     return _gemini_model_class()(
         model_id=MODEL_ID,
-        provider_config={"audio": {"voice": voice}, "inference": _live_tuning()},
+        provider_config={"audio": {"voice": voice}, "inference": inference},
         client_config={"api_key": _api_key(), "http_options": {"api_version": API_VERSION}},
     )
 
@@ -240,6 +245,9 @@ def prompt_section(lang: str, resumed: bool = False, order_lines: list = None) -
         lines = [
             "",
             "LANGUAGE: This call is in English, and you only speak English.",
+            "- Customers here speak English with Indian, Arab and other accents. What they say may reach you written in Hindi or "
+            'another script, or as odd words in another language (for example "या" or "हाँ" means "yeah"/"yes"). Treat it as the English '
+            "they most likely said and answer in English. Never switch language or reply in another language because of it",
             f'- If the customer asks to continue in {other_names} (for example "Arabic please" or "can you speak Malayalam?"), '
             f"call {calls} straight away. A colleague who speaks that language takes over the call with the order as it is, "
             "so say nothing after calling it",

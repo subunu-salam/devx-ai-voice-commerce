@@ -72,7 +72,7 @@ _MID_ORDER_PRICES = ("itemPriceText", "total", "totalText", "price", "priceText"
 def _who_first(result: dict) -> dict:
     """Until we know who is ordering, every tool result reminds the attendant to settle it (the drive-through flow)."""
     call = _call()
-    if _identity_open() and not getattr(call, "who_reminded", False) and not getattr(call, "who_answer", ""):   # remind once, not on every item
+    if _identity_open() and not getattr(call, "who_reminded", False) and not getattr(call, "who_answer", "") and not getattr(call, "who_asked", False):   # remind once, not on every item
         call.who_reminded = True
         result["first"] = (f'They have not said who is ordering yet. After confirming the item, ask once: "{_WHO_Q}" '
                            "Do not repeat this question again until they answer; carry on with the order meanwhile.")
@@ -217,7 +217,8 @@ def _grouped(digits: str) -> str:
     return ", ".join(" ".join(p) for p in parts if p)
 _GUEST = re.compile(r"\b(guest|no thanks|no thank you|not now|skip|without|don'?t want|continue)\b|لا شكر|ضيف|بدون|വേണ്ട|ഗസ്റ്റ്", re.I)
 _YES = re.compile(r"\b(yes|yeah|yep|yup|correct|that's right|that is right|right|sure|ok|okay|go ahead|place( it| the order| order)?|confirm|perfect|exactly)\b"
-                  r"|نعم|أيوه|ايوه|صحيح|تمام|أكد|اطلب|അതെ|ശരി|ഓക്കെ", re.I)
+                  r"|نعم|أيوه|ايوه|صحيح|تمام|أكد|اطلب|അതെ|ശരി|ഓക്കെ|ഉവ്വ്|हाँ|हां|(?:^|[\s,.!?।])(?:हा|या|यस|ओके)(?=$|[\s,.!?।])|जी|ठीक|सही"
+                  r"|\b(haan|han|haa|yah|ya|ji|theek|sahi)\b", re.I)
 _NO = re.compile(r"\b(no|nope|wrong|not right|change|incorrect)\b|لا|خطأ|غير|അല്ല|മാറ്റ", re.I)
 _PAY_WORDS = {"cash": re.compile(r"\bcash\b|كاش|نقد|ക്യാഷ്|പണം", re.I),
               "card": re.compile(r"\bcard\b|credit|debit|visa|master|بطاقة|كارت|കാർഡ്", re.I),
@@ -253,11 +254,40 @@ def _ask(step: str, step_no: int, question: str, options=None, typing: str = "")
     call = _call()
     call.step, call.mark = step, len(call.heard)
     call.who_open = question == _WHO_Q
+    if call.who_open:
+        call.who_asked = True
+    call.question = (step, step_no, question, list(options or []), typing)
     box = {"question": question, "options": options or []}
     if typing:
         box["input"] = typing   # "tel" or "text": the customer can type the answer instead of saying it
     _flow_screen(step_no, box if (options or typing) else None)
     return {"next": f'Say exactly: "{question}" Then stop and wait for the customer to answer. Do not call another checkout tool until they do.'}
+
+
+def _current_question(note: str) -> dict:
+    """Stay on the question already on screen (never step backwards), and tell the attendant to repeat only that."""
+    q = getattr(_call(), "question", None)
+    if not q:
+        return {"note": note}
+    step, step_no, question, options, typing = q
+    call = _call()
+    keep = call.mark   # an answer already given to this question still counts
+    result = {"note": note, **_ask(step, step_no, question, options, typing)}
+    call.mark = min(keep, call.mark)
+    return result
+
+
+def _ask_who_or_details() -> dict:
+    """"Member or first order?" is asked once per call. After that, ask for what is still missing instead."""
+    call = _call()
+    pending = getattr(call, "pending", None)
+    if pending and pending.get("phone"):
+        return _ask("identify_ok", 1, f"I have {_grouped(pending['phone'])}. Is that right?", [pending["phone"], "Change number"], "tel")
+    if getattr(call, "who_answer", "") == "member":
+        return _ask("identify", 1, _MEMBER_Q, None, "tel")
+    if getattr(call, "who_answer", "") == "first" or getattr(call, "who_asked", False):
+        return _ask("identify", 1, _DETAILS_Q, None, "tel")
+    return _ask("identify", 1, _WHO_Q, _WHO_OPTIONS)
 
 
 def flow_begin() -> None:
@@ -334,6 +364,7 @@ def quick_details(name: str, mobile_number: str) -> dict:
     if not 7 <= len(digits) <= 15:
         return {"status": "number unclear", **_ask("identify", 1, _NUMBER_Q, None, "tel")}
     call = _call()
+    call.who_answer = getattr(call, "who_answer", "") or "first"
     call.pending = {"name": name, "phone": digits}
     return {"status": "read back", **_ask("identify_ok", 1, f"Thanks, {name}. I have {_grouped(digits)}. Is that right?", [digits, "Change number"], "tel")}
 
@@ -433,12 +464,10 @@ def checkout() -> dict:
     call = _call()
     if get_order_state().is_empty():
         return {"error": "The order is empty. Ask what they would like."}
+    if call.step in ("plate_ok", "pay", "review") and call.plate:
+        return _current_question("Checkout is already under way and the plate is already given. Do not ask for the plate again.")
     if _identity_open():
-        if getattr(call, "who_answer", "") == "first":
-            return {"error": "We still need their name and mobile number.", **_ask("identify", 1, _DETAILS_Q, None, "tel")}
-        if getattr(call, "who_answer", "") == "member":
-            return {"error": "We still need their member sign-in.", **_ask("identify", 1, _MEMBER_Q, None, "tel")}
-        return {"error": "Who is ordering is not settled yet.", **_ask("identify", 1, _WHO_Q, _WHO_OPTIONS)}
+        return {"error": "We still need who is ordering. Never ask 'member or first order?' again if it was already asked.", **_ask_who_or_details()}
     summary = _show_order_on_screen()
     said = ", ".join(f"{i['quantity']} {i['name']}" for i in summary["items"])
     call.plate = call.pay = ""
@@ -453,6 +482,8 @@ def set_vehicle(plate_number: str) -> dict:
         plate_number: The plate exactly as the customer said it, letters and digits, e.g. "D 12345".
     """
     call = _call()
+    if call.step in ("pay", "review") and call.plate:
+        return _current_question(f"The plate {call.plate} is already confirmed. NEVER ask about the plate again unless the customer says it is wrong.")
     if call.step not in ("plate", "plate_ok"):
         return {"error": "Not at the car step. If they are done ordering, call checkout first."}
     vehicle = re.sub(r"\s+", " ", re.sub(r"[^A-Za-z0-9 ]", " ", str(plate_number or "")).upper()).strip()[:20]
@@ -472,6 +503,8 @@ def confirm_vehicle(is_correct: bool) -> dict:
         is_correct: true if they said yes / tapped the plate, false if they want to change it.
     """
     call = _call()
+    if call.step in ("pay", "review") and call.plate:
+        return _current_question(f"The plate {call.plate} is already confirmed. Do not ask about it again.")
     if call.step != "plate_ok" or not call.plate:
         return {"error": "No plate to confirm. Ask for the plate number first."}
     tapped = any(h.replace(" ", "").upper() == call.plate.replace(" ", "") for h in _since())
@@ -539,6 +572,10 @@ def add_to_order(item_id: str, category_id: str, quantity: int = 1, special_inst
     logger.info("add_to_order: %s %s qty=%s notes=%s", item_id, category_id, quantity, special_instructions)
     if quantity < 1:
         return {"error": "Quantity must be at least 1."}
+    if str(item_id).strip().lower() == "custom-burger":   # built layer by layer, never added plain
+        opened = burger_builder()
+        return {"error": "The Build Your Own Burger is built in the builder, not added directly. The builder is now open on their screen.",
+                "next": opened.get("next", "Ask what goes on it.")}
     response = _menu_table.get_item(Key={"PK": f"CATEGORY#{category_id}", "SK": f"ITEM#{item_id}"})
     menu_item = response.get("Item")
     if not menu_item:
