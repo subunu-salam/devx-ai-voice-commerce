@@ -318,7 +318,7 @@ def update_ui(
         order_total: Total price in cents.
         order_confirmed: Set to true when order is placed.
         order_number: The order number (set when order is confirmed).
-        burger_builder: Show/update the burger builder UI. Set to {"active": true, "patty": null, "toppings": [], "sauces": [], "price": 899} to show progress. Set to {"active": false} to close it.
+        burger_builder: Do not use: call the burger_builder tool instead.
 
     Returns:
         Confirmation that the update was sent.
@@ -353,17 +353,25 @@ def update_ui(
     if order_number is not None:
         current["orderNumber"] = order_number
     if burger_builder is not None:
+        # The attendant sometimes still drives the builder through update_ui. Hand it to the real builder, which keeps
+        # the burger, its price and what was just said, so the customer always sees the burger building.
+        set_ui_state(current)
         if isinstance(burger_builder, dict) and burger_builder.get("active"):
-            current["burgerBuilder"] = burger_builder
+            have = _calls.current().burger or {}
+            had = list(have.get("toppings", [])) + list(have.get("sauces", []))
+            want = [str(x) for x in list(burger_builder.get("toppings") or []) + list(burger_builder.get("sauces") or [])]
+            result = _order_tools.burger_builder(add=[w for w in want if w.lower() not in had], patty=str(burger_builder.get("patty") or ""),
+                                                 bun=str(burger_builder.get("bun") or ""))
         else:
-            current["burgerBuilder"] = None
+            result = _order_tools.burger_builder(close=True)
+        return {"status": "updated", **{k: v for k, v in result.items() if k != "status"}}
 
     # Auto-clear highlighted item only when navigating to a category (not when updating order)
     if highlighted_item is None and highlighted_category is not None:
         current["highlightedItem"] = None
 
     set_ui_state(current)
-    return {"status": "updated"}
+    return {"status": "updated", "next": "If you already replied this turn, say nothing more."}
 
 
 _SHOWING = re.compile(r"\bhere(?:'s| is| are| you go)\b|\btake a look\b|\bthese are\b|\bcheck out\b", re.IGNORECASE)
@@ -429,7 +437,7 @@ SHOW, DON'T LIST:
 RULES:
 {price_rules}
 - Keep each reply to {reply_length}. Short replies keep the order moving and the words on screen in step with your voice
-- Speak ONCE per turn. When a turn needs a tool, call the tool first and speak after its result. Never say a sentence, call a tool, and then say the same thing again in different words
+- Speak ONCE per turn. When a turn needs a tool, call the tool first and speak after its result. If you already spoke before a tool result came back, say NOTHING after it (never "Perfect, a chicken patty... Got it, a chicken patty..."). Never say a sentence, call a tool, and then say the same thing again in different words
 - Never repeat or rephrase something you have just said
 - Never say the words "screen", "card", "button" or "app". Just say "here are our burgers" or "take a look"
 - Never fabricate items. Only use the menu above

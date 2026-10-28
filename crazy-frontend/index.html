@@ -604,6 +604,25 @@ body.kiosk .tab[data-go="more"], body.kiosk #installCard{display:none !important
 [dir="rtl"] .bbgo{padding:8px 22px 8px 8px !important}
 .bbgo b{background:rgba(255,255,255,.14); border-radius:999px; padding:8px 14px; font-size:.9rem !important}
 
+/* ---------- the burger building live inside the call screen ---------- */
+.vb{width:100%; background:#FFFBF4; border-radius:22px; padding:12px 10px 10px; box-shadow:var(--shadow); text-align:start; animation:pop .4s var(--spring)}
+.vbhead{display:flex; align-items:baseline; gap:8px; padding:0 4px} .vbhead b{font-weight:800; font-size:1rem; color:#2B1A13}
+.vbhead span{flex:1; font-size:.72rem; color:#8A7A6E} .vbhead .vbprice{font-size:.9rem; background:#2B1A13; color:#fff; border-radius:999px; padding:3px 10px}
+.vbstage{position:relative; height:150px; margin:4px 0 6px; background:radial-gradient(160px 40px at 50% 92%, rgba(43,26,19,.14), transparent 70%)}
+.vbstack{position:absolute; left:50%; bottom:8px; width:200px; height:230px; margin-left:-100px; transform-origin:50% 100%; transition:transform .4s var(--spring)}
+.vbbuns{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:6px}
+.vbrow h4{font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#8A7A6E; margin:8px 4px 4px}
+.vbrow>div{display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:6px 2px 2px} .vbrow>div::-webkit-scrollbar{display:none}
+.vbchip{flex:none; width:64px; border:0; background:none; display:grid; justify-items:center; gap:1px; padding:0}
+.vbchip .bbico{position:relative; width:44px; height:44px; border-radius:50%; background:#F6EDE2; display:grid; place-items:center; overflow:visible; box-shadow:inset 0 0 0 1.5px #EADFD2}
+.vbchip .bbico svg{max-width:32px}
+.vbchip.on .bbico{box-shadow:inset 0 0 0 2.5px #E8452C; background:#FFE9DF}
+.vbchip.said .bbico{animation:bbsaid 1.4s ease-out; box-shadow:inset 0 0 0 2.5px #E8452C, 0 0 0 6px rgba(232,69,44,.25)}
+.vbchip b{font-size:.64rem; font-weight:700; color:#2B1A13; margin-top:2px} .vbchip small{font-size:.58rem; color:#8A7A6E}
+.vbchip .bbn{top:-5px; inset-inline-end:-6px; min-width:18px; height:18px; font-size:.64rem; background:#E8452C}
+.voice.building .orb{scale:.5; margin:-44px 0 -40px} .voice.building .vstate{font-size:.9rem; margin-top:-4px}
+.vbgo{width:100%; border:0; border-radius:999px; margin-top:10px; padding:11px; font-weight:800; color:#fff; background:#2B1A13}
+
 /* ---------- building by voice: the builder stays open while the customer talks ---------- */
 .bblive:empty{display:none}
 .bbsay{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:0; border-radius:999px; padding:11px 14px; margin:2px 0 10px; font-weight:800; font-size:.9rem; color:#fff;
@@ -1821,7 +1840,7 @@ function celebrate(number) {
 }
 function centerChip() { const chip = view === "menu" && document.querySelector('.chip[aria-pressed="true"]'); if (chip) chip.scrollIntoView({ block: "nearest", inline: "center" }); }
 function renderSpot() {
-  const ids = shown.filter(findItem); if (lit && findItem(lit) && ids.length && !ids.includes(lit)) ids.unshift(lit);
+  const ids = builder && live ? [] : shown.filter(findItem); if (lit && findItem(lit) && ids.length && !ids.includes(lit)) ids.unshift(lit);
   const key = [lit, JSON.stringify(builder), lang, ids.join(), lines().map(l => l.itemId + ":" + (l.quantity || 1)).join()].join("|"); if (key === spotKey) return; spotKey = key;
   const shelf = $("shelf"), same = shelf.dataset.ids === ids.join(), at = shelf.scrollLeft;
   $("shelfWrap").hidden = !ids.length; $("voice").classList.toggle("shelf-on", !!ids.length);
@@ -1835,6 +1854,8 @@ function renderSpot() {
     const litCard = lit && shelf.querySelector(".card.lit"); if (litCard) litCard.scrollIntoView({ block: "nearest", inline: "center" });
   } else { shelf.innerHTML = ""; shelf.dataset.ids = ""; }
   const i = !ids.length && lit && findItem(lit);
+  $("voice").classList.toggle("building", !!(builder && live));
+  if (builder && live) { $("spot").innerHTML = vbHtml(builder); return; }
   $("spot").innerHTML = i ? `<div class="spot"><div class="pic">${photo(i)}</div><div><b>${esc(itemName(i))}</b><span class="price">${money(i.price)}</span></div></div>`
     : builder ? `<div class="spot"><div class="pic">${CAT_ICON.custom}</div><div><b>${esc(t("building"))}</b><span>${esc([builder.patty, ...(builder.toppings || []), ...(builder.sauces || [])].filter(Boolean).join(", ") || "…")}</span></div></div>` : "";
 }
@@ -2055,12 +2076,12 @@ const BB_DEFS_FN = () => `<svg width="0" height="0" style="position:absolute" ar
   <filter id="bbRuffle" x="-5%" y="-40%" width="110%" height="180%"><feTurbulence type="fractalNoise" baseFrequency=".05 .2" numOctaves="2" seed="9"/><feDisplacementMap in="SourceGraphic" scale="9"/></filter>
 </defs></svg>`;
 const bbRand = (seed => () => (seed = (seed * 9301 + 49297) % 233280) / 233280);
-function bbLayer(k) {
+function bbLayer(k, bunArg) {
   const r = bbRand(k.length * 131 + k.charCodeAt(0));
   const dots = (n, x0, x1, y0, y1, rad, fill, op = 1) => Array.from({ length: n }, () => `<ellipse cx="${(x0 + r() * (x1 - x0)).toFixed(1)}" cy="${(y0 + r() * (y1 - y0)).toFixed(1)}" rx="${(rad * (.6 + r() * .8)).toFixed(1)}" ry="${(rad * (.4 + r() * .5)).toFixed(1)}" fill="${fill}" opacity="${op}"/>`).join("");
   if (k === "bun-bottom") return [34, `<path d="M6 8c0-4 3-6 8-6h172c5 0 8 2 8 6v6H6z" fill="url(#bbCrumb)"/>${dots(40, 12, 188, 4, 12, 1.2, "#E2BC82", .7)}
     <path d="M6 13h188c0 10-6 19-20 20H26C12 32 6 23 6 13z" fill="url(#bbBunBot)"/><path d="M16 26c40 4 128 4 168 0" stroke="#7E4415" stroke-width="2" fill="none" opacity=".35"/>`];
-  if (k === "bun-top") { const bun = (bb && bb.bun) || "sesame";
+  if (k === "bun-top") { const bun = bunArg || (bb && bb.bun) || "sesame";
     const crust = bun === "sesame" ? Array.from({ length: 22 }, () => { const x = 28 + r() * 144, y = 12 + r() * 38, a = (r() * 160 - 80).toFixed(0); return `<g transform="rotate(${a} ${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="${x.toFixed(1)}" cy="${(y + .6).toFixed(1)}" rx="3.6" ry="1.7" fill="#9A5A1F" opacity=".45"/><ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="3.4" ry="1.6" fill="#FFF3D9"/></g>`; }).join("")
       : bun === "parmesan" ? Array.from({ length: 70 }, () => { const x = 20 + r() * 160, y = 8 + r() * 48; return `<path d="M${x.toFixed(1)} ${y.toFixed(1)}l${(2 + r() * 4).toFixed(1)} ${(r() * 2 - 1).toFixed(1)}" stroke="${r() > .5 ? "#FFF4C8" : "#F2D27A"}" stroke-width="1.4" stroke-linecap="round"/>`; }).join("")
       : bun === "potato" ? dots(30, 30, 170, 14, 50, 1.4, "#FFF6D6", .6) : "";
@@ -2100,12 +2121,12 @@ function bbLayer(k) {
   return [8, `<rect x="8" y="1" width="184" height="6" rx="3" fill="#ccc"/>`];
 }
 const bbIcon = k => { const [h, body] = bbLayer(k); return `<svg viewBox="0 0 200 ${h}" preserveAspectRatio="none" width="44" height="${Math.round(Math.min(26, 8 + h * .8))}" aria-hidden="true">${body}</svg>`; };
-const bbSvg = k => { const [h, body] = bbLayer(k); return `<svg viewBox="0 0 200 ${h}" width="200" height="${h}" aria-hidden="true">${body}</svg>`; };
+const bbSvg = (k, bunArg) => { const [h, body] = bbLayer(k, bunArg); return `<svg viewBox="0 0 200 ${h}" width="200" height="${h}" aria-hidden="true">${body}</svg>`; };
 let bb = null;   // { patty, layers: [keys in the order they were added], fresh }
 const bbPrice = () => bb ? BB.base + bb.layers.reduce((s, k) => s + (BB_PRICE[k] || 0), 0) : BB.base;
 const bbCount = k => bb.layers.filter(x => x === k).length;
 function startBuilding() {   // in a call the attendant builds it with the customer by voice; otherwise tap to build
-  if (live && ws && ws.readyState === 1) { if (!bb) openBuilder(true); sendText("I'd like to build my own burger."); return; }
+  if (live && ws && ws.readyState === 1) { if (!builder) { builder = { active: true, voice: true, bun: "brioche", patty: "beef patty", toppings: [], sauces: [], price: BB.base, just: [] }; spotKey = ""; renderSpot(); } sendText("I'd like to build my own burger."); return; }
   openBuilder(false);
 }
 function openBuilder(voice) {
@@ -2192,6 +2213,7 @@ function syncVoiceBuilder(st) {
     if (bb && bb.voice) { if (st && st.added) { const btn = document.querySelector("#bb .bbgo"); btn && flyToOrder(btn); } closeBuilder(); }
     return;
   }
+  if (live) { if (bb) closeBuilder(); spotKey = ""; renderSpot(); vbPop(st); return; }   // in a call the burger builds inside the call screen, next to the conversation
   if (!st.voice) return;
   if (!bb || !$("bb")) openBuilder(true); else if (!bb.voice) { bb.voice = true; $("bb").classList.add("bbvoice"); }
   const layers = [...(st.toppings || []), ...(st.sauces || [])].filter(k => k in BB_PRICE);
@@ -2207,6 +2229,53 @@ function syncVoiceBuilder(st) {
   }
   bbRender();
 }
+/* ---- the burger, building live inside the call screen ---- */
+const VB_SAYS = { beef: "beef patty", chicken: "chicken patty", american: "american cheese", cheddar: "cheddar cheese", "pepper jack": "pepper jack cheese", swiss: "swiss cheese", cheese: "american cheese",
+  egg: "fried egg", jalapeno: "jalapeños", jalapenos: "jalapeños", pickle: "pickles", mushroom: "mushrooms", onions: "onion", tomatoes: "tomato", bbq: "bbq sauce", barbecue: "bbq sauce", chipotle: "chipotle mayo", special: "special sauce", mayonnaise: "mayo" };
+const vbKey = x => { const k = String(x || "").trim().toLowerCase(); return VB_SAYS[k] || k; };
+function vbState(st) {   // whatever the kitchen sends (old or new attendant), as one tidy burger
+  const keys = [...(st.toppings || []), ...(st.sauces || [])].map(vbKey).filter(k => k in BB_PRICE);
+  const patty = vbKey(st.patty); const okPatty = BB.patties.some(p => p[0] === patty) ? patty : "";
+  const bun = BB_BUNS.some(x => x[0] === st.bun) ? st.bun : "brioche";
+  return { bun, patty: okPatty, layers: keys, just: (st.just || []).map(vbKey), price: st.price || BB.base + keys.reduce((a, k) => a + (BB_PRICE[k] || 0), 0) };
+}
+let vbSeen = "";
+function vbPop(st) {   // a little "+ Bacon" over the burger for what was just said
+  const b = vbState(st), key = JSON.stringify([b.patty, b.bun, b.layers]); if (key === vbSeen) return; vbSeen = key;
+  const just = b.just.filter(k => k in BB_PRICE || BB.patties.some(p => p[0] === k)); if (!just.length) return;
+  setTimeout(() => { const pop = $("vbPop"); if (!pop || calm) return; pop.textContent = "+ " + just.map(k => BB_LABEL[k] || k).join(", "); pop.classList.remove("go"); void pop.offsetWidth; pop.classList.add("go"); }, 30);
+  if (navigator.vibrate) try { navigator.vibrate(8); } catch (e) {}
+}
+function vbHtml(st) {
+  const b = vbState(st), ar = lang === "ar", count = k => b.layers.filter(x => x === k).length;
+  const keys = ["bun-bottom", ...b.layers.filter(k => BB_SAUCE[k]), ...(b.patty ? [b.patty] : []), ...b.layers.filter(k => !BB_SAUCE[k])];
+  let y = 0, stack = "";
+  keys.forEach((k, i) => { const [h] = bbLayer(k, b.bun); const isNew = b.just.includes(k) && i === keys.lastIndexOf(k);
+    stack += `<div class="bbly ${isNew ? "drop" : ""}" style="bottom:${y}px; z-index:${i + 1}">${bbSvg(k, b.bun)}</div>`; y += h - 4; });
+  stack += `<div class="bbly bbtop" style="bottom:${y}px; z-index:99">${bbSvg("bun-top", b.bun)}</div>`;
+  const scale = Math.min(.62, 150 / (y + 70)).toFixed(3);
+  const chip = (k, name, price, on, n, radio) => `<button class="vbchip ${on ? "on" : ""} ${b.just.includes(k) ? "said" : ""}" data-vb="${esc(k)}" aria-pressed="${!!on}">
+      <span class="bbico">${bbIcon(k)}${on ? `<i class="bbn">${radio ? "✓" : n}</i>` : ""}</span><b>${esc(name)}</b><small>${price ? "+" + money(price) : radio ? "" : (ar ? "مجاناً" : "Free")}</small></button>`;
+  const row = (title, items) => `<div class="vbrow"><h4>${esc(title)}</h4><div>${items}</div></div>`;
+  return `<div class="vb" id="vb">${$("bb") ? "" : BB_DEFS_FN()}
+    <div class="vbhead"><b>${esc(ar ? "برجرك" : "Your burger")}</b><span>${esc(ar ? "قل ما تريد: «أضف بيكون»" : "Say it: \u201cadd bacon\u201d, \u201cno onion\u201d")}</span><b class="vbprice">${money(b.price)}</b></div>
+    <div class="vbstage"><div class="vbstack" style="transform:scale(${scale})">${stack}</div><span class="bbpop" id="vbPop"></span></div>
+    <div class="vbbuns">${BB_BUNS.map(([id, name, d, m, l]) => `<button class="bbbun ${b.bun === id ? "on" : ""}" data-vb-bun="${id}"><i style="background:radial-gradient(circle at 40% 30%, ${l}, ${m} 55%, ${d})"></i>${esc(name)}</button>`).join("")}</div>
+    ${row(ar ? "اللحم" : "Patty", BB.patties.map(([k, n]) => chip(k, n, 0, b.patty === k, 0, true)).join(""))}
+    ${BB.groups.map(g => row(g[1][ar ? "ar" : "en"], g[2].map(([k, n, p]) => chip(k, n, p, count(k), count(k))).join(""))).join("")}
+    <button class="vbgo" data-vb="done">${esc(ar ? "هذا برجري، أضفه للطلب" : "That's my burger, add it")}</button></div>`;
+}
+document.addEventListener("click", e => {   // taps on the in-call burger go to the attendant, who updates the burger for everyone
+  const c = e.target.closest("[data-vb]"), bn = e.target.closest("[data-vb-bun]"); if (!c && !bn) return;
+  if (!live) return; e.stopPropagation();
+  if (bn) return sendText(`Use a ${bn.dataset.vbBun} bun on my burger.`);
+  const k = c.dataset.vb, st = builder ? vbState(builder) : null;
+  if (k === "done") return sendText("That's my burger, I confirm. Please add it to my order.");
+  if (BB.patties.some(p => p[0] === k)) return sendText(`Make my burger a ${k}.`);
+  sendText(st && st.layers.includes(k) && c.classList.contains("on") && e.target.closest(".bbn") ? `Take one ${k} off my burger.` : `Add ${k} to my burger.`);
+  c.classList.add("said"); if (navigator.vibrate) try { navigator.vibrate(8); } catch (x) {}
+}, true);
+
 new MutationObserver(() => {   // what the customer and attendant just said, echoed inside the builder
   const li = $("caps") && $("caps").lastElementChild; if (!li) return;
   bbHeard = (li.classList.contains("user") ? "\u201c" : "") + li.textContent.trim().slice(0, 90) + (li.classList.contains("user") ? "\u201d" : "");
