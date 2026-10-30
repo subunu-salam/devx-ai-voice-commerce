@@ -1043,7 +1043,9 @@ class PublicCORS:
 
 
 def setup_admin(app) -> None:
-    origins = [o.strip() for o in os.environ.get("ADMIN_ORIGINS", DEFAULT_ORIGINS).split(",") if o.strip()]
+    # The hosted console is always allowed; ADMIN_ORIGINS adds more (it used to replace it and lock the console out).
+    raw = DEFAULT_ORIGINS + "," + os.environ.get("ADMIN_ORIGINS", "")
+    origins = list(dict.fromkeys(o.strip().rstrip("/") for o in raw.split(",") if o.strip()))
     app.add_middleware(PublicCORS, admin_origins=origins)
     for name in ("ops", "rewards", "insights"):   # their routes join this router, so they load first
         _extra(name)
