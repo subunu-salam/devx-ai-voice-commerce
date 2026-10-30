@@ -1024,9 +1024,27 @@ def delete_staff(username: str, user: dict = Depends(need("team.manage"))):
 
 # ---------- wiring ----------
 
+PUBLIC_PREFIXES = ("/rewards", "/orders", "/ping")
+
+
+class PublicCORS:
+    """CORS for two audiences. The customer app (rewards wallet, order tracking) can be served from any domain,
+    and those routes authenticate with a Bearer token, never cookies, so any origin may call them.
+    Everything else (the admin console API) stays limited to ADMIN_ORIGINS."""
+
+    def __init__(self, app, admin_origins):
+        self.admin = CORSMiddleware(app, allow_origins=admin_origins, allow_methods=["*"], allow_headers=["*"])
+        self.public = CORSMiddleware(app, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+    async def __call__(self, scope, receive, send):
+        path = scope.get("path", "") if scope["type"] == "http" else ""
+        public = any(path == p or path.startswith(p + "/") for p in PUBLIC_PREFIXES)
+        await (self.public if public else self.admin)(scope, receive, send)
+
+
 def setup_admin(app) -> None:
     origins = [o.strip() for o in os.environ.get("ADMIN_ORIGINS", DEFAULT_ORIGINS).split(",") if o.strip()]
-    app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"])
+    app.add_middleware(PublicCORS, admin_origins=origins)
     for name in ("ops", "rewards", "insights"):   # their routes join this router, so they load first
         _extra(name)
     app.include_router(router)
